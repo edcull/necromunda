@@ -266,7 +266,7 @@
   }
 
   /* ===== MOBILE LAYOUT ===== */
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     body { overflow: hidden; }
 
     /* Fixed top bar */
@@ -1426,7 +1426,7 @@
 
     function checkMobile(){
       const was = isMobile;
-      isMobile = window.matchMedia('(max-width:768px)').matches;
+      isMobile = window.matchMedia('(max-width:1200px)').matches;
       if(was && !isMobile){
         panX = 0; panY = 0;
         layer.style.transform = '';
