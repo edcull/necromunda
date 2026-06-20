@@ -381,7 +381,6 @@
     </div>
     <div class="controls">
       <span class="save-tag" id="saveTag"></span>
-      <span id="arbIndicator" style="display:none"></span>
       <a href="/necromunda" class="btn ghost" style="text-decoration:none">◀ Campaigns</a>
       <button class="btn" id="arbitratorBtn">⚔ Arbitrator</button>
     </div>
@@ -685,8 +684,6 @@
     return { ok: r.ok, status: r.status, data: await r.json().catch(()=>({})) };
   }
   function updateArbIndicator() {
-    const ind = document.getElementById('arbIndicator');
-    if (isArbitrator && currentUser) { ind.textContent = 'ARB: ' + currentUser.username; ind.style.display = ''; }
     else ind.style.display = 'none';
   }
 
