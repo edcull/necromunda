@@ -276,7 +276,7 @@
   });
 
   // Allow enter key in auth form
-  ['authUser','authPass','campaignName'].forEach(id => {
+  ['authUser','authPass'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') modalAction.click(); });
   });
 
