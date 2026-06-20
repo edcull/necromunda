@@ -130,6 +130,11 @@
   .legend li{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.05em;color:var(--text);text-transform:uppercase}
   .legend .swatch{width:13px;height:13px;border-radius:2px;display:grid;place-items:center;font-size:9px;border:1px solid rgba(0,0,0,.5);flex:0 0 auto}
   .legend .ct{margin-left:auto;color:var(--faint);font-size:10px;font-variant-numeric:tabular-nums}
+  .legend .ct-rep{color:var(--amber);font-size:10px;font-variant-numeric:tabular-nums;min-width:26px;text-align:right}
+  .legend .ct-rat{color:var(--tox);font-size:10px;font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
+  .legend-sort{display:flex;gap:6px;margin-bottom:8px}
+  .legend-sort button{background:transparent;border:1px solid var(--edge);color:var(--faint);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border-radius:2px;font-family:'Rajdhani'}
+  .legend-sort button.on{border-color:var(--tox);color:var(--tox)}
   .hint{position:absolute;right:14px;bottom:14px;z-index:5;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 
   /* ---------- drawer ---------- */
@@ -147,7 +152,7 @@
   .dbody{padding:18px 20px;overflow-y:auto;flex:1}
   .field{margin-bottom:16px}
   .field > label{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  select,input[type=text]{width:100%;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:10px 11px;
+  select,input[type=text],input[type=password]{width:100%;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:10px 11px;
     font-family:'Rajdhani';font-size:15px;font-weight:500;border-radius:2px}
   select:focus,input:focus{outline:none;border-color:var(--tox);box-shadow:0 0 0 2px var(--tox-dim)}
   select option{background:#0a100e}
@@ -220,10 +225,11 @@
   .icon-cell input{width:46px;text-align:center;font-size:17px;padding:8px 4px}
   .gang-row .nm{flex:1;min-width:80px}
   .gang-type-cell{flex:0 0 auto} .gang-type-cell select{font-family:'Rajdhani';font-size:13px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:8px 10px;border-radius:2px}
+  .stat-cell{flex:0 0 auto} .stat-cell input{width:60px;font-family:'Rajdhani';font-size:13px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:8px 6px;border-radius:2px;text-align:center}
   .gang-type-tag{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--tox);padding:4px 0}
   .emoji-btn{background:transparent;border:1px solid var(--edge);border-radius:2px;width:34px;height:34px;font-size:15px;flex:0 0 auto}
   .emoji-btn:hover{border-color:var(--tox)}
-  .palette{position:absolute;top:42px;right:0;z-index:5;background:#0a100e;border:1px solid var(--edge);border-radius:3px;padding:8px;display:none;grid-template-columns:repeat(8,1fr);gap:3px;width:264px;box-shadow:0 14px 40px rgba(0,0,0,.6)}
+  .palette{position:absolute;top:42px;left:0;z-index:5;background:#0a100e;border:1px solid var(--edge);border-radius:3px;padding:8px;display:none;grid-template-columns:repeat(8,1fr);gap:3px;width:264px;box-shadow:0 14px 40px rgba(0,0,0,.6)}
   .palette.open{display:grid}
   .palette button{font-size:17px;width:28px;height:28px;background:transparent;border:1px solid transparent;border-radius:2px}
   .palette button:hover{border-color:var(--tox);background:rgba(95,217,160,.1)}
@@ -263,7 +269,7 @@
       <svg class="hivemap" id="hivemap" viewBox="0 0 1600 900" preserveAspectRatio="none"></svg>
       <div class="vig"></div>
       <div id="nodes"></div>
-      <div class="legend"><h3>Known Factions</h3><ul id="legendList"></ul></div>
+      <div class="legend"><h3>Known Factions</h3><div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div><ul id="legendList"></ul></div>
     </div>
   </div>
 
@@ -279,7 +285,7 @@
 
 <div class="modal" id="modal" aria-label="Campaign setup">
   <div class="sheet">
-    <div class="mhead"><div><div class="kicker">Configuration</div><h2>Campaign Setup</h2></div>
+    <div class="mhead"><div><div class="kicker">Configuration</div><h2>Campaign Configuration</h2></div>
       <button class="x" id="modalClose" aria-label="Close">✕</button></div>
     <div class="mbody">
       <div class="setup-grid">
@@ -572,7 +578,7 @@
     const d=defaultState();
     const s={players:N,sector:loaded.sector||d.sector,campaign:loaded.campaign||d.campaign,gangs:[],nodes:{},pos:{},terrPool:null};
     for(let i=0;i<8;i++){ const g=(loaded.gangs&&loaded.gangs[i])||DEFAULT_GANGS[i];
-      s.gangs.push({name:g.name||DEFAULT_GANGS[i].name,icon:g.icon||DEFAULT_GANGS[i].icon,color:g.color||DEFAULT_GANGS[i].color,type:g.type||null}); }
+      s.gangs.push({name:g.name||DEFAULT_GANGS[i].name,icon:g.icon||DEFAULT_GANGS[i].icon,color:g.color||DEFAULT_GANGS[i].color,type:g.type||null,rep:Number(g.rep)||0,rating:Number(g.rating)||0}); }
     LAYOUT.forEach(n=>{ const ex=(loaded.nodes&&loaded.nodes[n.id])||{};
       const hasG=Object.prototype.hasOwnProperty.call(ex,'gang');
       s.nodes[n.id]= n.type==='hideout'
@@ -859,8 +865,9 @@
 
       if(n.type==='hideout'){
         const g=el('div','gicon', owner?owner.icon:'⌖'); mod.appendChild(g);
-        const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); mod.appendChild(tag);
-        name=owner?owner.name:'Unclaimed'; sub='Hideout';
+        const light=owner?isLight(owner.color):true;
+        const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); tag.style.color=light?'':'#e8f2ec'; mod.appendChild(tag);
+        name=owner?owner.name:'Unclaimed'; sub=owner&&owner.type?owner.type:'Hideout';
         if(!owner) btn.classList.add('uncontrolled');
       }else{
         const t=data.terr?TERR_BY_KEY[data.terr]:null;
@@ -871,7 +878,9 @@
 
       const lbl=el('div','lbl'); lbl.style.setProperty('--c',c);
       lbl.appendChild(el('span','name',name));
-      const sb=el('span','sub'+(owner?' owner':''),sub); sb.style.setProperty('--c',c); lbl.appendChild(sb);
+      const sb=el('span','sub'+(owner?' owner':''),sub); sb.style.setProperty('--c',c);
+      if(n.type==='hideout'&&owner&&!isLight(owner.color)) sb.style.color='#e8f2ec';
+      lbl.appendChild(sb);
 
       btn.appendChild(mod); btn.appendChild(lbl);
       attachDrag(btn,n.id);
@@ -880,17 +889,27 @@
     renderLegend();
     const fn=document.getElementById('footnote'); if(fn){ const N=state.players; fn.textContent=`${4*N} holdings · ${N} hideouts · ${3*N} territory plots`; }
   }
+  let legendSort='terr';
   function renderLegend(){
     const ul=document.getElementById('legendList'); ul.innerHTML='';
-    const rows=state.gangs.slice(0,state.players).map((g,i)=>({g,i,n:countHoldings(i)}));
-    rows.sort((a,b)=> b.n-a.n || a.i-b.i);          // most-held territories first
-    rows.forEach(({g,i,n})=>{
+    const rows=state.gangs.slice(0,state.players).map((g,i)=>({g,i,n:countHoldings(i),rep:Number(g.rep)||0,rat:Number(g.rating)||0}));
+    if(legendSort==='rep') rows.sort((a,b)=>b.rep-a.rep||a.i-b.i);
+    else if(legendSort==='rat') rows.sort((a,b)=>b.rat-a.rat||a.i-b.i);
+    else rows.sort((a,b)=>b.n-a.n||a.i-b.i);
+    rows.forEach(({g,i,n,rep,rat})=>{
       const li=el('li'); const sw=el('span','swatch',g.icon); sw.style.background=g.color;
-      li.appendChild(sw); li.appendChild(el('span',null,g.name)); li.appendChild(el('span','ct',n));
+      li.appendChild(sw); li.appendChild(el('span',null,g.name));
+      li.appendChild(el('span','ct',n));
+      li.appendChild(el('span','ct-rep',rep+'rep'));
+      li.appendChild(el('span','ct-rat',rat+'pts'));
       ul.appendChild(li);
     });
+    ['sortTerr','sortRep','sortRat'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on', (id==='sortTerr'&&legendSort==='terr')||(id==='sortRep'&&legendSort==='rep')||(id==='sortRat'&&legendSort==='rat')); });
   }
   function countHoldings(gi){ let n=0; for(const id in state.nodes) if(state.nodes[id].gang===gi) n++; return n; }
+  document.getElementById('sortTerr').addEventListener('click',()=>{ legendSort='terr'; renderLegend(); });
+  document.getElementById('sortRep').addEventListener('click',()=>{ legendSort='rep'; renderLegend(); });
+  document.getElementById('sortRat').addEventListener('click',()=>{ legendSort='rat'; renderLegend(); });
 
   /* ============ DRAWER ============ */
   const drawer=document.getElementById('drawer'), scrim=document.getElementById('scrim'), drawerBody=document.getElementById('drawerBody');
@@ -1057,11 +1076,18 @@
       gs.value=g.type||'';
       gs.addEventListener('change',()=>{ g.type=gs.value||null; scheduleSave(); });
       gt.appendChild(gs); row.appendChild(gt);
+      const rc=el('div','stat-cell'); const ri=document.createElement('input'); ri.type='number'; ri.min=0; ri.max=99; ri.step=1; ri.value=g.rep||0; ri.title='Reputation (tens)'; ri.placeholder='Rep';
+      ri.addEventListener('input',()=>{ g.rep=Math.max(0,parseInt(ri.value)||0); scheduleSave(); renderLegend(); });
+      rc.appendChild(ri); row.appendChild(rc);
+      const rrc=el('div','stat-cell'); const rri=document.createElement('input'); rri.type='number'; rri.min=0; rri.max=9999; rri.step=1; rri.value=g.rating||0; rri.title='Gang Rating (points)'; rri.placeholder='Rating';
+      rri.addEventListener('input',()=>{ g.rating=Math.max(0,parseInt(rri.value)||0); scheduleSave(); renderLegend(); });
+      rrc.appendChild(rri); row.appendChild(rrc);
       host.appendChild(row);
     });
   }
   document.addEventListener('click',()=>document.querySelectorAll('.palette.open').forEach(p=>p.classList.remove('open')));
   function toHex(c){ if(/^#[0-9a-f]{6}$/i.test(c)) return c; const m=document.createElement('canvas').getContext('2d'); m.fillStyle=c; return m.fillStyle; }
+  function isLight(hex){ const h=toHex(hex); const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return (0.299*r+0.587*g+0.114*b)>140; }
   const PALETTES=['#f0962a','#cdbb4a','#4f93c9','#d23b3b','#9b6cd6','#ff5e7a','#4fd1a0','#6fc4d9','#e8a23d','#7ad6c4','#d06fb0','#88c34a','#ff6b1a','#5fa8ff','#e05a5a','#b48aff'];
 
 
@@ -1087,7 +1113,7 @@
       const who = el('p','','• Logged in as: '+currentUser.username);
       who.style.cssText = 'font-size:13px;color:var(--tox);letter-spacing:.06em;margin-bottom:16px';
       body.appendChild(who);
-      const setupBtn2 = el('button','btn','⚙ Campaign Setup');
+      const setupBtn2 = el('button','btn','⚙ Campaign Configuration');
       setupBtn2.style.cssText = 'width:100%;margin-bottom:10px;text-align:center';
       setupBtn2.addEventListener('click', () => { arbModal.classList.remove('show'); openSetupModal(); });
       body.appendChild(setupBtn2);

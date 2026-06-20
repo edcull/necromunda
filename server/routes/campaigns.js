@@ -66,7 +66,8 @@ router.patch('/necromunda/api/campaigns/:id/state', requireAuth, (req, res) => {
   if (campaign.arbitrator_id !== req.session.user.id) return res.status(403).json({ error: 'Forbidden' });
   const { state } = req.body || {};
   if (state === undefined) return res.status(400).json({ error: 'state required' });
-  db.prepare('UPDATE campaigns SET state_json = ? WHERE id = ?').run(JSON.stringify(state), campaign.id);
+  const name = (state && state.campaign) ? String(state.campaign).trim() || campaign.id : campaign.id;
+  db.prepare('UPDATE campaigns SET state_json = ?, name = ? WHERE id = ?').run(JSON.stringify(state), name, campaign.id);
   res.json({ ok: true });
 });
 
