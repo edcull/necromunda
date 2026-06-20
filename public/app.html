@@ -1106,7 +1106,7 @@
     ['sortTerr','sortRep','sortRat'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on', (id==='sortTerr'&&legendSort==='terr')||(id==='sortRep'&&legendSort==='rep')||(id==='sortRat'&&legendSort==='rat')); });
   }
   function countHoldings(gi){ let n=0; for(const id in state.nodes) if(state.nodes[id].gang===gi) n++; return n; }
-  function gangTerrList(gi){ const t=[]; for(const id in state.nodes){ const d=state.nodes[id]; if(d.gang===gi&&d.terr){const tr=TERR_BY_KEY[d.terr];if(tr)t.push(tr);} } return t; }
+  function gangTerrList(gi){ const t=[]; for(const id in state.nodes){ const d=state.nodes[id]; if(d.gang===gi&&d.terr){const tr=TERR_BY_KEY[d.terr];if(tr)t.push({...tr,customLabel:d.label||null});} } return t; }
   function hideoutStats(ownerG,gi){ const wrap=el('div'); if(!ownerG) return wrap;
     const stats=el('div','hideout-stats');
     const re=el('div','hstat'); re.appendChild(el('span','hstat-label','Reputation')); re.appendChild(el('span','hstat-val hstat-rep',String(ownerG.rep||0))); stats.appendChild(re);
@@ -1120,9 +1120,8 @@
         const card=el('div','terr-held-card');
         const tile=el('div','tile'); tile.innerHTML=svgIcon(t.key); card.appendChild(tile);
         const info=el('div','tinfo');
-        info.appendChild(el('div','tname',t.name));
-        const meta=t.house||'Neutral';
-        info.appendChild(el('div','tmeta',meta));
+        info.appendChild(el('div','tname',t.customLabel||t.name));
+        info.appendChild(el('div','tmeta',t.name));
         card.appendChild(info); list.appendChild(card);
       });
       tf.appendChild(list); wrap.appendChild(tf);
