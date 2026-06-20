@@ -1197,7 +1197,8 @@
       if(!loaded || !loaded.campaign) state.campaign = campaignMeta.name;
       document.title = state.campaign + ' — Necromunda';
     } else {
-      state = defaultState();
+      window.location.replace('/necromunda');
+      return;
     }
     if(currentUser && campaignMeta && campaignMeta.arbitrator_id === currentUser.id) isArbitrator = true;
     updateArbIndicator();
