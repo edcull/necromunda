@@ -3,7 +3,7 @@ const express = require('express');
 const db = require('../db');
 const router = express.Router();
 
-const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid confusion
 function genId() {
   let id = '';
   for (let i = 0; i < 4; i++) id += CHARS[Math.floor(Math.random() * CHARS.length)];
@@ -20,6 +20,16 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// Random sector name: "SECTOR A3-K7 — CHEM SUMP"
+const SECTOR_DESCRIPTORS = ['CHEM', 'SHADOW', 'RAT', 'TOX', 'BLIGHT', 'RAD', 'DARK', 'BONE', 'ASH', 'GROT'];
+const SECTOR_LOCATIONS   = ['WASTES', 'SUMP', 'SPIRE', 'WARRENS', 'DEPTHS', 'DOMES', 'PITS', 'FLATS', 'REACHES', 'HOLLOWS'];
+const SECTOR_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randomSectorName() {
+  const code = `${pick(SECTOR_LETTERS)}${1 + Math.floor(Math.random() * 9)}-${pick(SECTOR_LETTERS)}${1 + Math.floor(Math.random() * 9)}`;
+  return `SECTOR ${code} — ${pick(SECTOR_DESCRIPTORS)} ${pick(SECTOR_LOCATIONS)}`;
+}
+
 router.get('/necromunda/api/campaigns', (req, res) => {
   const rows = db.prepare(`
     SELECT c.id, c.name, c.created_at, a.username AS arbitrator
@@ -31,11 +41,12 @@ router.get('/necromunda/api/campaigns', (req, res) => {
 });
 
 router.post('/necromunda/api/campaigns', requireAuth, (req, res) => {
-  const { name } = req.body || {};
-  if (!name) return res.status(400).json({ error: 'name required' });
   const id = uniqueId();
-  db.prepare('INSERT INTO campaigns (id, name, arbitrator_id) VALUES (?, ?, ?)').run(id, name.trim(), req.session.user.id);
-  res.json({ id, name: name.trim() });
+  const sector = randomSectorName();
+  // Initial state: name = campaign ID, sector = random generated name
+  const initialState = JSON.stringify({ campaign: id, sector });
+  db.prepare('INSERT INTO campaigns (id, name, arbitrator_id, state_json) VALUES (?, ?, ?, ?)').run(id, id, req.session.user.id, initialState);
+  res.json({ id, name: id, sector });
 });
 
 router.get('/necromunda/api/campaigns/:id', (req, res) => {

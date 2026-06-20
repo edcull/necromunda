@@ -108,10 +108,7 @@
           <span>Logged in as <span class="who" id="loggedInAs"></span></span>
           <button class="btn" id="logoutBtn" style="padding:4px 10px;font-size:11px">Logout</button>
         </div>
-        <div class="field">
-          <label>Campaign Name</label>
-          <input type="text" id="campaignName" placeholder="e.g. Chemspire War" maxlength="48">
-        </div>
+        <p style="font-size:13px;color:var(--muted);letter-spacing:.06em;line-height:1.6;margin-bottom:14px">A new campaign will be created with a randomised sector name and assigned a unique 4-character ID. You can rename it in Campaign Setup once inside.</p>
         <div class="err" id="createErr"></div>
       </div>
       <!-- Shown when logged out -->
@@ -236,14 +233,12 @@
 
   modalAction.addEventListener('click', async () => {
     if (currentUser){
-      // Create campaign
-      const name = document.getElementById('campaignName').value.trim();
-      if (!name){ createErr.textContent = 'Campaign name is required'; return; }
+      // Create campaign (name and sector auto-generated server-side)
       createErr.textContent = '';
       const r = await fetch('/necromunda/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
+        body: JSON.stringify({})
       });
       if (r.ok){
         const c = await r.json();

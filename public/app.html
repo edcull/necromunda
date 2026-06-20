@@ -897,18 +897,33 @@
     document.getElementById('drawerKicker').textContent= node.type==='hideout'?'Settlement':'Holding';
     document.getElementById('drawerTitle').textContent= node.type==='hideout'?'Gang Hideout':'Territory Plot';
     drawerBody.innerHTML='';
-    if(node.type==='hideout'){
-      drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); }, 'Garrison', false));
-      drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
+    if(isArbitrator){
+      if(node.type==='hideout'){
+        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); }, 'Garrison', false));
+        drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
+      }else{
+        drawerBody.appendChild(terrField(data.terr, key=>{
+          if(key){ for(const oid in state.nodes){ if(oid!==id && state.nodes[oid].terr===key) state.nodes[oid].terr=null; } }
+          data.terr=key; commit(); openEditor(id); }));
+        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); }, 'Controlling Gang', true));
+        drawerBody.appendChild(terrCard(data.terr));
+      }
     }else{
-      drawerBody.appendChild(terrField(data.terr, key=>{
-        if(key){ for(const oid in state.nodes){ if(oid!==id && state.nodes[oid].terr===key) state.nodes[oid].terr=null; } }
-        data.terr=key; commit(); openEditor(id); }));
-      drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); }, 'Controlling Gang', true));
-      drawerBody.appendChild(terrCard(data.terr));
-    }
-    if(!isArbitrator){
-      drawerBody.querySelectorAll('select').forEach(s=>{ s.disabled=true; s.title='Arbitrator access required'; });
+      // Read-only view: show ownership as text, show boons for territories
+      const ownerG = gangOf(data.gang);
+      const ownerLine = el('div','ownerline');
+      const dot = el('span','dot', ownerG ? ownerG.icon : '\u2205'); dot.style.background = ownerG ? ownerG.color : NEUTRAL;
+      ownerLine.appendChild(dot);
+      ownerLine.appendChild(el('span','who', ownerG ? ownerG.name : (node.type==='hideout'?'Unclaimed':'Uncontrolled')));
+      const ownerField = el('div','field');
+      ownerField.appendChild(el('label',null, node.type==='hideout'?'Garrison':'Controlling Gang'));
+      ownerField.appendChild(ownerLine);
+      drawerBody.appendChild(ownerField);
+      if(node.type==='hideout'){
+        drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
+      }else{
+        drawerBody.appendChild(terrCard(data.terr));
+      }
     }
     drawer.classList.add('show'); scrim.classList.add('show'); render();
   }
@@ -1152,8 +1167,6 @@
   document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
   document.getElementById('modalDone').addEventListener('click', () => modal.classList.remove('show'));
   modal.addEventListener('click', e => { if(e.target === modal) modal.classList.remove('show'); });
-  document.getElementById('inSector').addEventListener('input', e => { state.sector=e.target.value||'Unnamed Sector'; scheduleSave(); render(); });
-  document.getElementById('inCampaign').addEventListener('input', e => { state.campaign=e.target.value||'Campaign'; scheduleSave(); render(); });
 
   /* ============ INIT ============ */
   (async function init(){
@@ -1164,10 +1177,11 @@
     if(meRes.ok) currentUser = meRes.data;
     if(campRes.ok) {
       campaignMeta = campRes.data;
-      document.title = campaignMeta.name + ' — Necromunda';
       const loaded = campaignMeta.state_json ? JSON.parse(campaignMeta.state_json) : null;
       state = mergeState(loaded);
-      state.campaign = campaignMeta.name;
+      // state.campaign comes from state_json (editable in setup); fall back to DB name (= campaign ID initially)
+      if(!loaded || !loaded.campaign) state.campaign = campaignMeta.name;
+      document.title = state.campaign + ' — Necromunda';
     } else {
       state = defaultState();
     }
