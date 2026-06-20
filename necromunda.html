@@ -1,0 +1,1011 @@
+<!-- Necromunda Dominion Campaign Map — interactive underhive sector tracker -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dominion Campaign Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#070a09; --hive:#0d1311; --panel:#111a17; --panel-2:#16211d;
+    --tox:#5fd9a0; --tox-bright:#8effc4; --tox-dim:rgba(95,217,160,.16);
+    --amber:#e8a23d; --ember:#ff6b1a;
+    --text:#cdd8d2; --muted:#7e8f88; --faint:#566660;
+    --edge:rgba(125,255,191,.16); --edge-soft:rgba(125,255,191,.08);
+    --grey:#6c7a74; --ink:#e6efe9;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--void); color:var(--text);
+    font-family:'Rajdhani',system-ui,sans-serif; font-size:15px;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  h1,h2,h3,.disp{font-family:'Oswald',system-ui,sans-serif;font-weight:600;letter-spacing:.04em}
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  ::selection{background:var(--tox);color:#04110a}
+
+  .wrap{max-width:1480px;margin:0 auto;padding:18px 20px 48px}
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+  .brand .sector{font-family:'Oswald';font-weight:700;font-size:clamp(20px,3.2vw,32px);
+    letter-spacing:.06em;color:#eef6f1;line-height:1;text-transform:uppercase;text-shadow:0 0 18px rgba(95,217,160,.25)}
+  .brand .campaign{font-family:'Rajdhani';font-weight:600;font-size:12px;letter-spacing:.42em;
+    text-transform:uppercase;color:var(--tox);margin-top:6px;opacity:.85}
+  .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .save-tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);min-width:64px;text-align:right;transition:color .3s}
+  .save-tag.on{color:var(--tox)}
+  .btn{background:var(--panel);border:1px solid var(--edge);color:var(--text);padding:9px 15px;font-size:12px;
+    letter-spacing:.14em;text-transform:uppercase;font-weight:600;border-radius:2px;transition:.15s}
+  .btn:hover{border-color:var(--tox);color:var(--tox-bright);background:var(--panel-2)}
+  .btn.ghost{background:transparent}
+  .btn.warn:hover{border-color:var(--ember);color:#ffb27a}
+
+  /* ---------- HUD frame ---------- */
+  .frame{position:relative;border:1px solid var(--edge);background:var(--hive);
+    box-shadow:inset 0 0 90px rgba(0,0,0,.7), inset 0 0 1px rgba(125,255,191,.4), 0 0 0 4px rgba(95,217,160,.03);padding:7px}
+  .frame::before{content:"";position:absolute;inset:5px;border:1px solid var(--edge-soft);pointer-events:none;z-index:6}
+  .corner{position:absolute;width:26px;height:26px;border:2px solid var(--tox);opacity:.65;pointer-events:none;z-index:7}
+  .corner.tl{top:-1px;left:-1px;border-right:0;border-bottom:0}
+  .corner.tr{top:-1px;right:-1px;border-left:0;border-bottom:0}
+  .corner.bl{bottom:-1px;left:-1px;border-right:0;border-top:0}
+  .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0}
+
+  /* ---------- stage / underhive ---------- */
+  .stage{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;
+    background:
+      radial-gradient(42% 52% at 84% 82%, rgba(255,120,40,.20), transparent 60%),
+      radial-gradient(34% 46% at 16% 78%, rgba(255,110,30,.12), transparent 62%),
+      radial-gradient(40% 40% at 62% 16%, rgba(120,150,150,.10), transparent 66%),
+      radial-gradient(60% 70% at 40% 38%, rgba(34,52,48,.34), transparent 74%),
+      linear-gradient(180deg,#0c100e 0%,#0a0d0b 54%,#06090700 100%),#070a08;}
+  .stage .deck{position:absolute;inset:0;opacity:.14;pointer-events:none;
+    background-image:linear-gradient(rgba(125,255,191,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(125,255,191,.045) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask:radial-gradient(120% 120% at 50% 42%,#000 38%,transparent 100%);mask:radial-gradient(120% 120% at 50% 42%,#000 38%,transparent 100%)}
+  svg.hivemap{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+  .vig{position:absolute;inset:0;pointer-events:none;z-index:2;
+    box-shadow:inset 0 0 120px 18px rgba(2,4,3,.62), inset 0 0 360px 60px rgba(2,4,3,.34)}
+
+  /* hive map elements */
+  .dome{fill:none;stroke:rgba(95,217,160,.07);stroke-width:1.3}
+  .dome-spoke{stroke:rgba(95,217,160,.045);stroke-width:1}
+  .blk{fill:rgba(120,150,135,.05);stroke:rgba(120,150,135,.08);stroke-width:.7}
+  .blk.w{fill:rgba(180,140,90,.05);stroke:rgba(180,140,90,.08)}
+  .pipe{fill:none;stroke:rgba(170,190,180,.07);stroke-width:5;stroke-linecap:round}
+  .pipe-i{fill:none;stroke:rgba(10,16,14,.5);stroke-width:2.4}
+  .pipe-flow{fill:none;stroke:rgba(95,217,160,.16);stroke-width:1.4;stroke-dasharray:3 13;stroke-linecap:round;animation:flow 5s linear infinite}
+  .walk-u{stroke:rgba(0,0,0,.32);stroke-width:5;fill:none;stroke-linecap:round}
+  .walk{stroke:rgba(150,172,160,.16);stroke-width:2.2;fill:none;stroke-linecap:round}
+  .walk-c{stroke:rgba(125,255,191,.10);stroke-width:1;stroke-dasharray:2 5;fill:none}
+  @keyframes flow{to{stroke-dashoffset:-32}}
+
+  /* ---------- zone modules ---------- */
+  #nodes{position:absolute;inset:0;z-index:4}
+  .place-overlay{position:absolute;inset:0;z-index:8;cursor:crosshair;display:none}
+  .place-overlay.show{display:block}
+  .place-hint{position:absolute;left:50%;top:16px;transform:translateX(-50%);pointer-events:none;
+    background:rgba(6,11,9,.92);border:1px solid var(--tox);color:var(--tox-bright);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:8px 14px;border-radius:3px;white-space:nowrap;box-shadow:0 6px 22px rgba(0,0,0,.55)}
+  .place-hint .cancel{pointer-events:auto;margin-left:12px;color:var(--muted);text-decoration:underline;cursor:pointer}
+  .place-hint .cancel:hover{color:#ffb27a}
+  .locrow{display:flex;gap:8px}
+  .locbtn{flex:1;background:#16211d;border:1px solid var(--edge);color:var(--text);padding:9px 10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;border-radius:2px;cursor:pointer}
+  .locbtn:hover{border-color:var(--tox);color:var(--tox-bright)}
+  .locbtn.ghost{flex:0 0 auto}
+  .node{position:absolute;transform:translate(-50%,-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;touch-action:none}
+  .module{--c:var(--grey);position:relative;display:grid;place-items:center;border:1.5px solid var(--c);
+    background:rgba(8,13,11,.8);border-radius:9px;transition:box-shadow .18s, transform .18s;cursor:grab;
+    box-shadow:0 0 0 1px rgba(0,0,0,.55), 0 0 16px -3px var(--c), inset 0 0 14px rgba(0,0,0,.45)}
+  .module::before{content:"";position:absolute;inset:-17px;border-radius:50%;z-index:-1;pointer-events:none;
+    background:radial-gradient(circle, rgba(7,12,10,.78) 44%, rgba(7,12,10,0) 74%)}
+  .node.hideout .module::before{inset:-21px}
+  .node.dragging{z-index:9}
+  .node.dragging .module{cursor:grabbing;transform:scale(1.06);box-shadow:0 0 0 1px rgba(0,0,0,.6), 0 0 28px 2px var(--c), inset 0 0 14px rgba(0,0,0,.45)}
+  .node.territory .module{width:54px;height:54px}
+  .node.hideout .module{width:62px;height:62px;border-width:2px;border-radius:50% 50% 10px 10px}
+  .node.hideout .module::after{content:"";position:absolute;inset:-5px;border:1px solid var(--c);opacity:.3;border-radius:50% 50% 12px 12px}
+  .node:hover .module{transform:scale(1.07);box-shadow:0 0 0 1px rgba(0,0,0,.55), 0 0 24px 0 var(--c), inset 0 0 14px rgba(0,0,0,.45)}
+  .node.selected .module{outline:1px dashed var(--tox-bright);outline-offset:4px}
+
+  .terricon{width:32px;height:32px;color:var(--ink);display:block}
+  .node.hideout .module{font-size:28px;line-height:1}
+  .gicon{font-size:28px;line-height:1}
+  .node.uncontrolled .module{--ink:#9fb0a8}
+  .node.empty .module{border-style:dashed;border-color:rgba(120,142,132,.42);background:rgba(8,13,11,.45);box-shadow:inset 0 0 12px rgba(0,0,0,.4)}
+  .node.empty:hover .module{border-color:var(--tox);box-shadow:0 0 16px -4px var(--tox)}
+  .plus{font-size:24px;font-weight:300;color:rgba(150,172,160,.55)}
+
+  .tag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:7px;letter-spacing:.16em;font-weight:700;
+    background:var(--c,var(--tox));color:#06120c;padding:1px 6px;border-radius:1px;text-transform:uppercase;white-space:nowrap}
+  .lbl{--c:var(--grey);background:rgba(6,11,9,.85);border:1px solid var(--c);padding:2px 7px;text-align:center;border-radius:2px;max-width:124px}
+  .lbl .name{display:block;font-size:9.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#e8f2ec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;line-height:1.3}
+  .lbl .sub{display:block;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);line-height:1.3}
+  .lbl .sub.owner{color:var(--c)}
+
+  .legend{position:absolute;left:14px;bottom:14px;z-index:5;background:rgba(6,11,9,.74);border:1px solid var(--edge);
+    backdrop-filter:blur(2px);padding:9px 12px 10px;border-radius:2px;max-width:212px}
+  .legend h3{font-size:10px;letter-spacing:.24em;color:var(--tox);text-transform:uppercase;margin:0 0 7px}
+  .legend ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+  .legend li{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.05em;color:var(--text);text-transform:uppercase}
+  .legend .swatch{width:13px;height:13px;border-radius:2px;display:grid;place-items:center;font-size:9px;border:1px solid rgba(0,0,0,.5);flex:0 0 auto}
+  .legend .ct{margin-left:auto;color:var(--faint);font-size:10px;font-variant-numeric:tabular-nums}
+  .hint{position:absolute;right:14px;bottom:14px;z-index:5;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+
+  /* ---------- drawer ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(2,5,4,.55);backdrop-filter:blur(2px);z-index:40;opacity:0;visibility:hidden;transition:.2s}
+  .scrim.show{opacity:1;visibility:visible}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(392px,92vw);z-index:50;
+    background:linear-gradient(180deg,var(--panel) 0%,#0c1311 100%);border-left:1px solid var(--edge);
+    box-shadow:-20px 0 60px rgba(0,0,0,.6);transform:translateX(102%);transition:transform .26s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+  .drawer.show{transform:translateX(0)}
+  .dhead{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--edge)}
+  .dhead .kicker{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--tox)}
+  .dhead h2{margin:4px 0 0;font-size:19px;text-transform:uppercase;color:#eef6f1}
+  .x{background:transparent;border:1px solid var(--edge);width:30px;height:30px;border-radius:2px;font-size:16px;line-height:1;color:var(--muted)}
+  .x:hover{border-color:var(--ember);color:#ffb27a}
+  .dbody{padding:18px 20px;overflow-y:auto;flex:1}
+  .field{margin-bottom:16px}
+  .field > label{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  select,input[type=text]{width:100%;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:10px 11px;
+    font-family:'Rajdhani';font-size:15px;font-weight:500;border-radius:2px}
+  select:focus,input:focus{outline:none;border-color:var(--tox);box-shadow:0 0 0 2px var(--tox-dim)}
+  select option{background:#0a100e}
+
+  .terrcard{border:1px solid var(--edge);border-radius:2px;background:rgba(0,0,0,.25);padding:14px;margin-top:4px}
+  .ct-top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .ct-top .tile{--c:var(--tox);width:46px;height:46px;flex:0 0 auto;display:grid;place-items:center;border:1px solid var(--edge);border-radius:8px;background:rgba(0,0,0,.3)}
+  .ct-top .tile .terricon{width:30px;height:30px;color:var(--ink)}
+  .tname{font-family:'Oswald';font-size:18px;text-transform:uppercase;color:#eef6f1;line-height:1.05}
+  .tmeta{display:flex;gap:7px;margin-top:4px;align-items:center;flex-wrap:wrap}
+  .pill{font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:2px 6px;border-radius:1px;border:1px solid var(--edge);color:var(--muted)}
+  .pill.card{color:#0a100e;background:var(--tox);border-color:var(--tox)}
+  .pill.card.red{background:#e0626a;border-color:#e0626a}
+  .pill.house{color:var(--amber);border-color:rgba(232,162,61,.4)}
+  .flavor{font-style:italic;color:var(--muted);font-size:13.5px;line-height:1.5;margin:8px 0 12px}
+  .boon{margin-top:10px}
+  .boon h4{margin:0 0 4px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--tox)}
+  .boon.enh h4{color:var(--amber)}
+  .boon p{margin:0;font-size:13.5px;line-height:1.55;color:var(--text)}
+  .boonlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+  .boonlist li{display:flex;gap:9px;align-items:flex-start}
+  .boonlist li::before{content:"";flex:0 0 auto;width:5px;height:5px;margin-top:7px;border-radius:50%;background:var(--tox);opacity:.85}
+  .boon.enh .boonlist li::before{background:var(--amber)}
+  .boonlist .btag{flex:0 0 auto;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--tox);background:var(--tox-dim);border:1px solid var(--edge);border-radius:2px;padding:2px 6px;margin-top:1px}
+  .boon.enh .boonlist .btag{color:var(--amber);background:rgba(240,150,42,.12);border-color:rgba(240,150,42,.3)}
+  .boonlist .btxt{font-size:13px;line-height:1.5;color:var(--text)}
+  .empty-note{color:var(--faint);font-size:13px;line-height:1.5;font-style:italic;padding:6px 0}
+  .ownerline{display:flex;align-items:center;gap:9px;margin-top:10px;padding:9px 11px;border:1px solid var(--edge);border-radius:2px;background:rgba(0,0,0,.2)}
+  .ownerline .dot{width:16px;height:16px;border-radius:3px;display:grid;place-items:center;font-size:11px;flex:0 0 auto}
+  .ownerline .who{font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+
+  /* ---------- modal ---------- */
+  .modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;opacity:0;visibility:hidden;transition:.2s}
+  .modal.show{opacity:1;visibility:visible}
+  .sheet{width:min(680px,100%);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,var(--panel) 0%,#0b110f 100%);border:1px solid var(--edge);border-radius:3px;
+    box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translateY(10px) scale(.99);transition:.2s}
+  .modal.show .sheet{transform:none}
+  .mhead{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--edge)}
+  .mhead .kicker{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--tox)}
+  .mhead h2{margin:3px 0 0;font-size:20px;text-transform:uppercase;color:#eef6f1}
+  .mbody{padding:18px 22px;overflow-y:auto}
+  .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:20px}
+  .player-seg{display:flex;gap:6px;flex-wrap:wrap}
+  .player-seg button{flex:1;min-width:42px;background:#121a17;border:1px solid var(--edge);color:var(--text);
+    padding:9px 0;font-weight:700;font-size:14px;border-radius:3px;cursor:pointer;letter-spacing:.04em}
+  .player-seg button:hover{border-color:var(--tox)}
+  .player-seg button.on{background:var(--tox);border-color:var(--tox);color:#04140d;box-shadow:0 0 14px -2px var(--tox)}
+  .terr-head{display:flex;justify-content:space-between;align-items:baseline;margin:20px 0 10px}
+  .terr-count{font-size:11px;letter-spacing:.1em;color:var(--muted)}
+  .terr-count.over{color:#ff9a5a}
+  .terr-pool{display:flex;gap:12px;max-height:248px;overflow:auto;padding:4px 2px 2px}
+  .terr-col{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .terr-colhead{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tox);padding:2px 2px 4px;position:sticky;top:0;background:var(--panel);z-index:1}
+  .terr-chip{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--edge);border-radius:3px;cursor:pointer;background:#101714;transition:.12s}
+  .terr-chip:hover{border-color:var(--tox-dim)}
+  .terr-chip.on{border-color:var(--tox);background:#13211b}
+  .terr-chip .box{width:15px;height:15px;border:1px solid var(--muted);border-radius:2px;display:grid;place-items:center;font-size:11px;color:#04140d;flex:0 0 auto}
+  .terr-chip.on .box{background:var(--tox);border-color:var(--tox)}
+  .terr-chip .tn{font-size:12px;color:var(--text);line-height:1.15}
+  .terr-chip .tc{font-size:10px;color:var(--muted)}
+  @media(max-width:560px){.setup-grid{grid-template-columns:1fr}}
+  .lbl-sm{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .gang-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--edge-soft);border-radius:2px;margin-bottom:9px;background:rgba(0,0,0,.18)}
+  .gang-row .num{font-size:11px;color:var(--faint);width:14px;text-align:center;font-variant-numeric:tabular-nums}
+  .swatch-pick{position:relative;width:34px;height:34px;flex:0 0 auto}
+  .swatch-pick input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0}
+  .swatch-pick .face{position:absolute;inset:0;border-radius:3px;border:1px solid rgba(0,0,0,.5);display:grid;place-items:center;font-size:15px;pointer-events:none;box-shadow:0 0 10px -3px var(--c)}
+  .icon-cell{position:relative}
+  .icon-cell input{width:46px;text-align:center;font-size:17px;padding:8px 4px}
+  .gang-row .nm{flex:1;min-width:80px}
+  .emoji-btn{background:transparent;border:1px solid var(--edge);border-radius:2px;width:34px;height:34px;font-size:15px;flex:0 0 auto}
+  .emoji-btn:hover{border-color:var(--tox)}
+  .palette{position:absolute;top:42px;right:0;z-index:5;background:#0a100e;border:1px solid var(--edge);border-radius:3px;padding:8px;display:none;grid-template-columns:repeat(8,1fr);gap:3px;width:264px;box-shadow:0 14px 40px rgba(0,0,0,.6)}
+  .palette.open{display:grid}
+  .palette button{font-size:17px;width:28px;height:28px;background:transparent;border:1px solid transparent;border-radius:2px}
+  .palette button:hover{border-color:var(--tox);background:rgba(95,217,160,.1)}
+  .mfoot{padding:14px 22px;border-top:1px solid var(--edge);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .footnote{margin-top:14px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);text-align:center}
+
+  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+  @media(max-width:680px){
+    .node .lbl{max-width:88px}
+    .lbl .name{max-width:78px;font-size:8px}
+    .node.hideout .module{width:46px;height:46px;font-size:21px}
+    .node.territory .module{width:42px;height:42px}
+    .terricon{width:25px;height:25px}
+    .legend{max-width:150px;padding:7px 9px}.legend li{font-size:9px}
+  }
+</style>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div class="sector" id="sectorName">SECTOR D8-U1 — CHEMSPIRE WASTES</div>
+      <div class="campaign" id="campaignName">Dominion Campaign</div>
+    </div>
+    <div class="controls">
+      <span class="save-tag" id="saveTag"></span>
+      <button class="btn" id="setupBtn">⚙ Campaign Setup</button>
+      <button class="btn ghost warn" id="resetBtn">Reset</button>
+    </div>
+  </div>
+
+  <div class="frame">
+    <span class="corner tl"></span><span class="corner tr"></span>
+    <span class="corner bl"></span><span class="corner br"></span>
+    <div class="stage" id="stage">
+      <div class="deck"></div>
+      <svg class="hivemap" id="hivemap" viewBox="0 0 1600 900" preserveAspectRatio="none"></svg>
+      <div class="vig"></div>
+      <div id="nodes"></div>
+      <div class="legend"><h3>Known Factions</h3><ul id="legendList"></ul></div>
+    </div>
+  </div>
+
+  <div class="footnote" id="footnote"></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Holding editor">
+  <div class="dhead"><div><div class="kicker" id="drawerKicker">Holding</div><h2 id="drawerTitle">—</h2></div>
+    <button class="x" id="drawerClose" aria-label="Close">✕</button></div>
+  <div class="dbody" id="drawerBody"></div>
+</aside>
+
+<div class="modal" id="modal" aria-label="Campaign setup">
+  <div class="sheet">
+    <div class="mhead"><div><div class="kicker">Configuration</div><h2>Campaign Setup</h2></div>
+      <button class="x" id="modalClose" aria-label="Close">✕</button></div>
+    <div class="mbody">
+      <div class="setup-grid">
+        <div><label class="lbl-sm">Sector Name</label><input type="text" id="inSector" maxlength="48"></div>
+        <div><label class="lbl-sm">Campaign Name</label><input type="text" id="inCampaign" maxlength="40"></div>
+      </div>
+      <label class="lbl-sm" style="color:var(--tox);margin-bottom:8px">Players in this campaign</label>
+      <div class="player-seg" id="playerSeg"></div>
+      <label class="lbl-sm" id="gangsLabel" style="color:var(--tox);margin:18px 0 10px">The Gangs — name · icon · colour</label>
+      <div id="gangRows"></div>
+      <div class="terr-head"><label class="lbl-sm" style="color:var(--tox)">Territories in play</label><span class="terr-count" id="terrCount"></span></div>
+      <div class="terr-pool" id="terrPool"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" id="modalDone">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ TERRITORY GLYPHS (line-art, inherit colour) ============ */
+  const ICONS = {
+    settlement:'<path d="M2 21h20"/><path d="M4 21v-5l3-2 3 2v5"/><path d="M11 21v-7a4 4 0 0 1 8 0v7"/><path d="M15 14v-3"/>',
+    oldruins:'<path d="M3 21h18"/><path d="M6 21V9a2 2 0 0 1 4 0v4"/><path d="M5.5 9h5"/><path d="M15 21v-8l3 2v6"/>',
+    roguedoc:'<path d="M2 13h4l1.5-4 3 8L13 9l1.5 4H22"/><path d="M18 3v4M16 5h4"/>',
+    promethium:'<rect x="4" y="8" width="6" height="11" rx="1"/><path d="M4 11.5h6M4 15h6"/><rect x="12" y="10" width="6" height="9" rx="1"/><path d="M12 13.5h6"/><path d="M16.5 8c1-1.4.3-2.6-.2-3.4-.2 1.6-1.8 1.7-1 3.4" fill="currentColor" stroke="none"/>',
+    wastes:'<path d="M2 18c3-3 6-3 9 0s7 1 11-2"/><path d="M2 21h20"/><path d="M7 14l1.5-2L10 14M14 12l1.5-2 1.5 2"/>',
+    sludge:'<path d="M4 10c2 1.6 3.5 1.6 5.5 0s4-1.6 6 0 3.5 1.6 4.5.4"/><path d="M4 15c2 1.6 3.5 1.6 5.5 0s4-1.6 6 0 3.5 1.6 4.5.4"/><path d="M4 10v6a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-6"/>',
+    workshop:'<circle cx="12" cy="12" r="3"/><path d="M12 4v2.5M12 17.5V20M4 12h2.5M17.5 12H20M6.3 6.3l1.8 1.8M15.9 15.9l1.8 1.8M17.7 6.3l-1.8 1.8M8.1 15.9l-1.8 1.8"/>',
+    dome:'<path d="M3 20h18"/><path d="M4 20a8 8 0 0 1 16 0"/><path d="M12 4v8l-2.5 3M14.5 15L12 12"/>',
+    refuse:'<path d="M3 20h18"/><path d="M4.5 20c.8-5 3.5-7.5 7.5-7.5s6.7 2.5 7.5 7.5"/><path d="M9 13.5l1-2M13 12.5l1-2M11 16h2"/>',
+    corpse:'<path d="M9 3h6l3 7-3 11H9L6 10z"/><path d="M10 9.5l4 4M14 9.5l-4 4"/>',
+    bone:'<circle cx="12" cy="10" r="5"/><path d="M10 9.6v.01M14 9.6v.01"/><path d="M10 13.5q2 1.5 4 0"/><path d="M9 15l-1 6M15 15l1 6M8 21h8"/>',
+    drink:'<path d="M6 8h9v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/><path d="M15 10h2.5a2.5 2.5 0 0 1 0 5H15"/><path d="M6 8c0-2.2 2-3.5 4.5-3.5S15 5.8 15 8"/><path d="M9 12v4M12 12v4"/>',
+    gamble:'<rect x="3.5" y="3.5" width="10" height="10" rx="2"/><path d="M7 7h.01M10 10h.01"/><rect x="10.5" y="10.5" width="10" height="10" rx="2"/><path d="M14 14h.01M17 17h.01M14 17h.01M17 14h.01"/>',
+    needle:'<path d="M3 6c5 0 5 12 9 12s4-12 9-12M3 18c5 0 5-12 9-12s4 12 9 12"/>',
+    synth:'<path d="M9.5 3h5M11 3v5L6.2 16.5A2 2 0 0 0 8 19.5h8a2 2 0 0 0 1.8-3L13 8V3"/><path d="M8.2 14h7.6"/>',
+    stinger:'<path d="M4.5 11a7.5 5 0 0 1 15 0z"/><path d="M10 11v6a2 2 0 0 0 4 0v-6"/><path d="M9 8.6v.01M13.5 9v.01"/>',
+    narco:'<rect x="3.5" y="8.5" width="17" height="7" rx="3.5" transform="rotate(-25 12 12)"/><path d="M8.8 7.2l6.4 9.6"/>',
+    slag:'<path d="M5 21h14V9l-7-4-7 4z"/><path d="M9 21v-4a3 3 0 0 1 6 0v4"/><path d="M12 17c1.3-.9 1-2.1.6-2.8.9.7 1.9 1 .6 2.8" fill="currentColor" stroke="none"/>',
+    pit:'<path d="M4 4l8 8M20 4l-8 8"/><path d="M12 12l-2.5 2.5 1.2 1.2L13 13.4M12 12l2.5 2.5-1.2 1.2L11 13.4"/><path d="M4 4h2.2v2.2M20 4h-2.2v2.2"/><path d="M9 19h6"/>',
+    smelt:'<path d="M3 8h13l-2.2 4H8.5A5.5 5.5 0 0 1 3 8z"/><path d="M16 8l3-1v3.2"/><path d="M9 12l-1 3h6.5l1-3"/><path d="M7 18h9v2.5H7z"/>',
+    mine:'<path d="M11.5 8L7 21"/><path d="M3.5 9.5C8 4.5 15 4.5 19.5 9.5"/><path d="M4 9l2.2 1.6M19 9l-2.2 1.6"/>',
+    tunnels:'<path d="M2 20h20"/><path d="M3 20v-5a4 4 0 0 1 8 0v5M13 20v-5a4 4 0 0 1 8 0v5"/>',
+    toll:'<path d="M2 16c4 0 6-6 10-6s6 6 10 6"/><path d="M2 16v4M22 16v4M2 20h20"/><path d="M8 13v3.5M12 11v5.5M16 13v3.5"/>',
+    gen:'<path d="M13 2L5 13.5h5L8 22l8-12.5h-5z" fill="currentColor" stroke="none"/>',
+    archeo:'<path d="M12 2l4.5 4.5L12 11 7.5 6.5z"/><path d="M12 11v5"/><path d="M6.5 16h11L20 21H4z"/><path d="M10 6.5h4"/>',
+    bazaar:'<ellipse cx="8.5" cy="7" rx="5" ry="2.2"/><path d="M3.5 7v4c0 1.2 2.2 2.2 5 2.2s5-1 5-2.2V7"/><path d="M3.5 11v3.5c0 1.2 2.2 2.2 5 2.2"/><circle cx="16.5" cy="15.5" r="4"/><path d="M16.5 13.5v4M14.5 15.5h4"/>',
+  };
+  function svgIcon(key){
+    return `<svg class="terricon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]||''}</svg>`;
+  }
+
+  /* ============ TERRITORY DATA ============ */
+  const TERRITORIES = [
+    {key:'settlement',name:'Settlement',card:'A♦',
+      flavor:'Scrap-shanties peopled by the brave, the foolish and the desperate.',
+      boon:[{t:'Income',d:'The gang earns D6×10 credits when collecting income.'},{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Recruit',d:'Roll 2D6 after every battle — a single 6 grants a free Juve from the House List, a double 6 a free Ganger.'}]},
+    {key:'oldruins',name:'Old Ruins',card:'2♦',
+      flavor:'Ruins standing tall over the wastes, hiding the tattered treasures of past ages.',
+      boon:[{t:'Income',d:'The gang earns D3×10 credits, adding +1 to the D3 result for each Dome Runner attached to the gang.'}]},
+    {key:'roguedoc',name:'Rogue Doc Shop',card:'3♦',
+      flavor:'A rogue sawbones who rewards any gang that offers protection with loyal service.',
+      boon:[{t:'Income',d:'If the gang is an Outlaw gang, they earn D6×10 credits.'},{t:'Recruit',d:'If the gang is Law-abiding, they may recruit a Rogue Doc Hanger-on for free.'}]},
+    {key:'promethium',name:'Promethium Cache',card:'4♦',
+      flavor:'A half-forgotten stash of fuel drums — enough to run a factory, or burn the Sump down.',
+      boon:[{t:'Equipment',d:'Three fighters in the gang gain incendiary charges for free.'},{t:'Special',d:'All fighters may re-roll Ammo tests for any weapon with the Blaze trait.'}]},
+    {key:'wastes',name:'Wastes',card:'5♦',
+      flavor:'Ash, rubble and twisted metal that most gangs must cross to reach places of value.',
+      boon:[{t:'Special',d:'If challenged in the Occupation phase, the gang chooses the Territory at stake. If challenged in the Takeover phase, pass a Leader Intelligence test to play the Ambush scenario as the attacker.'}]},
+    {key:'sludge',name:'Sludge Sea',card:'6♦',
+      flavor:'Lakes of fuming, iridescent sludge drained down through the hive.',
+      boon:[{t:'Equipment',d:'Three fighters in the gang gain choke gas grenades for free.'}]},
+    {key:'workshop',name:'Workshop',card:'7♦',
+      flavor:'Scrap yards tended by strange recluses who build disturbing totems from machines.',
+      boon:[{t:'Income',d:'If the gang is an Outlaw gang, they earn D6×10 credits.'},{t:'Recruit',d:'If the gang is Law-abiding, they may recruit an Ammo-jack Hanger-on for free.'}]},
+    {key:'dome',name:'Collapsed Dome',card:'8♦',
+      flavor:'Treasure trapped beneath wreckage liable to fall at the slightest misstep.',
+      boon:[{t:'Income',d:'Choose to roll between 2D6×10 and 6D6×10 credits. On a double, no income is generated and a random fighter rolls on the Lasting Injury table.'}]},
+    {key:'refuse',name:'Refuse Drift',card:'9♦',house:'Cawdor',
+      flavor:'Vast drifts of refuse that shift like dunes in a desert.',
+      boon:[{t:'Income',d:'The gang earns 2D6×5 credits. On a double, a random fighter meets a waste-lurker and misses the next battle (no income is lost).'}],
+      enh:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Income',d:'The gang earns 2D6×5 credits with no risk of a waste-lurker.'}]},
+    {key:'corpse',name:'Corpse Farm',card:'10♦',house:'Cawdor',
+      flavor:'Where the dead are rendered into the corpse-starch that feeds the hive.',
+      boon:[{t:'Income',d:'D6×10 credits for every fighter on either side deleted during the Update Roster step of the last battle.'}],
+      enh:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Income',d:'2D6×10 credits for every fighter on either side deleted last battle.'}]},
+    {key:'bone',name:'Bone Shrine',card:'J♦',house:'Cawdor',
+      flavor:'Shrines of bone and noose-rope where gangers leave a cred for a blessing.',
+      boon:[{t:'Income',d:'The gang earns 2D6×5 credits.'}],
+      enh:[{t:'Reputation',d:'+2 Reputation whilst it controls this Territory.'},{t:'Income',d:'The gang earns 4D6×5 credits.'}]},
+    {key:'drink',name:'Drinking Hole',card:'Q♦',house:'Delaque',
+      flavor:'Where hivers numb their sorrows, or find courage at the bottom of a bottle.',
+      boon:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Special',d:'Any fighter may re-roll failed Cool tests; while marked from doing so they take −1 to hit for the rest of the battle.'}],
+      enh:[{t:'Reputation',d:'+2 Reputation whilst it controls this Territory.'},{t:'Special',d:'Nominate three enemy fighters at the start of the battle — they are Intoxicated, taking −1 to all tests and checks for the battle.'}]},
+    {key:'gamble',name:'Gambling Den',card:'K♦',house:'Delaque',
+      flavor:'Fortunes won on the turn of a card and lost on the spin of a bolt shell.',
+      boon:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Income',d:'Choose a suit and draw from a deck including Jokers — the chosen suit pays card value ×10 cr, same colour ×5, any other suit nothing. A Joker pays all your income to a random gang.'}],
+      enh:[{t:'Reputation',d:'+2 Reputation whilst it controls this Territory.'},{t:'Special',d:'Before the first roll for Priority, call in one enemy fighter\u2019s debt — they take no part in the battle.'}]},
+    {key:'needle',name:'Needle Ways',card:'A♠',house:'Delaque',
+      flavor:'Vents and crawl tunnels that let those who know them pass unseen anywhere.',
+      boon:[{t:'Special',d:'Select up to three fighters — they gain the Infiltrate skill.'}],
+      enh:[{t:'Special',d:'Select up to six fighters — they gain the Infiltrate skill.'}]},
+    {key:'synth',name:'Synth Still',card:'2♠',house:'Escher',
+      flavor:'Reclaimed pipes and vats that, in skilled hands, brew the finest poisons and medicines.',
+      boon:[{t:'Special',d:'Treat chem-synths, medicae kits, stimm-slug stashes and any weapon with the Gas or Toxin trait as Common.'}],
+      enh:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Special',d:'As above, and halve the cost of those items (rounding up).'}]},
+    {key:'stinger',name:'Stinger Mould Sprawl',card:'3♠',house:'Escher',
+      flavor:'A rare rad-fungus, deadly but offering near-miraculous healing.',
+      boon:[{t:'Special',d:'During the post-battle sequence, re-roll a single Lasting Injury roll on a fighter (a Memorable Death may not be re-rolled).'}],
+      enh:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Special',d:'Either remove a single existing Lasting Injury from a fighter, or re-roll a single Lasting Injury roll including a Memorable Death (re-rolling Captured).'}]},
+    {key:'narco',name:'Narco Den',card:'4♠',house:'Escher',
+      flavor:'Exotic smoke and chem-injectors where rich and poor alike chase dreams.',
+      boon:[{t:'Income',d:'The gang earns D6×5 credits.'}],
+      enh:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Income',d:'The gang earns 2D6×5 credits (2D6×10 if it also controls a Synth Still).'}]},
+    {key:'slag',name:'Slag Furnace',card:'5♠',house:'Goliath',
+      flavor:'Glowing with heat, smelting slag and ore so the metals can be poured off.',
+      boon:[{t:'Income',d:'The gang earns D6×5 credits.'}],
+      enh:[{t:'Reputation',d:'+2 Reputation whilst it controls this Territory.'},{t:'Recruit',d:'Roll 2D6 after every battle — a single 6 grants a free Juve from the House List, a double 6 a free Ganger.'}]},
+    {key:'pit',name:'Fighting Pit',card:'6♠',house:'Goliath',
+      flavor:'Feared fighters forged on the cinder floors before baying crowds.',
+      boon:[{t:'Recruit',d:'Recruit two Hive Scum Hired Guns, including their equipment, for free prior to every battle.'}],
+      enh:[{t:'Reputation',d:'+2 Reputation whilst it controls this Territory.'}]},
+    {key:'smelt',name:'Smelting Works',card:'7♠',house:'Goliath',
+      flavor:'Crags and seams of valuable slag, markers to the ancient industries of the Spire.',
+      boon:[{t:'Income',d:'The gang earns D6×5 credits.'}],
+      enh:[{t:'Income',d:'The gang earns 2D6×5 credits (2D6×10 if it also controls a Slag Furnace).'}]},
+    {key:'mine',name:'Mine Workings',card:'8♠',house:'Orlock',
+      flavor:'An open cast mine rich in carbonite gems, cognate ore, argent and emeralds.',
+      boon:[{t:'Income',d:'D6×10 credits. Captives may be set to work the mine for +D6×10 each; they can be ransomed but not sold to the Guild.'}],
+      enh:[{t:'Reputation',d:'+2 Reputation whilst it controls this Territory.'}]},
+    {key:'tunnels',name:'Tunnels',card:'9♠',house:'Orlock',
+      flavor:'The primary ways people move between locations — control them to strike where you wish.',
+      boon:[{t:'Special',d:'Deploy up to three fighters via tunnel entrance markers; each turn they arrive on a 4+.'}],
+      enh:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Special',d:'Deploy up to six fighters via tunnels.'}]},
+    {key:'toll',name:'Toll Crossing',card:'10♠',house:'Orlock',
+      flavor:'Bottlenecks where gangs set tolls, taking creds from any who wish to pass.',
+      boon:[{t:'Income',d:'The gang earns D6×5 credits.'}],
+      enh:[{t:'Special',d:'The gang has Priority in the first round of any battle. Any other gang may pay this gang 20 credits to gain the same benefit in a single battle.'}]},
+    {key:'gen',name:'Generatorium',card:'J♠',house:'Van Saar',
+      flavor:'Taps and generators that power the underhive — let it flow, or cut it at a whim.',
+      boon:[{t:'Special',d:'At the start of any Priority phase, stall the generators to plunge the battle into Pitch Black; at each End phase roll a D6, on a 5+ the lights return.'}],
+      enh:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'}]},
+    {key:'archeo',name:'Archaeotech Device',card:'Q♠',house:'Van Saar',
+      flavor:'Relics of a lost age — wondrous power and danger in equal measure.',
+      boon:[{t:'Special',d:'Give any number of weapons one of these Traits for free — Blaze, Rad-phage, Seismic or Shock (all the same Trait); they also gain Unstable. The Traits are lost if the Territory is lost.'}],
+      enh:[{t:'Reputation',d:'+2 Reputation whilst it controls this Territory.'},{t:'Special',d:'Grant two of those Traits instead of one.'}]},
+    {key:'bazaar',name:'Tech Bazaar',card:'K♠',house:'Van Saar',
+      flavor:'Bullet merchants and tech-prospectors haggling under the eye of the Gun-guild.',
+      boon:[{t:'Income',d:'The gang earns D6×10 credits.'},{t:'Equipment',d:'A Leader or Champion may make a Haggle post-battle action (roll 2D6) to buy one discounted item for the Stash.'}],
+      enh:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'},{t:'Income',d:'The gang earns D6×10 credits (2D6×10 if it also controls an Archaeotech Device).'}]},
+  ];
+  const TERR_BY_KEY = Object.fromEntries(TERRITORIES.map(t=>[t.key,t]));
+
+  const DEFAULT_GANGS = [
+    {name:'Bully Boys',icon:'👊',color:'#f0962a'},{name:'Dust Vultures',icon:'🦅',color:'#cdbb4a'},
+    {name:'Iron Enforcers',icon:'🛡️',color:'#4f93c9'},{name:'Ash Blades',icon:'🗡️',color:'#d23b3b'},
+    {name:'Iron Spiders',icon:'🕷️',color:'#9b6cd6'},{name:'Brotherhood of Flame',icon:'🔥',color:'#ff5e7a'},
+    {name:'Stealer Cult',icon:'🧬',color:'#4fd1a0'},{name:'Blood Axes',icon:'🪓',color:'#6fc4d9'},
+  ];
+
+  const RING_FRAC = 0.74;                         // territories sit on this ring road
+  function ringPts(d,i){ const out=[], n=d.ring, off=(i*53)%360; for(let k=0;k<n;k++){ const a=(off + k*360/Math.max(1,n) - 90)*Math.PI/180, rr=d.r*RING_FRAC; out.push([d.cx+Math.cos(a)*rr, d.cy+Math.sin(a)*rr]); } return out; }
+  function hidePts(d,i){ if(d.h<=1) return [[d.cx,d.cy]]; const out=[], off=i*40; for(let k=0;k<d.h;k++){ const a=(off + k*360/d.h)*Math.PI/180, rr=d.r*0.27; out.push([d.cx+Math.cos(a)*rr, d.cy+Math.sin(a)*rr]); } return out; }
+  let DISTRICTS=[], FAB_SITES=[], LAYOUT=[], LBI={};
+  const inGap=(x,y,p)=>!DISTRICTS.some(d=>Math.hypot(x-d.cx,y-d.cy)<d.r*(p||1));
+  // keep the bottom-left corner clear for the Known Factions key
+  const LEGRECT=[0,556,300,900];
+  function distLeg(x,y){ const dx=Math.max(LEGRECT[0]-x,0,x-LEGRECT[2]), dy=Math.max(LEGRECT[1]-y,0,y-LEGRECT[3]); return Math.hypot(dx,dy); }
+  const nearLeg=(x,y,m)=> distLeg(x,y) < (m||0);
+  // populated domes — varied sizes, one large, some overlap. Count is fewer than players.
+  function domeCount(N){ return ({3:3,4:3,5:4,6:5,7:6,8:6})[N] || Math.min(6,Math.max(2,N-1)); }
+  function genDistricts(M){
+    const rng=mulberry32(0xD15+M*131), d2=(a,b)=>{const dx=a[0]-b[0],dy=a[1]-b[1];return dx*dx+dy*dy;};
+    const X0=188,X1=1412,Y0=152,Y1=750;
+    const pool=[]; for(let i=0;i<2400;i++){ const x=X0+rng()*(X1-X0),y=Y0+rng()*(Y1-Y0); if(distLeg(x,y)>=150) pool.push([x,y]); }
+    const cen=[pool[0]], md=pool.map(p=>d2(p,cen[0]));
+    while(cen.length<M){ let bi=0,bd=-1; for(let j=0;j<pool.length;j++){if(md[j]>bd){bd=md[j];bi=j;}} const p=pool[bi]; cen.push(p); for(let j=0;j<pool.length;j++){const dd=d2(pool[j],p); if(dd<md[j])md[j]=dd;} }
+    const gx=cen.reduce((s,c)=>s+c[0],0)/M, gy=cen.reduce((s,c)=>s+c[1],0)/M;
+    const comp = M<=3?0.2 : M<=4?0.14 : M<=5?0.08 : 0.0;      // fewer domes: pull together for overlap
+    cen.forEach(c=>{ c[0]+=(gx-c[0])*comp; c[1]+=(gy-c[1])*comp; });
+    const shrink = M>=6?0.98 : M===5?0.96 : 1.0;             // 6 domes: a touch larger
+    const base=Math.max(126,Math.min(300,600/Math.sqrt(M)))*shrink;
+    const ds=cen.map(c=>({cx:c[0],cy:c[1],r:base*(0.82+rng()*0.4)}));
+    let li=0,ld=1e9; ds.forEach((d,i)=>{const dd=(d.cx-gx)**2+(d.cy-gy)**2; if(dd<ld){ld=dd;li=i;}}); ds[li].r=base*(M>=6?1.45:1.5);
+    ds.forEach(d=>{ d.r=Math.min(d.r, d.cx-34, 1600-34-d.cx, d.cy-26, 900-52-d.cy, distLeg(d.cx,d.cy)-8); d.r=Math.max(112,d.r); });
+    return ds;
+  }
+  function genFab(){
+    const rng=mulberry32(0xFAB17), sites=[], cand=[];
+    for(let gx=96;gx<1560;gx+=78){ for(let gy=140;gy<842;gy+=78){ const x=gx+(rng()*54-27),y=gy+(rng()*54-27); if(inGap(x,y,1.04)&&!nearLeg(x,y,64)) cand.push([x,y]); } }
+    for(let i=cand.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[cand[i],cand[j]]=[cand[j],cand[i]];}
+    const far=(x,y,d)=>sites.every(s=>Math.hypot(s[0]-x,s[1]-y)>d);
+    for(const [x,y] of cand){ if(sites.length>=60)break; if(far(x,y,50)) sites.push([x,y]); }
+    return sites;
+  }
+  function genLayout(N){
+    const M=DISTRICTS.length, d2=(a,b)=>{const dx=a[0]-b[0],dy=a[1]-b[1];return dx*dx+dy*dy;};
+    const playerHide={}, playerTerr={};
+    const MX0=126,MX1=1474,MY0=140,MY1=802, inR=(x,y)=>x>=MX0&&x<=MX1&&y>=MY0&&y<=MY1;
+    const pull=(x,y,cx,cy)=>{ if(inR(x,y))return[x,y]; for(let t=0.94;t>0;t-=0.04){ const px=cx+(x-cx)*t,py=cy+(y-cy)*t; if(inR(px,py))return[px,py]; } return [cx,cy]; };
+    // ---- hideouts: one per dome, but leave the SMALLEST dome free; overflow to factory ----
+    let freeIdx=0,minR=1e9; DISTRICTS.forEach((d,i)=>{ if(d.r<minR){minR=d.r;freeIdx=i;} });
+    const hideDomes=DISTRICTS.map((d,i)=>i).filter(i=>i!==freeIdx);
+    let pa=0; for(; pa<hideDomes.length && pa<N; pa++){ const d=DISTRICTS[hideDomes[pa]]; playerHide[pa]=[d.cx,d.cy]; }
+    // ---- territories: 3 per player, spread on dome ring roads (all domes, incl. the free one) ----
+    const domeTerr=Array(M).fill(0); for(let p=0;p<N;p++) domeTerr[p%M]+=3;
+    const domeRing=DISTRICTS.map((d,di)=>{ const T=domeTerr[di],pts=[],off=(di*53)%360; for(let i=0;i<T;i++){ const a=(off + i/Math.max(1,T)*360 -90)*Math.PI/180, rr=d.r*RING_FRAC; pts.push(pull(d.cx+Math.cos(a)*rr, d.cy+Math.sin(a)*rr, d.cx,d.cy)); } return pts; });
+    const ringIdx=Array(M).fill(0);
+    for(let p=0;p<N;p++){ const di=p%M, a3=[]; for(let s=0;s<3;s++) a3.push(domeRing[di][ringIdx[di]++]); playerTerr[p]=a3; }
+    // ---- relocate overflow hideouts + a good share of territories onto factory/gap sites ----
+    const dens=FAB_SITES.map(p=>({p,c:FAB_SITES.reduce((s,q)=> s+((p!==q&&Math.hypot(p[0]-q[0],p[1]-q[1])<150)?1:0),0)}));
+    const edgeOK=s=> inR(s[0],s[1]);
+    const denseTop=dens.sort((a,b)=>b.c-a.c).map(o=>o.p).filter(edgeOK).slice(0,Math.max(8,N));
+    const fpPick=(pts,k)=>{ if(!pts.length)return[]; const out=[pts[0]],md=pts.map(p=>d2(p,pts[0]));
+      while(out.length<k&&out.length<pts.length){ let bi=0,bd=-1; for(let j=0;j<pts.length;j++){if(md[j]>bd){bd=md[j];bi=j;}} out.push(pts[bi]); for(let j=0;j<pts.length;j++){const dd=d2(pts[j],pts[bi]); if(dd<md[j])md[j]=dd;} } return out; };
+    const overflow=N-pa;
+    const hideSites=fpPick(denseTop, overflow);   // distinct, well-separated dense areas
+    for(let k=0;k<overflow;k++){ const p=pa+k; if(hideSites[k]) playerHide[p]=hideSites[k]; else { const d=DISTRICTS[k%M]; playerHide[p]=[d.cx,d.cy]; } }
+    const ftT=Math.round(3*N*0.4);
+    const rest=FAB_SITES.filter(s=>!hideSites.includes(s)&&edgeOK(s));
+    const terrSites=fpPick(rest, ftT);
+    const usedSlot=new Set();
+    terrSites.forEach(s=>{ let bp=-1,bk=-1,bd=1e18; for(let p=0;p<N;p++){ playerTerr[p].forEach((tp,k)=>{ if(usedSlot.has(p+':'+k))return; const dd=d2(tp,s); if(dd<bd){bd=dd;bp=p;bk=k;} }); } if(bp>=0){ playerTerr[bp][bk]=s; usedSlot.add(bp+':'+bk); } });
+    // ---- enforce a minimum spacing between territories (and clear of hideouts) ----
+    const flat=[]; for(let p=0;p<N;p++) playerTerr[p].forEach((pos,k)=>flat.push({p,k,pos}));
+    const hideList=Object.values(playerHide), MTT=108, MTH=94;
+    for(let it=0;it<16;it++){ for(let i=0;i<flat.length;i++){ let x=flat[i].pos[0],y=flat[i].pos[1];
+      for(let j=0;j<flat.length;j++){ if(i===j)continue; const ox=flat[j].pos[0],oy=flat[j].pos[1],dx=x-ox,dy=y-oy,dd=Math.hypot(dx,dy);
+        if(dd>0.01&&dd<MTT){ const f=(MTT-dd)/2; x+=dx/dd*f; y+=dy/dd*f; } else if(dd<=0.01){ x+=(i-j); } }
+      for(const h of hideList){ const dx=x-h[0],dy=y-h[1],dd=Math.hypot(dx,dy); if(dd>0.01&&dd<MTH){ const f=(MTH-dd); x+=dx/dd*f; y+=dy/dd*f; } }
+      x=Math.max(MX0,Math.min(MX1,x)); y=Math.max(MY0,Math.min(MY1,y));
+      if(nearLeg(x,y,6)){ x=Math.max(x,312); }
+      flat[i].pos=[x,y]; } }
+    flat.forEach(f=>{ playerTerr[f.p][f.k]=f.pos; });
+    const arr=[]; let hi=0,ti=0;
+    for(let p=0;p<N;p++){ const hp=playerHide[p]; arr.push({id:'h'+(++hi),type:'hideout',x:hp[0]/16,y:hp[1]/9,player:p});
+      playerTerr[p].forEach(tp=>arr.push({id:'t'+(++ti),type:'territory',x:tp[0]/16,y:tp[1]/9,player:p})); }
+    return arr; }
+  function buildWorld(N){ DISTRICTS=genDistricts(domeCount(N)); FAB_SITES=genFab(); LAYOUT=genLayout(N); LBI={}; LAYOUT.forEach(n=>LBI[n.id]=n); }
+  buildWorld(8);
+  const EMOJI = ['👊','🦅','🛡️','🗡️','🕷️','🔥','🧬','🪓','💀','☠️','⚔️','⚙️','👁️','🐀','🦂','⛏️','🏴‍☠️','🦴','🩸','⚡','🛸','🐍','🦇','👹','🤖','🪖','🔱','🩻','🧨','💣','🔫','🏹','🪚','🔪','⚒️','🔨','🔩','⛓️','🪤','☣️','☢️','🛢️','🧪','⚗️','💉','💊','🏭','🚂','🧱','🪨','🦾','🦿','👺','🥷','🐗','🐺','🦟','🦠','🧟','🐉','🦖','🦑','🦀','🐙','🪲','🐜','🦗','🌋','🗝️','🪦','⚰️','⚱️','🪙','💰','🦷','🫀','🧠','🔆','🌫️','♠️','♦️','♣️','♥️','🟥','🟧','🟨','🟩','🟦','🟪','⚫','⚪'];
+
+  /* ============ STATE ============ */
+  const STORE_KEY='necromunda-dominion-v1';
+  let mem=null, state=null, selectedId=null;
+
+  function defaultState(){
+    const nodes={};
+    LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null}:{terr:null,gang:null}; });
+    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[]};
+  }
+  function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
+  function mergeState(loaded){
+    if(!loaded||typeof loaded!=='object'){ buildWorld(8); return defaultState(); }
+    const N=Math.max(3,Math.min(8, parseInt(loaded.players)||8));
+    buildWorld(N);
+    const d=defaultState();
+    const s={players:N,sector:loaded.sector||d.sector,campaign:loaded.campaign||d.campaign,gangs:[],nodes:{},pos:{},terrPool:null};
+    for(let i=0;i<8;i++){ const g=(loaded.gangs&&loaded.gangs[i])||DEFAULT_GANGS[i];
+      s.gangs.push({name:g.name||DEFAULT_GANGS[i].name,icon:g.icon||DEFAULT_GANGS[i].icon,color:g.color||DEFAULT_GANGS[i].color}); }
+    LAYOUT.forEach(n=>{ const ex=(loaded.nodes&&loaded.nodes[n.id])||{};
+      const hasG=Object.prototype.hasOwnProperty.call(ex,'gang');
+      s.nodes[n.id]= n.type==='hideout'
+        ? {gang: hasG?validGang(ex.gang):null}
+        : {terr:TERR_BY_KEY[ex.terr]?ex.terr:null,gang:validGang(ex.gang)};
+      const p=loaded.pos&&loaded.pos[n.id];
+      if(p&&isFinite(p.x)&&isFinite(p.y)) s.pos[n.id]={x:Math.max(2,Math.min(98,p.x)),y:Math.max(4,Math.min(96,p.y))}; });
+    s.terrPool = Array.isArray(loaded.terrPool)?loaded.terrPool.filter(k=>TERR_BY_KEY[k]):[];
+    return s;
+  }
+
+  /* ============ PERSISTENCE ============ */
+  async function loadState(){
+    try{ if(window.storage&&window.storage.get){ const r=await window.storage.get(STORE_KEY); if(r&&r.value) return mergeState(JSON.parse(r.value)); } }
+    catch(e){}
+    if(mem) return mergeState(mem);
+    return defaultState();
+  }
+  let saveTimer=null;
+  function scheduleSave(){ flashSaving(); clearTimeout(saveTimer); saveTimer=setTimeout(doSave,350); }
+  async function doSave(){ mem=JSON.parse(JSON.stringify(state));
+    try{ if(window.storage&&window.storage.set) await window.storage.set(STORE_KEY,JSON.stringify(state)); flashSaved(); }catch(e){ flashSaved(); } }
+  const saveTag=document.getElementById('saveTag');
+  function flashSaving(){ saveTag.textContent='Saving…'; saveTag.classList.remove('on'); }
+  function flashSaved(){ saveTag.textContent='✓ Saved'; saveTag.classList.add('on');
+    clearTimeout(flashSaved._t); flashSaved._t=setTimeout(()=>{saveTag.textContent='';saveTag.classList.remove('on');},1400); }
+
+  /* ============ HELPERS ============ */
+  const NEUTRAL='#6c7a74';
+  function gangOf(i){ return (i==null)?null:state.gangs[i]; }
+  function el(t,c,x){ const e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e; }
+
+  /* ============ PROCEDURAL UNDERHIVE BACKGROUND ============ */
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function nnEdges(){
+    const W=1600,H=900;
+    const pts=LAYOUT.map(n=>{ const o=(typeof state!=='undefined'&&state&&state.pos&&state.pos[n.id]); const x=o?o.x:n.x, y=o?o.y:n.y; return {x:x/100*W,y:y/100*H,t:n.type}; });
+    const set=new Set();
+    pts.forEach((p,i)=>{
+      const d=pts.map((q,j)=>({j,d:(q.x-p.x)**2+(q.y-p.y)**2})).filter(o=>o.j!==i).sort((a,b)=>a.d-b.d);
+      const k=p.t==='hideout'?3:2;
+      for(let m=0;m<k&&m<d.length;m++){ const a=Math.min(i,d[m].j),b=Math.max(i,d[m].j); set.add(a+'-'+b); }
+    });
+    return {pts,edges:[...set].map(s=>s.split('-').map(Number))};
+  }
+  function buildHive(){
+    // ===== REGIONAL HIVE MAP — populated domes amid a mess of sumps & dead factories =====
+    const W=1600,H=900, rng=mulberry32(0x5e1f00);
+    const ri=(a,b)=>a+rng()*(b-a);
+    const A=o=>Object.entries(o).map(([k,v])=>k+'="'+v+'"').join(' ');
+    const rect=(x,y,w,h,a)=>`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" ${A(a)}/>`;
+    const line=(x1,y1,x2,y2,a)=>`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" ${A(a)}/>`;
+    const circ=(x,y,r,a)=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(typeof r==='number'?r.toFixed(1):r)}" ${A(a)}/>`;
+    const path=(d,a)=>`<path d="${d}" ${A(a)}/>`;
+    const txt=(x,y,s,a)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" ${A(a)}>${s}</text>`;
+    const SHAD='rgba(0,0,0,.5)';
+    const out=[]; let domeDefs='';
+    const inDome=(x,y,p)=>DISTRICTS.some(d=>Math.hypot(x-d.cx,y-d.cy)<d.r*(p||1));
+    function blob(cx,cy,rx,ry,jit){ let d='M'; const n=16; for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,rr=1+(rng()*2-1)*jit; d+=(i?' L':'')+(cx+Math.cos(a)*rx*rr).toFixed(1)+' '+(cy+Math.sin(a)*ry*rr).toFixed(1);} return d+' Z'; }
+
+    // 1. atmosphere
+    out.push(rect(0,0,W,H,{fill:'url(#mapcool)'}));
+    out.push(rect(0,H*0.4,W,H*0.6,{fill:'url(#mapwarm)'}));
+
+    // 2. THE MESS between districts — toxic sumps, dead factories, rubble (only in the gaps)
+    function sump(x,y,rx,ry){
+      let o=circ(x,y,Math.max(rx,ry)*1.15,{fill:'url(#toxGlow)'});
+      o+=path(blob(x,y,rx,ry,.24),{fill:'#123026','fill-opacity':.92,stroke:'rgba(95,220,140,.20)','stroke-width':2});
+      o+=path(blob(x,y,rx*0.66,ry*0.66,.3),{fill:'#1b4632','fill-opacity':.7});
+      o+=path(blob(x,y,rx*0.36,ry*0.36,.34),{fill:'none',stroke:'rgba(130,245,170,.22)','stroke-width':1.3});
+      for(let i=0;i<11;i++){const a=rng()*6.283,rr=Math.sqrt(rng())*0.85; o+=circ(x+Math.cos(a)*rx*rr,y+Math.sin(a)*ry*rr,ri(1.4,3.6),{fill:'rgba(140,245,175,.14)'});}
+      return o;
+    }
+    function factory(x,y,s,bright){
+      bright=bright||0;
+      const slabOp=(0.7+0.24*bright).toFixed(2);
+      let o=rect(x-s*0.72,y-s*0.5,s*1.44,s*1.0,{fill:'#171b16','fill-opacity':slabOp,stroke:SHAD,'stroke-width':1});
+      if(bright>0.12) o+=rect(x-s*0.72,y-s*0.5,s*1.44,s*1.0,{fill:'#5a2a18','fill-opacity':(bright*0.2).toFixed(2)});
+      const lo=bright>0.45, b1=lo?'#2e342a':'#23271f', b2=lo?'#3a2c1d':'#2a2017';
+      const nb=4+Math.floor(rng()*4);
+      for(let i=0;i<nb;i++){const bx=x+ri(-s*0.6,s*0.45),by=y+ri(-s*0.42,s*0.4),bw=ri(s*0.16,s*0.5),bh=ri(s*0.2,s*0.55);
+        o+=rect(bx,by,bw,bh,{fill:rng()<.5?b1:b2,'fill-opacity':(0.85+0.15*bright).toFixed(2),stroke:SHAD,'stroke-width':1});
+        if(rng()<.45) o+=line(bx,by,bx+bw,by+bh,{stroke:'rgba(0,0,0,.4)','stroke-width':1.2}); }
+      for(let i=0;i<1+Math.floor(rng()*2);i++){const cx2=x+ri(-s*0.5,s*0.5),ch=ri(s*0.6,s*1.15),cw=ri(5,9);
+        o+=rect(cx2,y-ch,cw,ch,{fill:lo?'#2c2014':'#241a12',stroke:SHAD,'stroke-width':1})+rect(cx2-1,y-ch-3,cw+2,4,{fill:'#2c2118'}); }
+      if(rng()<.7){const tx=x+ri(-s*0.4,s*0.4),ty=y+ri(-s*0.05,s*0.4),tr=ri(s*0.12,s*0.22);
+        o+=circ(tx,ty,tr,{fill:'#1c1812',stroke:'rgba(120,135,120,.12)','stroke-width':1.4})+circ(tx,ty,tr*0.6,{fill:'none',stroke:'rgba(120,135,120,.10)','stroke-width':1}); }
+      for(let i=0;i<3;i++){const px=x+ri(-s*0.6,s*0.6),py=y+ri(-s*0.3,s*0.5);
+        o+=path(`M${px.toFixed(1)} ${py.toFixed(1)} q ${ri(-22,22).toFixed(1)} ${ri(-18,4).toFixed(1)} ${ri(-32,32).toFixed(1)} ${ri(-4,18).toFixed(1)}`,{fill:'none',stroke:'rgba(95,72,50,.4)','stroke-width':ri(2,4)}); }
+      for(let i=0;i<9;i++) o+=rect(x+ri(-s*0.75,s*0.75),y+ri(-s*0.5,s*0.55),ri(2,5),ri(2,5),{fill:'rgba(125,112,88,.12)'});
+      return o;
+    }
+    // local density of the factory sprawl (denser clusters glow warmer & read brighter)
+    const fabDens=FAB_SITES.map((p,i)=>{ let c=0; FAB_SITES.forEach((q,j)=>{ if(i!==j&&Math.hypot(p[0]-q[0],p[1]-q[1])<150) c++; }); return c; });
+    const fabMax=Math.max(1,...fabDens);
+    // red-brown aura pooling over the densest factory zones (drawn under the factories)
+    let fabGlow=''; FAB_SITES.forEach((p,i)=>{ const t=fabDens[i]/fabMax; if(t>0.18){ fabGlow+=circ(p[0],p[1],70+t*150,{fill:'url(#fabGlow)','fill-opacity':(0.12+t*0.5).toFixed(2)}); } });
+    out.push(fabGlow);
+    // factories — a cluster at every site, brighter where the sprawl is dense (+ satellites)
+    let messFab=''; FAB_SITES.forEach(([x,y],i)=>{ const t=fabDens[i]/fabMax; messFab+=factory(x,y,ri(32,64),t);
+      const sat=Math.floor(rng()*2)+(rng()<.4?1:0);
+      for(let k=0;k<sat;k++){ const a=rng()*6.283,rr=ri(40,72); messFab+=factory(x+Math.cos(a)*rr,y+Math.sin(a)*rr,ri(20,38),t*0.7); } });
+    // sumps — tucked into open gaps; evenly spread across the map with a little clustering
+    const fabFar=(x,y,d)=>FAB_SITES.every(s=>Math.hypot(s[0]-x,s[1]-y)>d);
+    const gaps=[]; for(let gx=92;gx<W;gx+=84){ for(let gy=132;gy<H-42;gy+=84){ const x=gx+ri(-34,34),y=gy+ri(-34,34); if(!inDome(x,y,1.04)&&fabFar(x,y,64)&&!nearLeg(x,y,130)) gaps.push([x,y]); } }
+    let sumpC=[];
+    if(gaps.length){
+      // even base via farthest-point
+      const md=gaps.map(g=>1e18); let cur=gaps[0]; sumpC.push(cur);
+      const baseN=Math.min(7,gaps.length);
+      while(sumpC.length<baseN){ let bi=0,bd=-1; for(let j=0;j<gaps.length;j++){ const dd=Math.hypot(gaps[j][0]-cur[0],gaps[j][1]-cur[1]); if(dd<md[j])md[j]=dd; if(md[j]>bd){bd=md[j];bi=j;} } cur=gaps[bi]; sumpC.push(cur); }
+      // a few clusters: place near an existing sump
+      let added=0,tries=0;
+      while(added<3 && tries<160){ tries++; const base=sumpC[Math.floor(rng()*baseN)];
+        const cand=gaps.filter(g=>{ const dB=Math.hypot(g[0]-base[0],g[1]-base[1]); return dB>=96&&dB<=190 && sumpC.every(s=>Math.hypot(s[0]-g[0],s[1]-g[1])>=90); });
+        if(cand.length){ sumpC.push(cand[Math.floor(rng()*cand.length)]); added++; } }
+    }
+    let messSump=''; sumpC.forEach(([x,y])=> messSump+=sump(x,y,ri(50,120),ri(38,80)));
+    // toxic rivulets linking nearby sumps
+    let chan=''; sumpC.forEach((p,i)=>{ let bj=-1,bd=1e9; sumpC.forEach((q,j)=>{ if(j!==i){const dd=Math.hypot(p[0]-q[0],p[1]-q[1]); if(dd<bd&&dd<300){bd=dd;bj=j;}} }); if(bj>i){ const q=sumpC[bj],mx=(p[0]+q[0])/2+ri(-30,30),my=(p[1]+q[1])/2+ri(-30,30),d=`M${p[0].toFixed(1)} ${p[1].toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${q[0].toFixed(1)} ${q[1].toFixed(1)}`; chan+=path(d,{fill:'none',stroke:'rgba(95,210,140,.12)','stroke-width':3})+path(d,{fill:'none',stroke:'rgba(140,245,175,.10)','stroke-width':1}); } });
+    out.push(chan); out.push(messSump);
+    // dense hab / junk sprawl through the warrens
+    let junk=''; for(let i=0;i<900;i++){ const x=rng()*W,y=ri(120,H-26); if(inDome(x,y,0.98))continue;
+      const w=ri(2.5,8),h=ri(2.5,8),rot=ri(0,90); junk+=rect(x,y,w,h,{fill:rng()<.5?'rgba(150,140,118,.07)':'rgba(120,150,130,.06)',transform:`rotate(${rot.toFixed(0)} ${(x+w/2).toFixed(1)} ${(y+h/2).toFixed(1)})`}); }
+    out.push(junk);
+    // rubble / debris scattered through the gaps
+    let rub=''; for(let i=0;i<1480;i++){ const x=rng()*W,y=ri(120,H-26); if(inDome(x,y,0.97))continue;
+      if(rng()<0.12) rub+=line(x,y,x+ri(-7,7),y+ri(-5,5),{stroke:'rgba(110,98,76,.12)','stroke-width':1});
+      else rub+=rect(x,y,ri(2,5),ri(2,5),{fill:rng()<.10?'rgba(120,240,160,.09)':'rgba(120,110,88,.08)',transform:`rotate(${(ri(0,90)).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})`}); }
+    out.push(rub);
+    out.push(messFab);
+
+    // 3. POPULATED DOMES (districts) with the holdings ring road
+    DISTRICTS.forEach((d,di)=>{
+      const cx=d.cx,cy=d.cy,r=d.r,cid='dome'+di;
+      domeDefs+=`<clipPath id="${cid}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>`;
+      out.push(circ(cx,cy,r,{fill:'#101713','fill-opacity':.92,stroke:'rgba(130,150,135,.14)','stroke-width':2}));
+      out.push(circ(cx,cy,r*1.02,{fill:'url(#domeGlow)'}));
+      let g='';
+      g+=circ(cx,cy,r*0.40,{fill:'none',stroke:'rgba(130,150,135,.09)','stroke-width':1.2});
+      g+=circ(cx,cy,r*0.95,{fill:'none',stroke:'rgba(130,150,135,.08)','stroke-width':1.2});
+      const spokes=7+Math.floor(rng()*4);
+      for(let s=0;s<spokes;s++){const a=s/spokes*6.283+rng()*0.2; g+=line(cx,cy,cx+Math.cos(a)*r,cy+Math.sin(a)*r,{stroke:'rgba(130,150,135,.07)','stroke-width':1});}
+      const nb=Math.floor(r*r/108);
+      for(let b=0;b<nb;b++){const a=rng()*6.283,rr=Math.sqrt(rng())*r*0.95,x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,w=ri(3,8),h=ri(3,8),rot=ri(0,90),lit=rng()<0.09;
+        g+=rect(x-w/2,y-h/2,w,h,{fill:lit?'rgba(255,160,80,.24)':(rng()<.5?'rgba(160,178,160,.08)':'rgba(130,150,130,.06)'),transform:`rotate(${rot.toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})`});}
+      out.push(`<g clip-path="url(#${cid})">${g}</g>`);
+      // the holdings ring road (where territories sit) — a touch brighter
+      out.push(circ(cx,cy,r*RING_FRAC,{fill:'none',stroke:'rgba(120,210,170,.16)','stroke-width':1.6}));
+      out.push(circ(cx,cy,r*RING_FRAC,{fill:'none',stroke:'rgba(120,210,170,.06)','stroke-width':5}));
+      // (seating pads drawn from the actual holding positions, after this loop)
+      out.push(path(`M${cx-r} ${cy} A${r} ${r} 0 0 1 ${cx+r} ${cy}`,{fill:'none',stroke:'rgba(190,205,195,.06)','stroke-width':2}));
+    });
+    // seating pads under every holding at its real position (covers relocated factory holdings)
+    LAYOUT.forEach(n=>{ const o=(typeof state!=='undefined'&&state&&state.pos&&state.pos[n.id]); const x=(o?o.x:n.x)*16, y=(o?o.y:n.y)*9;
+      if(n.type==='hideout') out.push(circ(x,y,30,{fill:'url(#domeGlow)'})+circ(x,y,14,{fill:'rgba(8,14,11,.5)',stroke:'rgba(130,150,135,.13)','stroke-width':1}));
+      else out.push(circ(x,y,13,{fill:'rgba(8,14,11,.45)',stroke:'rgba(120,210,170,.14)','stroke-width':1})); });
+
+    // 4. arterial conduits linking districts + pipe network through factory sprawl
+    const dc=DISTRICTS.map(d=>[d.cx,d.cy]);
+    function artery(x0,y0,x1,y1,w){ const mx=(x0+x1)/2+ri(-44,44),my=(y0+y1)/2+ri(-34,34);
+      const d=`M${x0.toFixed(1)} ${y0.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+      const bw=w||4.3;
+      return path(d,{fill:'none',stroke:'rgba(0,0,0,.45)','stroke-width':bw+3.7})+path(d,{fill:'none',stroke:'url(#artGrad)','stroke-width':bw,'stroke-opacity':.71,'stroke-linecap':'round'})+path(d,{fill:'none',stroke:'rgba(220,200,170,.05)','stroke-width':1.2}); }
+    let art='';
+    // trunk network linking the domes — each to its two nearest neighbours
+    const aedges=new Set();
+    dc.forEach((p,i)=>{ dc.map((q,j)=>({j,d:(q[0]-p[0])**2+(q[1]-p[1])**2})).filter(o=>o.j!==i).sort((a,b)=>a.d-b.d).slice(0,2)
+      .forEach(o=>aedges.add(Math.min(i,o.j)+'-'+Math.max(i,o.j))); });
+    aedges.forEach(k=>{ const [a,b]=k.split('-').map(Number); art+=artery(dc[a][0],dc[a][1],dc[b][0],dc[b][1],4.6); });
+    art+=artery(-20,300,1620,360,4.6);
+    // finer pipe network weaving through the factory sprawl (each site to its nearest)
+    FAB_SITES.forEach((p,i)=>{ let bj=-1,bd=1e9; FAB_SITES.forEach((q,j)=>{ if(j!==i){const dd=Math.hypot(p[0]-q[0],p[1]-q[1]); if(dd<bd&&dd<150){bd=dd;bj=j;}} }); if(bj>i){ art+=artery(p[0],p[1],FAB_SITES[bj][0],FAB_SITES[bj][1],2.4); } });
+    // junctions at dome cores and fab sites
+    dc.forEach(([x,y])=>{ art+=circ(x,y,6.5,{fill:'#201710',stroke:'rgba(165,135,97,.17)','stroke-width':1.3})+circ(x,y,3,{fill:'rgba(170,140,100,.1)'}); });
+    FAB_SITES.forEach(([x,y])=>{ art+=circ(x,y,3,{fill:'#1b130c',stroke:'rgba(150,120,84,.14)','stroke-width':1}); });
+    out.push(art);
+
+    // 5. transit rails
+    ['M-20 470 C400 440 900 520 1620 470','M250 920 C320 600 560 360 720 -20'].forEach(d=>{
+      out.push(path(d,{fill:'none',stroke:'rgba(95,140,150,.09)','stroke-width':3}));
+      out.push(path(d,{fill:'none',stroke:'rgba(102,217,185,.13)','stroke-width':1,'stroke-dasharray':'1 10'}));
+    });
+
+    // 6. supply routes between holdings (green logistics network)
+    const {pts,edges}=nnEdges(); let road='';
+    edges.forEach(([a,b])=>{ const p=pts[a],q=pts[b];
+      road+=line(p.x,p.y,q.x,q.y,{stroke:'rgba(105,180,145,.17)','stroke-width':2.6})+line(p.x,p.y,q.x,q.y,{stroke:'rgba(138,255,196,.28)','stroke-width':1.15,'stroke-dasharray':'3 6'}); });
+    out.push(road);
+
+    // 7. sector grid + coordinate graticule
+    let grid='';
+    for(let x=0;x<=W;x+=100) grid+=line(x,0,x,H,{stroke:'rgba(125,255,191,.04)','stroke-width':1});
+    for(let y=0;y<=H;y+=100) grid+=line(0,y,W,y,{stroke:'rgba(125,255,191,.04)','stroke-width':1});
+    for(let x=0;x<=W;x+=400) grid+=line(x,0,x,H,{stroke:'rgba(125,255,191,.09)','stroke-width':1});
+    for(let y=0;y<=H;y+=400) grid+=line(0,y,W,y,{stroke:'rgba(125,255,191,.09)','stroke-width':1});
+    const tick={fill:'rgba(125,255,191,.30)','font-family':'monospace','font-size':'11'};
+    let ci=0; for(let x=100;x<W;x+=200) grid+=txt(x+3,16,String(++ci).padStart(2,'0'),tick);
+    let ro=0; const rl='ABCDEFGH'; for(let y=120;y<H;y+=200) grid+=txt(6,y,rl[ro++]||'',tick);
+    out.push(grid);
+
+    // 8. scale bar (top-left) + compass (top-right)
+    const mile=266.7, sbx=78, sby=58, seg=mile/4;
+    let sb=rect(sbx-8,sby-30,mile+18,34,{fill:'rgba(6,11,9,.55)',stroke:'rgba(95,217,160,.22)','stroke-width':1,rx:2});
+    for(let i=0;i<4;i++) sb+=rect(sbx+i*seg,sby-6,seg,5,{fill:i%2?'rgba(95,217,160,0)':'rgba(95,217,160,.45)',stroke:'rgba(95,217,160,.45)','stroke-width':1});
+    sb+=txt(sbx-2,sby-9,'0',{fill:'rgba(95,217,160,.6)','font-family':'monospace','font-size':'10'});
+    sb+=txt(sbx+mile-3,sby-9,'1',{fill:'rgba(95,217,160,.6)','font-family':'monospace','font-size':'10'});
+    sb+=txt(sbx+mile+9,sby+0,'MILE',{fill:'rgba(95,217,160,.55)','font-family':'monospace','font-size':'10','letter-spacing':'1'});
+    sb+=txt(sbx-4,sby-19,'SECTOR SPAN \u2248 6 MILES',{fill:'rgba(95,217,160,.42)','font-family':'monospace','font-size':'9','letter-spacing':'2'});
+    out.push(sb);
+    const ox=1532,oy=72;
+    let cp=circ(ox,oy,22,{fill:'rgba(6,11,9,.5)',stroke:'rgba(95,217,160,.3)','stroke-width':1});
+    cp+=path(`M${ox} ${oy-16} L${ox-5} ${oy+4} L${ox} ${oy} L${ox+5} ${oy+4} Z`,{fill:'rgba(95,217,160,.55)'});
+    cp+=path(`M${ox} ${oy+16} L${ox-5} ${oy-4} L${ox} ${oy} L${ox+5} ${oy-4} Z`,{fill:'rgba(95,217,160,.18)'});
+    cp+=txt(ox-3.5,oy-25,'N',{fill:'rgba(95,217,160,.6)','font-family':'monospace','font-size':'11'});
+    out.push(cp);
+
+    const defs=`<defs>
+      <linearGradient id="mapcool" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e1614" stop-opacity=".4"/><stop offset="1" stop-color="#060907" stop-opacity="0"/></linearGradient>
+      <linearGradient id="mapwarm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0f08" stop-opacity="0"/><stop offset="1" stop-color="#1d1008" stop-opacity=".45"/></linearGradient>
+      <linearGradient id="artGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#52341f"/><stop offset=".5" stop-color="#7a4e2e"/><stop offset="1" stop-color="#3a2415"/></linearGradient>
+      <radialGradient id="toxGlow"><stop offset="0" stop-color="rgba(90,235,150,.18)"/><stop offset="1" stop-color="rgba(90,235,150,0)"/></radialGradient>
+      <radialGradient id="fabGlow"><stop offset="0" stop-color="rgba(150,52,26,.5)"/><stop offset=".45" stop-color="rgba(120,46,24,.28)"/><stop offset="1" stop-color="rgba(110,40,22,0)"/></radialGradient>
+      <radialGradient id="domeGlow"><stop offset="0" stop-color="rgba(255,170,90,.05)"/><stop offset=".7" stop-color="rgba(255,170,90,.02)"/><stop offset="1" stop-color="rgba(255,170,90,0)"/></radialGradient>
+      ${domeDefs}
+    </defs>`;
+    document.getElementById('hivemap').innerHTML = defs + out.join('');
+  }
+
+  /* ============ RENDER NODES ============ */
+  const nodesWrap=document.getElementById('nodes');
+  function nodePos(n){ const p=state.pos&&state.pos[n.id]; return (p&&isFinite(p.x))?{x:p.x,y:p.y}:{x:n.x,y:n.y}; }
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+  // drag-to-reposition (with click fallback to open the editor)
+  function attachDrag(btn,id){
+    let active=false, moved=false, sx=0, sy=0, ox=0, oy=0;
+    function down(e){
+      if(e.pointerType==='mouse' && e.button!==0) return;
+      active=true; moved=false; sx=e.clientX; sy=e.clientY;
+      const cur=nodePos(LBI[id]); ox=cur.x; oy=cur.y;
+      btn.classList.add('dragging');
+      try{ btn.setPointerCapture(e.pointerId); }catch(_){}
+      btn.addEventListener('pointermove',move);
+      btn.addEventListener('pointerup',up);
+      btn.addEventListener('pointercancel',up);
+      e.preventDefault(); e.stopPropagation();
+    }
+    function move(e){
+      if(!active) return;
+      const r=nodesWrap.getBoundingClientRect();
+      if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>4) moved=true;
+      if(!moved) return;
+      const nx=clamp(ox+(e.clientX-sx)/r.width*100, 2.5, 97.5);
+      const ny=clamp(oy+(e.clientY-sy)/r.height*100, 4, 95.5);
+      btn.style.left=nx+'%'; btn.style.top=ny+'%';
+      state.pos=state.pos||{}; state.pos[id]={x:+nx.toFixed(2),y:+ny.toFixed(2)};
+    }
+    function up(e){
+      if(!active) return; active=false;
+      btn.classList.remove('dragging');
+      btn.removeEventListener('pointermove',move);
+      btn.removeEventListener('pointerup',up);
+      btn.removeEventListener('pointercancel',up);
+      try{ btn.releasePointerCapture(e.pointerId); }catch(_){}
+      if(moved){ scheduleSave(); buildHive(); } else { openEditor(id); }
+    }
+    btn.addEventListener('pointerdown',down);
+  }
+
+  function render(){
+    document.getElementById('sectorName').textContent=state.sector;
+    document.getElementById('campaignName').textContent=state.campaign;
+    nodesWrap.innerHTML='';
+    LAYOUT.forEach(n=>{
+      const data=state.nodes[n.id];
+      const btn=el('button','node '+n.type);
+      const p=nodePos(n);
+      btn.style.left=p.x+'%'; btn.style.top=p.y+'%'; btn.dataset.id=n.id;
+      if(n.id===selectedId) btn.classList.add('selected');
+      const owner=gangOf(data.gang);
+      const c=owner?owner.color:NEUTRAL;
+      const mod=el('div','module'); mod.style.setProperty('--c',c);
+      let name='',sub='';
+
+      if(n.type==='hideout'){
+        const g=el('div','gicon', owner?owner.icon:'⌖'); mod.appendChild(g);
+        const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); mod.appendChild(tag);
+        name=owner?owner.name:'Unclaimed'; sub='Hideout';
+        if(!owner) btn.classList.add('uncontrolled');
+      }else{
+        const t=data.terr?TERR_BY_KEY[data.terr]:null;
+        if(!t){ btn.classList.add('empty'); mod.appendChild(el('div','plus','+')); name='Empty Plot'; sub='Tap to develop'; }
+        else { mod.innerHTML=svgIcon(t.key); name=t.name; sub=owner?owner.name:'Uncontrolled'; }
+        if(!owner) btn.classList.add('uncontrolled');
+      }
+
+      const lbl=el('div','lbl'); lbl.style.setProperty('--c',c);
+      lbl.appendChild(el('span','name',name));
+      const sb=el('span','sub'+(owner?' owner':''),sub); sb.style.setProperty('--c',c); lbl.appendChild(sb);
+
+      btn.appendChild(mod); btn.appendChild(lbl);
+      attachDrag(btn,n.id);
+      nodesWrap.appendChild(btn);
+    });
+    renderLegend();
+    const fn=document.getElementById('footnote'); if(fn){ const N=state.players; fn.textContent=`${4*N} holdings · ${N} hideouts · ${3*N} territory plots`; }
+  }
+  function renderLegend(){
+    const ul=document.getElementById('legendList'); ul.innerHTML='';
+    const rows=state.gangs.slice(0,state.players).map((g,i)=>({g,i,n:countHoldings(i)}));
+    rows.sort((a,b)=> b.n-a.n || a.i-b.i);          // most-held territories first
+    rows.forEach(({g,i,n})=>{
+      const li=el('li'); const sw=el('span','swatch',g.icon); sw.style.background=g.color;
+      li.appendChild(sw); li.appendChild(el('span',null,g.name)); li.appendChild(el('span','ct',n));
+      ul.appendChild(li);
+    });
+  }
+  function countHoldings(gi){ let n=0; for(const id in state.nodes) if(state.nodes[id].gang===gi) n++; return n; }
+
+  /* ============ DRAWER ============ */
+  const drawer=document.getElementById('drawer'), scrim=document.getElementById('scrim'), drawerBody=document.getElementById('drawerBody');
+  function openEditor(id){
+    selectedId=id;
+    const node=LAYOUT.find(n=>n.id===id), data=state.nodes[id];
+    document.getElementById('drawerKicker').textContent= node.type==='hideout'?'Settlement':'Holding';
+    document.getElementById('drawerTitle').textContent= node.type==='hideout'?'Gang Hideout':'Territory Plot';
+    drawerBody.innerHTML='';
+    if(node.type==='hideout'){
+      drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); }, 'Garrison', false));
+      drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
+    }else{
+      drawerBody.appendChild(terrField(data.terr, key=>{
+        if(key){ for(const oid in state.nodes){ if(oid!==id && state.nodes[oid].terr===key) state.nodes[oid].terr=null; } }
+        data.terr=key; commit(); openEditor(id); }));
+      drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); }, 'Controlling Gang', true));
+      drawerBody.appendChild(terrCard(data.terr));
+    }
+    drawer.classList.add('show'); scrim.classList.add('show'); render();
+  }
+  function gangField(current,onChange,label,allowNone){
+    const f=el('div','field'); f.appendChild(el('label',null,label||'Gang'));
+    const sel=el('select');
+    const none=el('option',null, allowNone?'— Uncontrolled —':'— Unclaimed —'); none.value=''; sel.appendChild(none);
+    state.gangs.slice(0,state.players).forEach((g,i)=>{ const o=el('option',null,g.icon+'  '+g.name); o.value=String(i); sel.appendChild(o); });
+    sel.value=(current==null)?'':String(current);
+    const line=el('div','ownerline'); fillOwner(line,current);
+    sel.addEventListener('change',()=>{ const v=sel.value===''?null:Number(sel.value); fillOwner(line,v); onChange(v); });
+    f.appendChild(sel); f.appendChild(line); return f;
+  }
+  function fillOwner(line,gi){ line.innerHTML=''; const g=gangOf(gi);
+    const dot=el('span','dot',g?g.icon:'∅'); dot.style.background=g?g.color:NEUTRAL; line.appendChild(dot);
+    line.appendChild(el('span','who',g?g.name:'No gang assigned')); }
+  function terrField(current,onChange){
+    const f=el('div','field'); f.appendChild(el('label',null,'Territory Type'));
+    const sel=el('select'); const none=el('option',null,'— Empty plot —'); none.value=''; sel.appendChild(none);
+    const pool=(state.terrPool&&state.terrPool.length)?state.terrPool:TERRITORIES.map(t=>t.key);
+    const used=new Set(); for(const oid in state.nodes){ if(oid===selectedId) continue; const tk=state.nodes[oid].terr; if(tk) used.add(tk); }
+    TERRITORIES.filter(t=>pool.includes(t.key)||t.key===current).forEach(t=>{ const inUse=used.has(t.key);
+      const o=el('option',null,`${t.name} (${t.card})${t.house?' · '+t.house:''}${inUse?'  · placed':''}`); o.value=t.key;
+      if(inUse) o.style.color='#6f7d77';
+      sel.appendChild(o); });
+    sel.value=current||''; sel.addEventListener('change',()=>onChange(sel.value||null)); f.appendChild(sel); return f;
+  }
+  function terrCard(key){
+    const wrap=el('div');
+    if(!key){ wrap.appendChild(el('p','empty-note','Pick a territory type and this plot fills with its glyph on the map. The boons it grants the controlling gang appear here.')); return wrap; }
+    const t=TERR_BY_KEY[key], card=el('div','terrcard');
+    const top=el('div','ct-top');
+    const tile=el('div','tile'); tile.innerHTML=svgIcon(t.key); top.appendChild(tile);
+    const head=el('div'); head.appendChild(el('div','tname',t.name));
+    const meta=el('div','tmeta');
+    meta.appendChild(el('span','pill card'+(/[♦]/.test(t.card)?' red':''),t.card));
+    if(t.house) meta.appendChild(el('span','pill house',t.house+' gangs'));
+    head.appendChild(meta); top.appendChild(head); card.appendChild(top);
+    card.appendChild(el('p','flavor',t.flavor));
+    const effList=arr=>{ const ul=el('ul','boonlist'); arr.forEach(e=>{ const li=el('li'); li.appendChild(el('span','btag',e.t)); li.appendChild(el('span','btxt',e.d)); ul.appendChild(li); }); return ul; };
+    const b=el('div','boon'); b.appendChild(el('h4',null,'Territory Boon')); b.appendChild(effList(t.boon)); card.appendChild(b);
+    if(t.enh){ const e=el('div','boon enh'); e.appendChild(el('h4',null,'Enhanced Boon · '+t.house)); e.appendChild(effList(t.enh)); card.appendChild(e); }
+    wrap.appendChild(card); return wrap;
+  }
+  function closeDrawer(){ drawer.classList.remove('show'); scrim.classList.remove('show'); selectedId=null; render(); }
+  document.getElementById('drawerClose').addEventListener('click',closeDrawer);
+  scrim.addEventListener('click',closeDrawer);
+  function commit(){ scheduleSave(); render(); }
+
+  /* ============ MODAL ============ */
+  const modal=document.getElementById('modal');
+  function openModal(){ document.getElementById('inSector').value=state.sector; document.getElementById('inCampaign').value=state.campaign; buildPlayerSeg(); buildGangRows(); buildTerrPool(); modal.classList.add('show'); }
+  function closeModal(){ modal.classList.remove('show'); }
+
+  function setPlayers(N){ N=clamp(N|0,3,8); if(N===state.players) return; state.players=N; buildWorld(N);
+    const nn={}; LAYOUT.forEach(n=>{ nn[n.id]= state.nodes[n.id] || (n.type==='hideout'?{gang:null}:{terr:null,gang:null}); });
+    state.nodes=nn;
+    if(state.pos) Object.keys(state.pos).forEach(id=>{ if(!LBI[id]) delete state.pos[id]; });
+    scheduleSave(); buildHive(); render();
+    if(modal.classList.contains('show')){ buildPlayerSeg(); buildGangRows(); buildTerrPool(); }
+  }
+  function buildPlayerSeg(){
+    const host=document.getElementById('playerSeg'); host.innerHTML='';
+    for(let n=3;n<=8;n++){ const b=el('button',n===state.players?'on':'',String(n));
+      b.addEventListener('click',()=>setPlayers(n)); host.appendChild(b); }
+    const gl=document.getElementById('gangsLabel'); if(gl) gl.textContent='The '+state.players+' Gangs — name · icon · colour';
+  }
+  function buildTerrPool(){
+    const host=document.getElementById('terrPool'); host.innerHTML='';
+    const pool=state.terrPool||(state.terrPool=[]);
+    const cols={'♦':el('div','terr-col'),'♠':el('div','terr-col')};
+    cols['♦'].appendChild(el('div','terr-colhead','♦  Diamonds'));
+    cols['♠'].appendChild(el('div','terr-colhead','♠  Spades'));
+    host.appendChild(cols['♦']); host.appendChild(cols['♠']);
+    TERRITORIES.forEach(t=>{ const suit=/♠/.test(t.card)?'♠':'♦', on=pool.includes(t.key);
+      const chip=el('div','terr-chip'+(on?' on':''));
+      const box=el('span','box',on?'✓':''); chip.appendChild(box);
+      const txt=el('div'); txt.appendChild(el('div','tn',t.name)); txt.appendChild(el('div','tc',t.card+(t.house?' · '+t.house:''))); chip.appendChild(txt);
+      chip.addEventListener('click',()=>{ const i=pool.indexOf(t.key);
+        if(i>=0) pool.splice(i,1); else pool.push(t.key);
+        chip.classList.toggle('on'); box.textContent=pool.includes(t.key)?'✓':'';
+        updateTerrCount(); scheduleSave(); render(); });
+      cols[suit].appendChild(chip); });
+    updateTerrCount();
+  }
+  function updateTerrCount(){
+    const c=document.getElementById('terrCount'); if(!c) return;
+    const sel=(state.terrPool||[]).length, target=state.players*3;
+    c.textContent=sel+' selected · target '+target+' (3 per player)';
+    c.classList.toggle('over', sel<target);
+  }
+  document.getElementById('setupBtn').addEventListener('click',openModal);
+  document.getElementById('modalClose').addEventListener('click',closeModal);
+  document.getElementById('modalDone').addEventListener('click',closeModal);
+  modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
+  document.getElementById('inSector').addEventListener('input',e=>{ state.sector=e.target.value||'Unnamed Sector'; scheduleSave(); render(); });
+  document.getElementById('inCampaign').addEventListener('input',e=>{ state.campaign=e.target.value||'Campaign'; scheduleSave(); render(); });
+
+  function buildGangRows(){
+    const host=document.getElementById('gangRows'); host.innerHTML='';
+    state.gangs.slice(0,state.players).forEach((g,i)=>{
+      const row=el('div','gang-row'); row.appendChild(el('span','num',String(i+1)));
+      const sp=el('div','swatch-pick');
+      const ci=document.createElement('input'); ci.type='color'; ci.value=toHex(g.color);
+      const face=el('div','face',g.icon); face.style.setProperty('--c',g.color); face.style.background=g.color;
+      ci.addEventListener('input',()=>{ g.color=ci.value; face.style.background=g.color; face.style.setProperty('--c',g.color); scheduleSave(); render(); });
+      sp.appendChild(ci); sp.appendChild(face); row.appendChild(sp);
+      const ic=el('div','icon-cell');
+      const ii=document.createElement('input'); ii.type='text'; ii.value=g.icon; ii.maxLength=4;
+      ii.addEventListener('input',()=>{ g.icon=ii.value||'•'; face.textContent=g.icon; scheduleSave(); render(); });
+      ic.appendChild(ii); row.appendChild(ic);
+      const eb=el('button','emoji-btn','▾'); eb.title='Pick an icon';
+      const pal=el('div','palette');
+      EMOJI.forEach(em=>{ const b=el('button',null,em); b.addEventListener('click',()=>{ g.icon=em; ii.value=em; face.textContent=em; pal.classList.remove('open'); scheduleSave(); render(); }); pal.appendChild(b); });
+      eb.addEventListener('click',e=>{ e.stopPropagation(); document.querySelectorAll('.palette.open').forEach(p=>{if(p!==pal)p.classList.remove('open')}); pal.classList.toggle('open'); });
+      ic.appendChild(pal); row.appendChild(eb);
+      const nm=el('div','nm'); const ni=document.createElement('input'); ni.type='text'; ni.value=g.name; ni.maxLength=28;
+      ni.addEventListener('input',()=>{ g.name=ni.value||('Gang '+(i+1)); scheduleSave(); render(); });
+      nm.appendChild(ni); row.appendChild(nm);
+      host.appendChild(row);
+    });
+  }
+  document.addEventListener('click',()=>document.querySelectorAll('.palette.open').forEach(p=>p.classList.remove('open')));
+  function toHex(c){ if(/^#[0-9a-f]{6}$/i.test(c)) return c; const m=document.createElement('canvas').getContext('2d'); m.fillStyle=c; return m.fillStyle; }
+  const PALETTES=['#f0962a','#cdbb4a','#4f93c9','#d23b3b','#9b6cd6','#ff5e7a','#4fd1a0','#6fc4d9','#e8a23d','#7ad6c4','#d06fb0','#88c34a','#ff6b1a','#5fa8ff','#e05a5a','#b48aff'];
+
+  document.getElementById('resetBtn').addEventListener('click',()=>{ if(confirm('Reset the entire campaign? All gangs and holdings return to defaults.')){ state=defaultState(); scheduleSave(); closeDrawer(); render(); } });
+
+  /* ============ INIT ============ */
+  (async function init(){ state=await loadState(); buildHive(); render(); })();
+})();
+</script>
