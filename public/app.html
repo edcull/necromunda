@@ -880,7 +880,7 @@
       const lbl=el('div','lbl'); lbl.style.setProperty('--c',c);
       lbl.appendChild(el('span','name',name));
       const sb=el('span','sub'+(owner?' owner':''),sub); sb.style.setProperty('--c',c);
-      if(n.type==='hideout'&&owner) sb.style.color='#e8f2ec';
+      if(owner) sb.style.color='#e8f2ec';
       lbl.appendChild(sb);
 
       btn.appendChild(mod); btn.appendChild(lbl);
