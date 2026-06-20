@@ -220,6 +220,7 @@
   .icon-cell input{width:46px;text-align:center;font-size:17px;padding:8px 4px}
   .gang-row .nm{flex:1;min-width:80px}
   .gang-type-cell{flex:0 0 auto} .gang-type-cell select{font-family:'Rajdhani';font-size:13px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:8px 10px;border-radius:2px}
+  .gang-type-tag{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--tox);padding:4px 0}
   .emoji-btn{background:transparent;border:1px solid var(--edge);border-radius:2px;width:34px;height:34px;font-size:15px;flex:0 0 auto}
   .emoji-btn:hover{border-color:var(--tox)}
   .palette{position:absolute;top:42px;right:0;z-index:5;background:#0a100e;border:1px solid var(--edge);border-radius:3px;padding:8px;display:none;grid-template-columns:repeat(8,1fr);gap:3px;width:264px;box-shadow:0 14px 40px rgba(0,0,0,.6)}
@@ -901,7 +902,9 @@
     drawerBody.innerHTML='';
     if(isArbitrator){
       if(node.type==='hideout'){
-        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); }, 'Garrison', false));
+        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); openEditor(id); }, 'Garrison', false));
+        const ownerG=gangOf(data.gang);
+        if(ownerG && ownerG.type){ const tf=el('div','field'); tf.appendChild(el('label',null,'Gang Type')); tf.appendChild(el('div','gang-type-tag',ownerG.type)); drawerBody.appendChild(tf); }
         drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
       }else{
         drawerBody.appendChild(terrField(data.terr, key=>{
@@ -922,6 +925,7 @@
       ownerField.appendChild(ownerLine);
       drawerBody.appendChild(ownerField);
       if(node.type==='hideout'){
+        if(ownerG && ownerG.type){ const tf=el('div','field'); tf.appendChild(el('label',null,'Gang Type')); tf.appendChild(el('div','gang-type-tag',ownerG.type)); drawerBody.appendChild(tf); }
         drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
       }else{
         drawerBody.appendChild(terrCard(data.terr));
