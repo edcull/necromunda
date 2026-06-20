@@ -361,6 +361,9 @@
     ::-webkit-scrollbar-thumb { background: var(--edge); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--tox-dim); }
 
+    /* Territory pool: no inner scroll on mobile, just flow */
+    .terr-pool { max-height: none; overflow: visible; flex-wrap: wrap; }
+
     /* Hide the hint text on mobile */
     .hint { display: none; }
 
