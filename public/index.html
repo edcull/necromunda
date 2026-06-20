@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Necromunda — Dominion Campaign Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#070a09; --hive:#0d1311; --panel:#111a17; --panel-2:#16211d;
+    --tox:#5fd9a0; --tox-bright:#8effc4; --tox-dim:rgba(95,217,160,.16);
+    --amber:#e8a23d; --ember:#ff6b1a;
+    --text:#cdd8d2; --muted:#7e8f88; --faint:#566660;
+    --edge:rgba(125,255,191,.16); --edge-soft:rgba(125,255,191,.08);
+    --grey:#6c7a74; --ink:#e6efe9;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{background:var(--void);color:var(--text);font-family:'Rajdhani',system-ui,sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.disp{font-family:'Oswald',system-ui,sans-serif;font-weight:600;letter-spacing:.04em}
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  ::selection{background:var(--tox);color:#04110a}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 20px 60px}
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:32px;border-bottom:1px solid var(--edge);padding-bottom:20px}
+  .brand .title{font-family:'Oswald';font-weight:700;font-size:clamp(22px,4vw,36px);letter-spacing:.08em;color:#eef6f1;line-height:1;text-transform:uppercase;text-shadow:0 0 18px rgba(95,217,160,.25)}
+  .brand .sub{font-family:'Rajdhani';font-weight:600;font-size:12px;letter-spacing:.42em;text-transform:uppercase;color:var(--tox);margin-top:6px;opacity:.85}
+
+  .btn{background:var(--panel);border:1px solid var(--edge);color:var(--text);padding:10px 18px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;border-radius:2px;transition:.15s}
+  .btn:hover{border-color:var(--tox);color:var(--tox-bright);background:var(--panel-2)}
+  .btn.primary{background:var(--tox);border-color:var(--tox);color:#04140d;font-weight:700}
+  .btn.primary:hover{background:var(--tox-bright);border-color:var(--tox-bright);color:#04140d}
+
+  /* campaigns grid */
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+  .section-head h2{font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--tox);margin:0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .card{display:block;background:var(--panel);border:1px solid var(--edge);border-radius:3px;padding:18px 20px;text-decoration:none;color:var(--text);transition:.15s;cursor:pointer}
+  .card:hover{border-color:var(--tox);background:var(--panel-2);transform:translateY(-1px)}
+  .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .card-name{font-family:'Oswald';font-size:19px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#eef6f1;line-height:1.1}
+  .badge{font-size:10px;letter-spacing:.18em;font-weight:700;background:var(--tox-dim);border:1px solid var(--edge);color:var(--tox);padding:2px 8px;border-radius:2px;text-transform:uppercase;font-family:'Rajdhani';white-space:nowrap}
+  .card-meta{font-size:12px;color:var(--muted);letter-spacing:.06em}
+  .card-meta span{color:var(--text)}
+
+  .empty-state{text-align:center;padding:60px 20px;color:var(--faint);font-size:14px;letter-spacing:.08em;text-transform:uppercase;border:1px dashed var(--edge-soft);border-radius:3px}
+  .empty-state p{margin:8px 0 0;font-size:12px}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(2,5,4,.7);backdrop-filter:blur(3px);z-index:50;display:grid;place-items:center;padding:20px;opacity:0;visibility:hidden;transition:.2s}
+  .overlay.show{opacity:1;visibility:visible}
+  .sheet{width:min(480px,100%);background:linear-gradient(180deg,var(--panel) 0%,#0b110f 100%);border:1px solid var(--edge);border-radius:3px;box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translateY(10px) scale(.99);transition:.2s}
+  .overlay.show .sheet{transform:none}
+  .mhead{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--edge)}
+  .mhead .kicker{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--tox)}
+  .mhead h2{margin:3px 0 0;font-size:20px;text-transform:uppercase;color:#eef6f1;font-family:'Oswald';font-weight:600}
+  .mbody{padding:22px}
+  .x{background:transparent;border:1px solid var(--edge);width:30px;height:30px;border-radius:2px;font-size:16px;line-height:1;color:var(--muted)}
+  .x:hover{border-color:var(--ember);color:#ffb27a}
+
+  /* tabs */
+  .tabs{display:flex;border-bottom:1px solid var(--edge);margin-bottom:20px}
+  .tab{background:transparent;border:0;border-bottom:2px solid transparent;padding:8px 16px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:var(--muted);margin-bottom:-1px;transition:.15s}
+  .tab.on{color:var(--tox);border-bottom-color:var(--tox)}
+  .tab:hover:not(.on){color:var(--text)}
+
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  input[type=text],input[type=password]{width:100%;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:10px 11px;font-family:'Rajdhani';font-size:15px;font-weight:500;border-radius:2px}
+  input:focus{outline:none;border-color:var(--tox);box-shadow:0 0 0 2px var(--tox-dim)}
+  .mfoot{padding:14px 22px;border-top:1px solid var(--edge);display:flex;justify-content:flex-end;gap:10px}
+  .err{color:#ff9a7a;font-size:12px;letter-spacing:.06em;margin-top:8px;min-height:18px}
+  .user-bar{display:flex;align-items:center;justify-content:space-between;background:var(--tox-dim);border:1px solid var(--edge);border-radius:2px;padding:10px 14px;margin-bottom:16px;font-size:13px}
+  .user-bar .who{color:var(--tox);font-weight:700;letter-spacing:.08em}
+</style>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div class="title">NECROMUNDA</div>
+      <div class="sub">Dominion Campaign Tracker</div>
+    </div>
+    <div>
+      <button class="btn primary" id="createBtn">+ Create Campaign</button>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <h2>Active Campaigns</h2>
+  </div>
+  <div class="grid" id="campaignGrid">
+    <div class="empty-state">Loading campaigns…<p></p></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="mhead">
+      <div><div class="kicker">Campaign</div><h2 id="modalTitle">Create Campaign</h2></div>
+      <button class="x" id="modalClose">✕</button>
+    </div>
+    <div class="mbody">
+      <!-- Shown when logged in -->
+      <div id="loggedInView" style="display:none">
+        <div class="user-bar">
+          <span>Logged in as <span class="who" id="loggedInAs"></span></span>
+          <button class="btn" id="logoutBtn" style="padding:4px 10px;font-size:11px">Logout</button>
+        </div>
+        <p style="font-size:13px;color:var(--muted);letter-spacing:.06em;line-height:1.6;margin-bottom:14px">A new campaign will be created with a randomised sector name and assigned a unique 4-character ID. You can rename it in Campaign Setup once inside.</p>
+        <div class="err" id="createErr"></div>
+      </div>
+      <!-- Shown when logged out -->
+      <div id="authView">
+        <div class="tabs">
+          <button class="tab on" id="tabLogin">Login</button>
+          <button class="tab" id="tabRegister">Register</button>
+        </div>
+        <div class="field">
+          <label>Username</label>
+          <input type="text" id="authUser" autocomplete="username" maxlength="40">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="authPass" autocomplete="current-password">
+        </div>
+        <div class="err" id="authErr"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" id="modalCancel">Cancel</button>
+      <button class="btn primary" id="modalAction">Login</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  let currentUser = null;
+  let authMode = 'login'; // 'login' | 'register'
+
+  // Fetch campaigns
+  async function loadCampaigns(){
+    const grid = document.getElementById('campaignGrid');
+    try {
+      const r = await fetch('/necromunda/api/campaigns');
+      const list = await r.json();
+      if (!list.length){
+        grid.innerHTML = '<div class="empty-state">No campaigns yet<p>Create one to get started</p></div>';
+        return;
+      }
+      grid.innerHTML = '';
+      list.forEach(c => {
+        const card = document.createElement('a');
+        card.className = 'card';
+        card.href = '/necromunda/campaign/' + c.id;
+        const date = new Date(c.created_at * 1000).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+        card.innerHTML = `
+          <div class="card-top">
+            <div class="card-name">${esc(c.name)}</div>
+            <div class="badge">${esc(c.id)}</div>
+          </div>
+          <div class="card-meta">Arbitrator: <span>${esc(c.arbitrator)}</span> &nbsp;·&nbsp; ${esc(date)}</div>
+        `;
+        grid.appendChild(card);
+      });
+    } catch(e){
+      grid.innerHTML = '<div class="empty-state">Failed to load campaigns</div>';
+    }
+  }
+
+  function esc(s){ const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+  // Check current auth state
+  async function checkMe(){
+    try {
+      const r = await fetch('/necromunda/api/auth/me');
+      if (r.ok) currentUser = await r.json();
+      else currentUser = null;
+    } catch(_){ currentUser = null; }
+  }
+
+  // Modal
+  const overlay = document.getElementById('overlay');
+  const loggedInView = document.getElementById('loggedInView');
+  const authView = document.getElementById('authView');
+  const loggedInAs = document.getElementById('loggedInAs');
+  const modalAction = document.getElementById('modalAction');
+  const authErr = document.getElementById('authErr');
+  const createErr = document.getElementById('createErr');
+
+  function showModal(){
+    overlay.classList.add('show');
+    authErr.textContent = '';
+    createErr.textContent = '';
+    if (currentUser){
+      loggedInView.style.display = '';
+      authView.style.display = 'none';
+      loggedInAs.textContent = currentUser.username;
+      modalAction.textContent = 'Create Campaign';
+      document.getElementById('modalTitle').textContent = 'Create Campaign';
+    } else {
+      loggedInView.style.display = 'none';
+      authView.style.display = '';
+      setAuthMode('login');
+      document.getElementById('modalTitle').textContent = 'Arbitrator Login';
+    }
+  }
+  function hideModal(){ overlay.classList.remove('show'); }
+
+  function setAuthMode(m){
+    authMode = m;
+    document.getElementById('tabLogin').classList.toggle('on', m === 'login');
+    document.getElementById('tabRegister').classList.toggle('on', m === 'register');
+    modalAction.textContent = m === 'login' ? 'Login' : 'Register';
+    document.getElementById('modalTitle').textContent = m === 'login' ? 'Arbitrator Login' : 'Register as Arbitrator';
+  }
+
+  document.getElementById('tabLogin').addEventListener('click', () => setAuthMode('login'));
+  document.getElementById('tabRegister').addEventListener('click', () => setAuthMode('register'));
+  document.getElementById('createBtn').addEventListener('click', showModal);
+  document.getElementById('modalClose').addEventListener('click', hideModal);
+  document.getElementById('modalCancel').addEventListener('click', hideModal);
+  overlay.addEventListener('click', e => { if (e.target === overlay) hideModal(); });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await fetch('/necromunda/api/auth/logout', { method: 'POST' });
+    currentUser = null;
+    hideModal();
+  });
+
+  modalAction.addEventListener('click', async () => {
+    if (currentUser){
+      // Create campaign (name and sector auto-generated server-side)
+      createErr.textContent = '';
+      const r = await fetch('/necromunda/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      if (r.ok){
+        const c = await r.json();
+        window.location.href = '/necromunda/campaign/' + c.id;
+      } else {
+        const e = await r.json().catch(() => ({}));
+        createErr.textContent = e.error || 'Failed to create campaign';
+      }
+    } else {
+      // Auth
+      const username = document.getElementById('authUser').value.trim();
+      const password = document.getElementById('authPass').value;
+      if (!username || !password){ authErr.textContent = 'Enter username and password'; return; }
+      authErr.textContent = '';
+      const endpoint = authMode === 'login' ? '/necromunda/api/auth/login' : '/necromunda/api/auth/register';
+      const r = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (r.ok){
+        currentUser = await r.json();
+        // Show create campaign view
+        loggedInView.style.display = '';
+        authView.style.display = 'none';
+        loggedInAs.textContent = currentUser.username;
+        modalAction.textContent = 'Create Campaign';
+        document.getElementById('modalTitle').textContent = 'Create Campaign';
+        authErr.textContent = '';
+      } else {
+        const e = await r.json().catch(() => ({}));
+        authErr.textContent = e.error || 'Authentication failed';
+      }
+    }
+  });
+
+  // Allow enter key in auth form
+  ['authUser','authPass','campaignName'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') modalAction.click(); });
+  });
+
+  // Init
+  (async () => {
+    await checkMe();
+    await loadCampaigns();
+  })();
+})();
+</script>
+</html>
