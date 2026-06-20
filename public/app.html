@@ -219,6 +219,7 @@
   .icon-cell{position:relative}
   .icon-cell input{width:46px;text-align:center;font-size:17px;padding:8px 4px}
   .gang-row .nm{flex:1;min-width:80px}
+  .gang-type-cell{flex:0 0 auto} .gang-type-cell select{font-family:'Rajdhani';font-size:13px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:8px 10px;border-radius:2px}
   .emoji-btn{background:transparent;border:1px solid var(--edge);border-radius:2px;width:34px;height:34px;font-size:15px;flex:0 0 auto}
   .emoji-btn:hover{border-color:var(--tox)}
   .palette{position:absolute;top:42px;right:0;z-index:5;background:#0a100e;border:1px solid var(--edge);border-radius:3px;padding:8px;display:none;grid-template-columns:repeat(8,1fr);gap:3px;width:264px;box-shadow:0 14px 40px rgba(0,0,0,.6)}
@@ -990,7 +991,7 @@
     const host=document.getElementById('playerSeg'); host.innerHTML='';
     for(let n=3;n<=8;n++){ const b=el('button',n===state.players?'on':'',String(n));
       b.addEventListener('click',()=>setPlayers(n)); host.appendChild(b); }
-    const gl=document.getElementById('gangsLabel'); if(gl) gl.textContent='The '+state.players+' Gangs — name · icon · colour';
+    const gl=document.getElementById('gangsLabel'); if(gl) gl.textContent='The '+state.players+' Gangs — name · icon · colour · type';
   }
   function buildTerrPool(){
     const host=document.getElementById('terrPool'); host.innerHTML='';
@@ -1022,6 +1023,8 @@
   document.getElementById('inSector').addEventListener('input',e=>{ state.sector=e.target.value||'Unnamed Sector'; scheduleSave(); render(); });
   document.getElementById('inCampaign').addEventListener('input',e=>{ state.campaign=e.target.value||'Campaign'; scheduleSave(); render(); });
 
+  const GANG_TYPES = ['Cawdor','Delaque','Escher','Goliath','Orlock','Van Saar','Palanite Enforcers','Badzone Enforcers','Corpse-Grinder Cult','Chaos Cult','Genestealer Cult','Venator','Outcasts','Slave Ogryns','Spyrers','Ash Waste Nomads','Ironhead Squat Prospectors'];
+
   function buildGangRows(){
     const host=document.getElementById('gangRows'); host.innerHTML='';
     state.gangs.slice(0,state.players).forEach((g,i)=>{
@@ -1043,6 +1046,12 @@
       const nm=el('div','nm'); const ni=document.createElement('input'); ni.type='text'; ni.value=g.name; ni.maxLength=28;
       ni.addEventListener('input',()=>{ g.name=ni.value||('Gang '+(i+1)); scheduleSave(); render(); });
       nm.appendChild(ni); row.appendChild(nm);
+      const gt=el('div','gang-type-cell'); const gs=el('select');
+      const none=el('option',null,'— Type —'); none.value=''; gs.appendChild(none);
+      GANG_TYPES.forEach(t=>{ const o=el('option',null,t); o.value=t; gs.appendChild(o); });
+      gs.value=g.type||'';
+      gs.addEventListener('change',()=>{ g.type=gs.value||null; scheduleSave(); });
+      gt.appendChild(gs); row.appendChild(gt);
       host.appendChild(row);
     });
   }
