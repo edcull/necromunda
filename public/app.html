@@ -920,7 +920,7 @@
     drawerBody.innerHTML='';
     if(isArbitrator){
       if(node.type==='hideout'){
-        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); openEditor(id); }, 'Garrison', false));
+        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); openEditor(id); }, 'Gang Name', false));
         const ownerG=gangOf(data.gang);
         if(ownerG && ownerG.type){ const tf=el('div','field'); tf.appendChild(el('label',null,'Gang Type')); tf.appendChild(el('div','gang-type-tag',ownerG.type)); drawerBody.appendChild(tf); }
         drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
@@ -939,7 +939,7 @@
       ownerLine.appendChild(dot);
       ownerLine.appendChild(el('span','who', ownerG ? ownerG.name : (node.type==='hideout'?'Unclaimed':'Uncontrolled')));
       const ownerField = el('div','field');
-      ownerField.appendChild(el('label',null, node.type==='hideout'?'Garrison':'Controlling Gang'));
+      ownerField.appendChild(el('label',null, node.type==='hideout'?'Gang Name':'Controlling Gang'));
       ownerField.appendChild(ownerLine);
       drawerBody.appendChild(ownerField);
       if(node.type==='hideout'){
