@@ -1135,6 +1135,15 @@
       setupBtn2.style.cssText = 'width:100%;margin-bottom:10px;text-align:center';
       setupBtn2.addEventListener('click', () => { arbModal.classList.remove('show'); openSetupModal(); });
       body.appendChild(setupBtn2);
+      const delBtn = el('button','btn','⚠ Delete Campaign');
+      delBtn.style.cssText = 'width:100%;margin-bottom:10px;text-align:center;border-color:var(--ember);color:var(--ember)';
+      delBtn.addEventListener('click', async () => {
+        if(!confirm('Permanently delete this campaign? This cannot be undone.')) return;
+        const r = await apiFetch('DELETE', `/api/campaigns/${campaignId}`);
+        if(r.ok) window.location.replace('/necromunda');
+        else alert((r.data&&r.data.error)||'Failed to delete campaign');
+      });
+      body.appendChild(delBtn);
       const logoutBtn = el('button','btn warn ghost','Logout');
       logoutBtn.style.cssText = 'width:100%;text-align:center';
       logoutBtn.addEventListener('click', async () => {
