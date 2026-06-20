@@ -987,7 +987,16 @@
   function attachDrag(btn,id){
     let active=false, moved=false, sx=0, sy=0, ox=0, oy=0;
     function down(e){
-      if(!isArbitrator || e.pointerType==='touch'){ openEditor(id); return; }
+      if(e.pointerType==='touch'){
+        active=true; moved=false; sx=e.clientX; sy=e.clientY;
+        try{ btn.setPointerCapture(e.pointerId); }catch(_){}
+        btn.addEventListener('pointermove',touchMove);
+        btn.addEventListener('pointerup',touchUp);
+        btn.addEventListener('pointercancel',touchCancel);
+        e.stopPropagation();
+        return;
+      }
+      if(!isArbitrator){ openEditor(id); return; }
       if(e.button!==0) return;
       active=true; moved=false; sx=e.clientX; sy=e.clientY;
       const cur=nodePos(LBI[id]); ox=cur.x; oy=cur.y;
@@ -997,6 +1006,24 @@
       btn.addEventListener('pointerup',up);
       btn.addEventListener('pointercancel',up);
       e.preventDefault(); e.stopPropagation();
+    }
+    function touchMove(e){
+      if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>8) moved=true;
+    }
+    function touchUp(e){
+      btn.removeEventListener('pointermove',touchMove);
+      btn.removeEventListener('pointerup',touchUp);
+      btn.removeEventListener('pointercancel',touchCancel);
+      try{ btn.releasePointerCapture(e.pointerId); }catch(_){}
+      active=false;
+      e.preventDefault(); // suppress synthetic click that would hit the scrim
+      if(!moved) openEditor(id);
+    }
+    function touchCancel(){
+      btn.removeEventListener('pointermove',touchMove);
+      btn.removeEventListener('pointerup',touchUp);
+      btn.removeEventListener('pointercancel',touchCancel);
+      active=false;
     }
     function move(e){
       if(!active) return;
