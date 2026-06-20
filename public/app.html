@@ -1333,7 +1333,7 @@
       logoutBtn.addEventListener('click', async () => {
         await apiFetch('POST', '/api/auth/logout');
         currentUser = null; isArbitrator = false;
-        updateArbIndicator(); renderArbModal(); render();
+         renderArbModal(); render();
       });
       body.appendChild(logoutBtn);
       return;
@@ -1352,7 +1352,7 @@
       logoutBtn.addEventListener('click', async () => {
         await apiFetch('POST', '/api/auth/logout');
         currentUser = null; isArbitrator = false;
-        updateArbIndicator(); renderArbModal();
+         renderArbModal();
       });
       body.appendChild(logoutBtn);
       return;
@@ -1405,7 +1405,7 @@
       if(!ok) { errEl.textContent = data.error || 'Authentication failed'; return; }
       currentUser = data;
       if(campaignMeta && campaignMeta.arbitrator_id === currentUser.id) {
-        isArbitrator = true; updateArbIndicator();
+        isArbitrator = true; 
         arbModal.classList.remove('show'); render();
       } else {
         renderArbModal();
@@ -1502,7 +1502,7 @@
       return;
     }
     if(currentUser && campaignMeta && campaignMeta.arbitrator_id === currentUser.id) isArbitrator = true;
-    updateArbIndicator();
+    
     buildHive();
     render();
   })();
