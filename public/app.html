@@ -301,10 +301,8 @@
       width: 100%;
       aspect-ratio: unset;
       overflow: hidden;
-      /* legend is position:fixed so it escapes; but keep clip for pan layer */
+      touch-action: none;
     }
-    /* Allow legend (fixed child) pointer events to pass through */
-    .legend { pointer-events: auto; isolation: isolate; }
 
     /* The pannable layer inside the map */
     #panLayer {
@@ -989,8 +987,8 @@
   function attachDrag(btn,id){
     let active=false, moved=false, sx=0, sy=0, ox=0, oy=0;
     function down(e){
-      if(!isArbitrator){ openEditor(id); return; }
-      if(e.pointerType==='mouse' && e.button!==0) return;
+      if(!isArbitrator || e.pointerType==='touch'){ openEditor(id); return; }
+      if(e.button!==0) return;
       active=true; moved=false; sx=e.clientX; sy=e.clientY;
       const cur=nodePos(LBI[id]); ox=cur.x; oy=cur.y;
       btn.classList.add('dragging');
