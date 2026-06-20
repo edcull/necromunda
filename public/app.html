@@ -1045,7 +1045,8 @@
       const eb=el('button','emoji-btn','▾'); eb.title='Pick an icon';
       const pal=el('div','palette');
       EMOJI.forEach(em=>{ const b=el('button',null,em); b.addEventListener('click',()=>{ g.icon=em; ii.value=em; face.textContent=em; pal.classList.remove('open'); scheduleSave(); render(); }); pal.appendChild(b); });
-      eb.addEventListener('click',e=>{ e.stopPropagation(); document.querySelectorAll('.palette.open').forEach(p=>{if(p!==pal)p.classList.remove('open')}); pal.classList.toggle('open'); });
+      eb.addEventListener('click',e=>{ e.stopPropagation(); document.querySelectorAll('.palette.open').forEach(p=>{if(p!==pal)p.classList.remove('open')}); pal.classList.toggle('open');
+        if(pal.classList.contains('open')){ const r=pal.getBoundingClientRect(); if(r.bottom>window.innerHeight-16){ pal.style.top='auto'; pal.style.bottom='42px'; } else { pal.style.top=''; pal.style.bottom=''; } } });
       ic.appendChild(pal); row.appendChild(eb);
       const nm=el('div','nm'); const ni=document.createElement('input'); ni.type='text'; ni.value=g.name; ni.maxLength=28;
       ni.addEventListener('input',()=>{ g.name=ni.value||('Gang '+(i+1)); scheduleSave(); render(); });
