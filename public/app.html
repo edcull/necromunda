@@ -1373,7 +1373,6 @@
       const was = isMobile;
       isMobile = window.matchMedia('(max-width:768px)').matches;
       if(was && !isMobile){
-        // Switched to desktop — reset pan so map fills stage normally
         panX = 0; panY = 0;
         layer.style.transform = '';
       }
