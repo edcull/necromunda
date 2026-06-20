@@ -286,19 +286,16 @@
     .corner { display: none; }
     .footnote { display: none; }
 
-    /* Map area fills between topbar and legend panel */
+    /* Map area fills full height — legend floats on top */
     .stage {
       position: fixed;
       top: 56px;
       left: 0; right: 0;
-      bottom: 180px;
+      bottom: 0;
       width: 100%;
       aspect-ratio: unset;
       overflow: hidden;
-      /* legend is position:fixed so it escapes; but keep clip for pan layer */
     }
-    /* Allow legend (fixed child) pointer events to pass through */
-    .legend { pointer-events: auto; isolation: isolate; }
 
     /* The pannable layer inside the map */
     #panLayer {
@@ -320,20 +317,40 @@
 
     /* Node positions are in % of #nodes, which is now 1600×900 px */
 
-    /* Fixed bottom legend panel */
+    /* Fixed bottom legend panel — collapsed by default, expands upward */
     .legend {
       position: fixed; bottom: 0; left: 0; right: 0;
-      z-index: 20; max-width: 100%;
+      z-index: 25; max-width: 100%;
       border-radius: 0; border-left: none; border-right: none; border-bottom: none;
-      background: rgba(6,11,9,.96);
-      padding: 8px 12px 10px;
-      height: 180px; box-sizing: border-box;
+      background: rgba(6,11,9,.97);
+      box-sizing: border-box;
+      height: 40px;
+      overflow: hidden;
+      transition: height 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    .legend.expanded {
+      height: 260px;
       overflow-y: auto;
     }
-    .legend h3 { margin: 0 0 4px; }
-    .legend ul { gap: 2px; }
-    .legend li { font-size: 10px; }
-    .legend-sort { margin-bottom: 6px; }
+    .legend-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; height: 40px; cursor: pointer; user-select: none;
+    }
+    .legend-toggle-label {
+      font-size: 11px; letter-spacing: .28em; color: var(--tox);
+      text-transform: uppercase; font-family: 'Oswald'; font-weight: 600;
+    }
+    .legend-toggle-chevron {
+      font-size: 14px; color: var(--tox); transition: transform 0.2s;
+      line-height: 1;
+    }
+    .legend.expanded .legend-toggle-chevron { transform: rotate(180deg); }
+    .legend-body { padding: 4px 12px 10px; }
+    .legend h3 { display: none; }
+    .legend ul { gap: 3px; }
+    .legend li { font-size: 12px; }
+    .legend-sort { margin-bottom: 8px; }
+    .legend-sort button { font-size: 10px; padding: 4px 8px; }
 
     /* Gang rows: two-row layout on mobile */
     .gang-row { flex-wrap: wrap; gap: 6px; }
@@ -396,7 +413,17 @@
       </div>
       <div class="vig"></div>
     </div>
-    <div class="legend"><h3>Gangs</h3><div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div><ul id="legendList"></ul></div>
+    <div class="legend" id="legend">
+      <div class="legend-toggle" id="legendToggle">
+        <span class="legend-toggle-label">Gangs</span>
+        <span class="legend-toggle-chevron">▲</span>
+      </div>
+      <div class="legend-body">
+        <h3>Gangs</h3>
+        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div>
+        <ul id="legendList"></ul>
+      </div>
+    </div>
   </div>
 
   <div class="footnote" id="footnote"></div>
@@ -1055,6 +1082,11 @@
   document.getElementById('sortTerr').addEventListener('click',()=>{ legendSort='terr'; renderLegend(); });
   document.getElementById('sortRep').addEventListener('click',()=>{ legendSort='rep'; renderLegend(); });
   document.getElementById('sortRat').addEventListener('click',()=>{ legendSort='rat'; renderLegend(); });
+
+  /* Legend collapse toggle (mobile only) */
+  document.getElementById('legendToggle').addEventListener('click', () => {
+    document.getElementById('legend').classList.toggle('expanded');
+  });
 
   /* ============ DRAWER ============ */
   const drawer=document.getElementById('drawer'), scrim=document.getElementById('scrim'), drawerBody=document.getElementById('drawerBody');
