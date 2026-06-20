@@ -60,6 +60,14 @@ router.get('/necromunda/api/campaigns/:id', (req, res) => {
   res.json(row);
 });
 
+router.delete('/necromunda/api/campaigns/:id', requireAuth, (req, res) => {
+  const campaign = db.prepare('SELECT * FROM campaigns WHERE id = ?').get(req.params.id.toUpperCase());
+  if (!campaign) return res.status(404).json({ error: 'Not found' });
+  if (campaign.arbitrator_id !== req.session.user.id) return res.status(403).json({ error: 'Forbidden' });
+  db.prepare('DELETE FROM campaigns WHERE id = ?').run(campaign.id);
+  res.json({ ok: true });
+});
+
 router.patch('/necromunda/api/campaigns/:id/state', requireAuth, (req, res) => {
   const campaign = db.prepare('SELECT * FROM campaigns WHERE id = ?').get(req.params.id.toUpperCase());
   if (!campaign) return res.status(404).json({ error: 'Not found' });
