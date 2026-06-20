@@ -129,12 +129,14 @@
   .legend ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
   .legend li{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.05em;color:var(--text);text-transform:uppercase}
   .legend .swatch{width:13px;height:13px;border-radius:2px;display:grid;place-items:center;font-size:9px;border:1px solid rgba(0,0,0,.5);flex:0 0 auto}
-  .legend .ct{margin-left:auto;color:var(--faint);font-size:10px;font-variant-numeric:tabular-nums}
-  .legend .ct-rep{color:var(--amber);font-size:10px;font-variant-numeric:tabular-nums;min-width:26px;text-align:right}
-  .legend .ct-rat{color:var(--tox);font-size:10px;font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
-  .legend-sort{display:flex;gap:6px;margin-bottom:8px}
-  .legend-sort button{background:transparent;border:1px solid var(--edge);color:var(--faint);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border-radius:2px;font-family:'Rajdhani'}
-  .legend-sort button.on{border-color:var(--tox);color:var(--tox)}
+  .legend .ct{margin-left:auto;color:rgba(95,217,160,.45);font-size:10px;font-variant-numeric:tabular-nums}
+  .legend .ct-rep{color:rgba(232,162,61,.45);font-size:10px;font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
+  .legend .ct-rat{color:rgba(95,217,160,.45);font-size:10px;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
+  .legend-sort{display:flex;gap:4px;margin-bottom:8px;width:100%} .legend-sort button{flex:1}
+  .legend-sort button{background:transparent;border:1px solid rgba(95,217,160,.15);color:rgba(95,217,160,.3);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border-radius:2px;font-family:'Rajdhani';transition:.15s}
+  #sortTerr{border-color:rgba(95,217,160,.15);color:rgba(95,217,160,.3)} #sortTerr.on{border-color:var(--tox);color:var(--tox)}
+  #sortRep{border-color:rgba(232,162,61,.15);color:rgba(232,162,61,.3)} #sortRep.on{border-color:var(--amber);color:var(--amber)}
+  #sortRat{border-color:rgba(95,217,160,.15);color:rgba(95,217,160,.3)} #sortRat.on{border-color:var(--tox-bright);color:var(--tox-bright)}
   .hint{position:absolute;right:14px;bottom:14px;z-index:5;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 
   /* ---------- drawer ---------- */
@@ -269,7 +271,7 @@
       <svg class="hivemap" id="hivemap" viewBox="0 0 1600 900" preserveAspectRatio="none"></svg>
       <div class="vig"></div>
       <div id="nodes"></div>
-      <div class="legend"><h3>Known Factions</h3><div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div><ul id="legendList"></ul></div>
+      <div class="legend"><h3>Gangs</h3><div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div><ul id="legendList"></ul></div>
     </div>
   </div>
 
@@ -466,7 +468,7 @@
   function hidePts(d,i){ if(d.h<=1) return [[d.cx,d.cy]]; const out=[], off=i*40; for(let k=0;k<d.h;k++){ const a=(off + k*360/d.h)*Math.PI/180, rr=d.r*0.27; out.push([d.cx+Math.cos(a)*rr, d.cy+Math.sin(a)*rr]); } return out; }
   let DISTRICTS=[], FAB_SITES=[], LAYOUT=[], LBI={};
   const inGap=(x,y,p)=>!DISTRICTS.some(d=>Math.hypot(x-d.cx,y-d.cy)<d.r*(p||1));
-  // keep the bottom-left corner clear for the Known Factions key
+  // keep the bottom-left corner clear for the Gangs key
   const LEGRECT=[0,556,300,900];
   function distLeg(x,y){ const dx=Math.max(LEGRECT[0]-x,0,x-LEGRECT[2]), dy=Math.max(LEGRECT[1]-y,0,y-LEGRECT[3]); return Math.hypot(dx,dy); }
   const nearLeg=(x,y,m)=> distLeg(x,y) < (m||0);
@@ -865,8 +867,7 @@
 
       if(n.type==='hideout'){
         const g=el('div','gicon', owner?owner.icon:'⌖'); mod.appendChild(g);
-        const light=owner?isLight(owner.color):true;
-        const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); tag.style.color=light?'':'#e8f2ec'; mod.appendChild(tag);
+        const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); tag.style.color='#e8f2ec'; mod.appendChild(tag);
         name=owner?owner.name:'Unclaimed'; sub=owner&&owner.type?owner.type:'Hideout';
         if(!owner) btn.classList.add('uncontrolled');
       }else{
@@ -879,7 +880,7 @@
       const lbl=el('div','lbl'); lbl.style.setProperty('--c',c);
       lbl.appendChild(el('span','name',name));
       const sb=el('span','sub'+(owner?' owner':''),sub); sb.style.setProperty('--c',c);
-      if(n.type==='hideout'&&owner&&!isLight(owner.color)) sb.style.color='#e8f2ec';
+      if(owner) sb.style.color='#e8f2ec';
       lbl.appendChild(sb);
 
       btn.appendChild(mod); btn.appendChild(lbl);
@@ -900,8 +901,8 @@
       const li=el('li'); const sw=el('span','swatch',g.icon); sw.style.background=g.color;
       li.appendChild(sw); li.appendChild(el('span',null,g.name));
       li.appendChild(el('span','ct',n));
-      li.appendChild(el('span','ct-rep',rep+'rep'));
-      li.appendChild(el('span','ct-rat',rat+'pts'));
+      li.appendChild(el('span','ct-rep',rep));
+      li.appendChild(el('span','ct-rat',rat));
       ul.appendChild(li);
     });
     ['sortTerr','sortRep','sortRat'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on', (id==='sortTerr'&&legendSort==='terr')||(id==='sortRep'&&legendSort==='rep')||(id==='sortRat'&&legendSort==='rat')); });
@@ -921,7 +922,7 @@
     drawerBody.innerHTML='';
     if(isArbitrator){
       if(node.type==='hideout'){
-        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); openEditor(id); }, 'Garrison', false));
+        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); openEditor(id); }, 'Gang Name', false));
         const ownerG=gangOf(data.gang);
         if(ownerG && ownerG.type){ const tf=el('div','field'); tf.appendChild(el('label',null,'Gang Type')); tf.appendChild(el('div','gang-type-tag',ownerG.type)); drawerBody.appendChild(tf); }
         drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
@@ -940,7 +941,7 @@
       ownerLine.appendChild(dot);
       ownerLine.appendChild(el('span','who', ownerG ? ownerG.name : (node.type==='hideout'?'Unclaimed':'Uncontrolled')));
       const ownerField = el('div','field');
-      ownerField.appendChild(el('label',null, node.type==='hideout'?'Garrison':'Controlling Gang'));
+      ownerField.appendChild(el('label',null, node.type==='hideout'?'Gang Name':'Controlling Gang'));
       ownerField.appendChild(ownerLine);
       drawerBody.appendChild(ownerField);
       if(node.type==='hideout'){
