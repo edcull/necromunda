@@ -1121,7 +1121,7 @@
         const tile=el('div','tile'); tile.innerHTML=svgIcon(t.key); card.appendChild(tile);
         const info=el('div','tinfo');
         info.appendChild(el('div','tname',t.name));
-        const meta=[t.card,t.house?t.house+' gangs':null].filter(Boolean).join(' · ');
+        const meta=t.house||'Neutral';
         info.appendChild(el('div','tmeta',meta));
         card.appendChild(info); list.appendChild(card);
       });
