@@ -132,9 +132,9 @@
   .legend ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
   .legend li{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.05em;color:var(--text);text-transform:uppercase}
   .legend .swatch{width:13px;height:13px;border-radius:2px;display:grid;place-items:center;font-size:9px;border:1px solid rgba(0,0,0,.5);flex:0 0 auto}
-  .legend .ct{margin-left:auto;color:rgba(95,217,160,.45);font-size:10px;font-variant-numeric:tabular-nums}
-  .legend .ct-rep{color:rgba(232,162,61,.45);font-size:10px;font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
-  .legend .ct-rat{color:rgba(95,217,160,.45);font-size:10px;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
+  .legend .ct{margin-left:auto;color:rgba(95,217,160,.85);font-size:10px;font-variant-numeric:tabular-nums}
+  .legend .ct-rep{color:rgba(232,162,61,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
+  .legend .ct-rat{color:rgba(95,217,160,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
   .legend-sort{display:flex;gap:4px;margin-bottom:8px;width:100%} .legend-sort button{flex:1}
   .legend-sort button{background:transparent;border:1px solid rgba(95,217,160,.15);color:rgba(95,217,160,.3);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border-radius:2px;font-family:'Rajdhani';transition:.15s}
   #sortTerr{border-color:rgba(95,217,160,.15);color:rgba(95,217,160,.3)} #sortTerr.on{border-color:var(--tox);color:var(--tox)}
@@ -209,7 +209,7 @@
   .terr-head{display:flex;justify-content:space-between;align-items:baseline;margin:20px 0 10px}
   .terr-count{font-size:11px;letter-spacing:.1em;color:var(--muted)}
   .terr-count.over{color:#ff9a5a}
-  .terr-pool{display:flex;gap:12px;max-height:248px;overflow:auto;padding:4px 2px 2px}
+  .terr-pool{display:flex;gap:12px;padding:4px 2px 2px;flex-wrap:wrap}
   .terr-col{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
   .terr-colhead{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tox);padding:2px 2px 4px;position:sticky;top:0;background:var(--panel);z-index:1}
   .terr-chip{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--edge);border-radius:3px;cursor:pointer;background:#101714;transition:.12s}
@@ -253,6 +253,10 @@
   .footnote{margin-top:14px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);text-align:center}
 
   @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:var(--void)}
+  ::-webkit-scrollbar-thumb{background:var(--edge);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--tox-dim)}
   @media(max-width:680px){
     .node .lbl{max-width:88px}
     .lbl .name{max-width:78px;font-size:8px}
@@ -286,12 +290,12 @@
     .corner { display: none; }
     .footnote { display: none; }
 
-    /* Map area fills between topbar and legend panel */
+    /* Map area fills full height — legend floats on top */
     .stage {
       position: fixed;
       top: 56px;
       left: 0; right: 0;
-      bottom: 180px;
+      bottom: 0;
       width: 100%;
       aspect-ratio: unset;
       overflow: hidden;
@@ -306,7 +310,6 @@
       top: 0; left: 0;
       width: 1600px; height: 900px;
       transform-origin: 0 0;
-      will-change: transform;
     }
 
     svg.hivemap {
@@ -321,20 +324,60 @@
 
     /* Node positions are in % of #nodes, which is now 1600×900 px */
 
-    /* Fixed bottom legend panel */
+    /* Fixed bottom legend panel — collapsed by default, expands upward */
     .legend {
       position: fixed; bottom: 0; left: 0; right: 0;
-      z-index: 20; max-width: 100%;
+      z-index: 25; max-width: 100%;
       border-radius: 0; border-left: none; border-right: none; border-bottom: none;
-      background: rgba(6,11,9,.96);
-      padding: 8px 12px 10px;
-      height: 180px; box-sizing: border-box;
+      background: rgba(6,11,9,.97);
+      box-sizing: border-box;
+      height: 40px;
+      overflow: hidden;
+      transition: height 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    .legend.expanded {
+      height: 260px;
       overflow-y: auto;
     }
-    .legend h3 { margin: 0 0 4px; }
-    .legend ul { gap: 2px; }
-    .legend li { font-size: 10px; }
-    .legend-sort { margin-bottom: 6px; }
+    .legend-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; height: 40px; cursor: pointer; user-select: none;
+    }
+    .legend-toggle-label {
+      font-size: 11px; letter-spacing: .28em; color: var(--tox);
+      text-transform: uppercase; font-family: 'Oswald'; font-weight: 600;
+    }
+    .legend-toggle-chevron {
+      font-size: 14px; color: var(--tox); transition: transform 0.2s;
+      line-height: 1;
+    }
+    .legend.expanded .legend-toggle-chevron { transform: rotate(180deg); }
+    .legend-body { padding: 4px 12px 10px; }
+    .legend h3 { display: none; }
+    .legend ul { gap: 3px; }
+    .legend li { font-size: 12px; }
+    .legend-sort { margin-bottom: 8px; }
+    .legend-sort button { font-size: 10px; padding: 4px 8px; }
+
+    /* Gang rows: two-row layout on mobile */
+    .gang-row { flex-wrap: wrap; gap: 6px; }
+    .gang-row .num { order: 0; }
+    .gang-row .swatch-pick { order: 1; }
+    .gang-row .icon-cell { order: 2; }
+    .gang-row .emoji-btn { order: 3; }
+    .gang-row .nm { order: 4; flex: 1; min-width: 0; }
+    .gang-type-cell { order: 10; flex: 1 1 100%; margin-top: 2px; }
+    .stat-cell { order: 11; flex: 1; }
+    .stat-cell input { width: 100%; }
+
+    /* Territories in hideout drawer: single column */
+    .terr-held { grid-template-columns: 1fr !important; }
+
+    /* Prevent horizontal scroll */
+    html, body { overflow-x: hidden; max-width: 100vw; }
+    .sheet { max-width: 100vw; box-sizing: border-box; }
+    .mbody { overflow-x: hidden; }
+
 
     /* Gang rows: two-row layout on mobile */
     .gang-row { flex-wrap: wrap; gap: 6px; }
@@ -378,7 +421,6 @@
     </div>
     <div class="controls">
       <span class="save-tag" id="saveTag"></span>
-      <span id="arbIndicator" style="display:none"></span>
       <a href="/necromunda" class="btn ghost" style="text-decoration:none">◀ Campaigns</a>
       <button class="btn" id="arbitratorBtn">⚔ Arbitrator</button>
     </div>
@@ -395,7 +437,17 @@
       </div>
       <div class="vig"></div>
     </div>
-    <div class="legend"><h3>Gangs</h3><div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div><ul id="legendList"></ul></div>
+    <div class="legend" id="legend">
+      <div class="legend-toggle" id="legendToggle">
+        <span class="legend-toggle-label">Gangs</span>
+        <span class="legend-toggle-chevron">▲</span>
+      </div>
+      <div class="legend-body">
+        <h3>Gangs</h3>
+        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div>
+        <ul id="legendList"></ul>
+      </div>
+    </div>
   </div>
 
   <div class="footnote" id="footnote"></div>
@@ -682,8 +734,6 @@
     return { ok: r.ok, status: r.status, data: await r.json().catch(()=>({})) };
   }
   function updateArbIndicator() {
-    const ind = document.getElementById('arbIndicator');
-    if (isArbitrator && currentUser) { ind.textContent = 'ARB: ' + currentUser.username; ind.style.display = ''; }
     else ind.style.display = 'none';
   }
 
@@ -1056,6 +1106,11 @@
   document.getElementById('sortTerr').addEventListener('click',()=>{ legendSort='terr'; renderLegend(); });
   document.getElementById('sortRep').addEventListener('click',()=>{ legendSort='rep'; renderLegend(); });
   document.getElementById('sortRat').addEventListener('click',()=>{ legendSort='rat'; renderLegend(); });
+
+  /* Legend collapse toggle (mobile only) */
+  document.getElementById('legendToggle').addEventListener('click', () => {
+    document.getElementById('legend').classList.toggle('expanded');
+  });
 
   /* ============ DRAWER ============ */
   const drawer=document.getElementById('drawer'), scrim=document.getElementById('scrim'), drawerBody=document.getElementById('drawerBody');
