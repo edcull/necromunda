@@ -128,6 +128,8 @@
 
   .legend{position:absolute;left:14px;bottom:14px;z-index:5;background:rgba(6,11,9,.74);border:1px solid var(--edge);
     backdrop-filter:blur(2px);padding:9px 12px 10px;border-radius:2px;max-width:212px}
+  .legend-toggle{display:none}
+  .legend-body{}
   .legend h3{font-size:10px;letter-spacing:.24em;color:var(--tox);text-transform:uppercase;margin:0 0 7px}
   .legend ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
   .legend li{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.05em;color:var(--text);text-transform:uppercase}
@@ -732,9 +734,6 @@
       body: body ? JSON.stringify(body) : undefined,
     });
     return { ok: r.ok, status: r.status, data: await r.json().catch(()=>({})) };
-  }
-  function updateArbIndicator() {
-    else ind.style.display = 'none';
   }
 
   /* ============ STATE ============ */
@@ -1430,6 +1429,7 @@
       if(was && !isMobile){
         panX = 0; panY = 0;
         layer.style.transform = '';
+        document.getElementById('legend').classList.remove('expanded');
       }
     }
     checkMobile();
