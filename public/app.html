@@ -739,7 +739,7 @@
 
   function defaultState(){
     const nodes={};
-    LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null}:{terr:null,gang:null}; });
+    LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null,label:null}:{terr:null,gang:null,label:null}; });
     return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[]};
   }
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
@@ -753,9 +753,10 @@
       s.gangs.push({name:g.name||DEFAULT_GANGS[i].name,icon:g.icon||DEFAULT_GANGS[i].icon,color:g.color||DEFAULT_GANGS[i].color,type:g.type||null,rep:Number(g.rep)||0,rating:Number(g.rating)||0}); }
     LAYOUT.forEach(n=>{ const ex=(loaded.nodes&&loaded.nodes[n.id])||{};
       const hasG=Object.prototype.hasOwnProperty.call(ex,'gang');
+      const lbl=(typeof ex.label==='string'&&ex.label.trim())?ex.label.trim():null;
       s.nodes[n.id]= n.type==='hideout'
-        ? {gang: hasG?validGang(ex.gang):null}
-        : {terr:TERR_BY_KEY[ex.terr]?ex.terr:null,gang:validGang(ex.gang)};
+        ? {gang: hasG?validGang(ex.gang):null, label:lbl}
+        : {terr:TERR_BY_KEY[ex.terr]?ex.terr:null,gang:validGang(ex.gang), label:lbl};
       const p=loaded.pos&&loaded.pos[n.id];
       if(p&&isFinite(p.x)&&isFinite(p.y)) s.pos[n.id]={x:Math.max(2,Math.min(98,p.x)),y:Math.max(4,Math.min(96,p.y))}; });
     s.terrPool = Array.isArray(loaded.terrPool)?loaded.terrPool.filter(k=>TERR_BY_KEY[k]):[];
@@ -1065,12 +1066,12 @@
       if(n.type==='hideout'){
         const g=el('div','gicon', owner?owner.icon:'⌖'); mod.appendChild(g);
         const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); tag.style.color='#e8f2ec'; mod.appendChild(tag);
-        name=owner?owner.name:'Unclaimed'; sub=owner&&owner.type?owner.type:'Hideout';
+        name=data.label||(owner?owner.name:'Unclaimed'); sub=owner&&owner.type?owner.type:'Hideout';
         if(!owner) btn.classList.add('uncontrolled');
       }else{
         const t=data.terr?TERR_BY_KEY[data.terr]:null;
         if(!t){ btn.classList.add('empty'); mod.appendChild(el('div','plus','+')); name='Empty Plot'; sub='Tap to develop'; }
-        else { mod.innerHTML=svgIcon(t.key); name=t.name; sub=owner?owner.name:'Uncontrolled'; }
+        else { mod.innerHTML=svgIcon(t.key); name=data.label||t.name; sub=owner?owner.name:'Uncontrolled'; }
         if(!owner) btn.classList.add('uncontrolled');
       }
 
@@ -1141,8 +1142,20 @@
   function openEditor(id){
     selectedId=id;
     const node=LAYOUT.find(n=>n.id===id), data=state.nodes[id];
+    const defaultTitle = node.type==='hideout'?'Gang Hideout':'Territory Plot';
     document.getElementById('drawerKicker').textContent= node.type==='hideout'?'Settlement':'Holding';
-    document.getElementById('drawerTitle').textContent= node.type==='hideout'?'Gang Hideout':'Territory Plot';
+    // Drawer title: show custom label with inline edit for arbitrators
+    const titleEl = document.getElementById('drawerTitle');
+    if(isArbitrator){
+      titleEl.innerHTML='';
+      const inp=document.createElement('input');
+      inp.type='text'; inp.value=data.label||''; inp.placeholder=defaultTitle;
+      inp.style.cssText='width:100%;background:transparent;border:0;border-bottom:1px solid var(--edge);color:#eef6f1;font-family:\'Oswald\';font-size:20px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 0;outline:none;';
+      inp.addEventListener('input',()=>{ data.label=inp.value.trim()||null; commit(); });
+      titleEl.appendChild(inp);
+    } else {
+      titleEl.textContent = data.label || defaultTitle;
+    }
     drawerBody.innerHTML='';
     if(isArbitrator){
       if(node.type==='hideout'){
