@@ -859,8 +859,9 @@
 
       if(n.type==='hideout'){
         const g=el('div','gicon', owner?owner.icon:'⌖'); mod.appendChild(g);
-        const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); mod.appendChild(tag);
-        name=owner?owner.name:'Unclaimed'; sub='Hideout';
+        const light=owner?isLight(owner.color):true;
+        const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); tag.style.color=light?'':'#e8f2ec'; mod.appendChild(tag);
+        name=owner?owner.name:'Unclaimed'; sub=owner&&owner.type?owner.type:'Hideout';
         if(!owner) btn.classList.add('uncontrolled');
       }else{
         const t=data.terr?TERR_BY_KEY[data.terr]:null;
@@ -871,7 +872,9 @@
 
       const lbl=el('div','lbl'); lbl.style.setProperty('--c',c);
       lbl.appendChild(el('span','name',name));
-      const sb=el('span','sub'+(owner?' owner':''),sub); sb.style.setProperty('--c',c); lbl.appendChild(sb);
+      const sb=el('span','sub'+(owner?' owner':''),sub); sb.style.setProperty('--c',c);
+      if(n.type==='hideout'&&owner&&!isLight(owner.color)) sb.style.color='#e8f2ec';
+      lbl.appendChild(sb);
 
       btn.appendChild(mod); btn.appendChild(lbl);
       attachDrag(btn,n.id);
@@ -1062,6 +1065,7 @@
   }
   document.addEventListener('click',()=>document.querySelectorAll('.palette.open').forEach(p=>p.classList.remove('open')));
   function toHex(c){ if(/^#[0-9a-f]{6}$/i.test(c)) return c; const m=document.createElement('canvas').getContext('2d'); m.fillStyle=c; return m.fillStyle; }
+  function isLight(hex){ const h=toHex(hex); const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return (0.299*r+0.587*g+0.114*b)>140; }
   const PALETTES=['#f0962a','#cdbb4a','#4f93c9','#d23b3b','#9b6cd6','#ff5e7a','#4fd1a0','#6fc4d9','#e8a23d','#7ad6c4','#d06fb0','#88c34a','#ff6b1a','#5fa8ff','#e05a5a','#b48aff'];
 
 
