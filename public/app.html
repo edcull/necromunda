@@ -271,7 +271,7 @@
       <svg class="hivemap" id="hivemap" viewBox="0 0 1600 900" preserveAspectRatio="none"></svg>
       <div class="vig"></div>
       <div id="nodes"></div>
-      <div class="legend"><h3>Known Factions</h3><div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div><ul id="legendList"></ul></div>
+      <div class="legend"><h3>Gangs</h3><div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div><ul id="legendList"></ul></div>
     </div>
   </div>
 
@@ -468,7 +468,7 @@
   function hidePts(d,i){ if(d.h<=1) return [[d.cx,d.cy]]; const out=[], off=i*40; for(let k=0;k<d.h;k++){ const a=(off + k*360/d.h)*Math.PI/180, rr=d.r*0.27; out.push([d.cx+Math.cos(a)*rr, d.cy+Math.sin(a)*rr]); } return out; }
   let DISTRICTS=[], FAB_SITES=[], LAYOUT=[], LBI={};
   const inGap=(x,y,p)=>!DISTRICTS.some(d=>Math.hypot(x-d.cx,y-d.cy)<d.r*(p||1));
-  // keep the bottom-left corner clear for the Known Factions key
+  // keep the bottom-left corner clear for the Gangs key
   const LEGRECT=[0,556,300,900];
   function distLeg(x,y){ const dx=Math.max(LEGRECT[0]-x,0,x-LEGRECT[2]), dy=Math.max(LEGRECT[1]-y,0,y-LEGRECT[3]); return Math.hypot(dx,dy); }
   const nearLeg=(x,y,m)=> distLeg(x,y) < (m||0);
