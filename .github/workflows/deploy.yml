@@ -14,5 +14,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Ensure data directory exists
+        run: mkdir -p /home/archetek/necromunda-data
+
       - name: Restart service
         run: sudo systemctl restart necromunda
