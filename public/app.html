@@ -988,8 +988,6 @@
     let active=false, moved=false, sx=0, sy=0, ox=0, oy=0;
     function down(e){
       if(e.pointerType==='touch'){
-        // Touch: track movement on pointerup, open editor only if not moved
-        // (defer to pointerup + preventDefault to kill the synthetic click that would hit the scrim)
         active=true; moved=false; sx=e.clientX; sy=e.clientY;
         try{ btn.setPointerCapture(e.pointerId); }catch(_){}
         btn.addEventListener('pointermove',touchMove);
