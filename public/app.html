@@ -1106,7 +1106,8 @@
     ['sortTerr','sortRep','sortRat'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on', (id==='sortTerr'&&legendSort==='terr')||(id==='sortRep'&&legendSort==='rep')||(id==='sortRat'&&legendSort==='rat')); });
   }
   function countHoldings(gi){ let n=0; for(const id in state.nodes) if(state.nodes[id].gang===gi) n++; return n; }
-  function gangTerrList(gi){ const t=[]; for(const id in state.nodes){ const d=state.nodes[id]; if(d.gang===gi&&d.terr){const tr=TERR_BY_KEY[d.terr];if(tr)t.push({...tr,customLabel:d.label||null});} } return t; }
+  function gangTerrList(gi){ const t=[]; for(const id in state.nodes){ const d=state.nodes[id]; if(d.gang===gi&&d.terr){const tr=TERR_BY_KEY[d.terr];if(tr)t.push({...tr,customLabel:d.label||null,nodeId:id});} } return t; }
+  function findHideoutNodeId(gi){ for(const id in state.nodes){ const d=state.nodes[id]; const n=LAYOUT.find(x=>x.id===id); if(n&&n.type==='hideout'&&d.gang===gi) return id; } return null; }
   function hideoutStats(ownerG,gi){ const wrap=el('div'); if(!ownerG) return wrap;
     const stats=el('div','hideout-stats');
     const re=el('div','hstat'); re.appendChild(el('span','hstat-label','Reputation')); re.appendChild(el('span','hstat-val hstat-rep',String(ownerG.rep||0))); stats.appendChild(re);
@@ -1118,6 +1119,8 @@
       const list=el('div','terr-held');
       terrs.forEach(t=>{
         const card=el('div','terr-held-card');
+        card.style.cursor='pointer';
+        card.addEventListener('click',()=>{ if(t.nodeId) openEditor(t.nodeId); });
         const tile=el('div','tile'); tile.innerHTML=svgIcon(t.key); card.appendChild(tile);
         const info=el('div','tinfo');
         info.appendChild(el('div','tname',t.customLabel||t.name));
@@ -1167,7 +1170,11 @@
         drawerBody.appendChild(terrField(data.terr, key=>{
           if(key){ for(const oid in state.nodes){ if(oid!==id && state.nodes[oid].terr===key) state.nodes[oid].terr=null; } }
           data.terr=key; commit(); openEditor(id); }));
-        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); }, 'Controlling Gang', true));
+        const gangF=gangField(data.gang, gi=>{ data.gang=gi; commit(); openEditor(id); }, 'Controlling Gang', true);
+        // Make the ownerline clickable to navigate to gang hideout
+        const ol=gangF.querySelector('.ownerline');
+        if(ol){ ol.style.cursor='pointer'; ol.addEventListener('click',()=>{ const h=findHideoutNodeId(data.gang); if(h) openEditor(h); }); }
+        drawerBody.appendChild(gangF);
         drawerBody.appendChild(terrCard(data.terr));
       }
     }else{
@@ -1177,6 +1184,10 @@
       const dot = el('span','dot', ownerG ? ownerG.icon : '\u2205'); dot.style.background = ownerG ? ownerG.color : NEUTRAL;
       ownerLine.appendChild(dot);
       ownerLine.appendChild(el('span','who', ownerG ? ownerG.name : (node.type==='hideout'?'Unclaimed':'Uncontrolled')));
+      if(node.type!=='hideout' && ownerG){
+        ownerLine.style.cursor='pointer';
+        ownerLine.addEventListener('click',()=>{ const h=findHideoutNodeId(data.gang); if(h) openEditor(h); });
+      }
       const ownerField = el('div','field');
       ownerField.appendChild(el('label',null, node.type==='hideout'?'Gang Name':'Controlling Gang'));
       ownerField.appendChild(ownerLine);
