@@ -51,6 +51,9 @@
   .corner.bl{bottom:-1px;left:-1px;border-right:0;border-top:0}
   .corner.br{bottom:-1px;right:-1px;border-left:0;border-top:0}
 
+  /* ---------- pan layer (wraps SVG + nodes) ---------- */
+  #panLayer{position:absolute;inset:0}
+
   /* ---------- stage / underhive ---------- */
   .stage{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;
     background:
@@ -251,7 +254,86 @@
     .node.hideout .module{width:46px;height:46px;font-size:21px}
     .node.territory .module{width:42px;height:42px}
     .terricon{width:25px;height:25px}
-    .legend{max-width:150px;padding:7px 9px}.legend li{font-size:9px}
+  }
+
+  /* ===== MOBILE LAYOUT ===== */
+  @media (max-width: 768px) {
+    body { overflow: hidden; }
+
+    /* Fixed top bar */
+    .wrap { padding: 0; max-width: 100%; }
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+      height: 56px; min-height: 56px;
+      background: var(--panel); border-bottom: 1px solid var(--edge);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px; gap: 8px; flex-wrap: nowrap; margin-bottom: 0;
+    }
+    .brand .sector { font-size: 14px; line-height: 1; }
+    .brand .campaign { font-size: 10px; margin-top: 3px; }
+    .controls { gap: 6px; flex-wrap: nowrap; }
+    .controls .save-tag { display: none; }
+    .btn { padding: 6px 10px; font-size: 10px; }
+
+    /* Hide the desktop frame chrome */
+    .frame { border: none; background: none; box-shadow: none; padding: 0; }
+    .frame::before { display: none; }
+    .corner { display: none; }
+    .footnote { display: none; }
+
+    /* Map area fills between topbar and legend panel */
+    .stage {
+      position: fixed;
+      top: 56px;
+      left: 0; right: 0;
+      bottom: 180px;
+      width: 100%;
+      aspect-ratio: unset;
+      overflow: hidden;
+    }
+
+    /* The pannable layer inside the map */
+    #panLayer {
+      position: absolute;
+      top: 0; left: 0;
+      width: 1600px; height: 900px;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    svg.hivemap {
+      position: absolute; top: 0; left: 0;
+      width: 1600px; height: 900px;
+    }
+
+    #nodes {
+      position: absolute; top: 0; left: 0;
+      width: 1600px; height: 900px;
+    }
+
+    /* Node positions are in % of #nodes, which is now 1600×900 px */
+
+    /* Fixed bottom legend panel */
+    .legend {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      z-index: 20; max-width: 100%;
+      border-radius: 0; border-left: none; border-right: none; border-bottom: none;
+      background: rgba(6,11,9,.96);
+      padding: 8px 12px 10px;
+      height: 180px; box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .legend h3 { margin: 0 0 4px; }
+    .legend ul { gap: 2px; }
+    .legend li { font-size: 10px; }
+    .legend-sort { margin-bottom: 6px; }
+
+    /* Hide the hint text on mobile */
+    .hint { display: none; }
+
+    /* Deck and vignette stay inside panLayer */
+    .deck { pointer-events: none; }
+    .vig { pointer-events: none; }
   }
 </style>
 
@@ -274,9 +356,11 @@
     <span class="corner bl"></span><span class="corner br"></span>
     <div class="stage" id="stage">
       <div class="deck"></div>
-      <svg class="hivemap" id="hivemap" viewBox="0 0 1600 900" preserveAspectRatio="none"></svg>
+      <div id="panLayer">
+        <svg class="hivemap" id="hivemap" viewBox="0 0 1600 900" preserveAspectRatio="none"></svg>
+        <div id="nodes"></div>
+      </div>
       <div class="vig"></div>
-      <div id="nodes"></div>
       <div class="legend"><h3>Gangs</h3><div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div><ul id="legendList"></ul></div>
     </div>
   </div>
@@ -1230,6 +1314,61 @@
     submitBtn.addEventListener('click', doAuth);
     iPass.addEventListener('keydown', e => { if(e.key === 'Enter') doAuth(); });
   }
+
+  /* ============ MOBILE PAN ============ */
+  (function initPan(){
+    const stage = document.getElementById('stage');
+    const layer = document.getElementById('panLayer');
+    let panX = 0, panY = 0;
+    let active = false, startX = 0, startY = 0, baseX = 0, baseY = 0;
+    let isMobile = false;
+
+    function checkMobile(){ isMobile = window.matchMedia('(max-width:768px)').matches; }
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    function clampPan(x, y){
+      const W = 1600, H = 900;
+      const sw = stage.clientWidth, sh = stage.clientHeight;
+      const minX = Math.min(0, sw - W), minY = Math.min(0, sh - H);
+      return { x: Math.max(minX, Math.min(0, x)), y: Math.max(minY, Math.min(0, y)) };
+    }
+
+    function applyPan(x, y){
+      const c = clampPan(x, y);
+      panX = c.x; panY = c.y;
+      layer.style.transform = `translate(${panX}px,${panY}px)`;
+    }
+
+    stage.addEventListener('pointerdown', e => {
+      if(!isMobile) return;
+      // Only pan on the stage background / panLayer itself, not node buttons
+      if(e.target.closest('.node')) return;
+      active = true;
+      startX = e.clientX; startY = e.clientY;
+      baseX = panX; baseY = panY;
+      stage.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    }, { passive: false });
+
+    stage.addEventListener('pointermove', e => {
+      if(!active) return;
+      applyPan(baseX + (e.clientX - startX), baseY + (e.clientY - startY));
+    });
+
+    stage.addEventListener('pointerup', () => { active = false; });
+    stage.addEventListener('pointercancel', () => { active = false; });
+
+    // On initial mobile load, centre the map
+    function centreMap(){
+      if(!isMobile) return;
+      const sw = stage.clientWidth, sh = stage.clientHeight;
+      applyPan((sw - 1600) / 2, (sh - 900) / 2);
+    }
+    window.addEventListener('resize', centreMap);
+    // Run after layout
+    setTimeout(centreMap, 0);
+  })();
 
   /* ============ SETUP MODAL WIRING ============ */
   document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
