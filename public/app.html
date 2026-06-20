@@ -865,8 +865,7 @@
 
       if(n.type==='hideout'){
         const g=el('div','gicon', owner?owner.icon:'⌖'); mod.appendChild(g);
-        const light=owner?isLight(owner.color):true;
-        const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); tag.style.color=light?'':'#e8f2ec'; mod.appendChild(tag);
+        const tag=el('div','tag','Hideout'); tag.style.setProperty('--c',c); tag.style.color='#e8f2ec'; mod.appendChild(tag);
         name=owner?owner.name:'Unclaimed'; sub=owner&&owner.type?owner.type:'Hideout';
         if(!owner) btn.classList.add('uncontrolled');
       }else{
@@ -879,7 +878,7 @@
       const lbl=el('div','lbl'); lbl.style.setProperty('--c',c);
       lbl.appendChild(el('span','name',name));
       const sb=el('span','sub'+(owner?' owner':''),sub); sb.style.setProperty('--c',c);
-      if(n.type==='hideout'&&owner&&!isLight(owner.color)) sb.style.color='#e8f2ec';
+      if(n.type==='hideout'&&owner) sb.style.color='#e8f2ec';
       lbl.appendChild(sb);
 
       btn.appendChild(mod); btn.appendChild(lbl);
