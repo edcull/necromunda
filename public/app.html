@@ -1936,8 +1936,14 @@
       cpNavLabel.textContent = cd.phase==='downtime' ? 'Downtime' : cd.label;
       cpPrev.disabled = viewIdx <= 0;
       cpNext.disabled = viewIdx >= CYCLE_DEFS.length - 1;
-      // Advance only on current cycle, arb only, and not the last
-      cpAdvance.style.display = (isArbitrator && isCurrentCycle && curIdx < CYCLE_DEFS.length-1) ? '' : 'none';
+      // Advance on current cycle, arb only, not last; Roll Back when viewing a past cycle as arb
+      if(isArbitrator && isCurrentCycle && curIdx < CYCLE_DEFS.length-1){
+        cpAdvance.style.display=''; cpAdvance.textContent='Advance ▶';
+      } else if(isArbitrator && !isCurrentCycle && viewIdx < curIdx){
+        cpAdvance.style.display=''; cpAdvance.textContent='◀ Set Active';
+      } else {
+        cpAdvance.style.display='none';
+      }
 
       const cyc = state.cycles.find(c=>c.id===viewingCycleId)||{challenges:[]};
 
@@ -1980,7 +1986,7 @@
       const hdr = document.createElement('div');
       hdr.className = 'cp-section-head';
       hdr.innerHTML = '<span>Challenges</span>';
-      if(isArbitrator && isCurrentCycle){
+      if(isArbitrator){
         const addBtn = document.createElement('button');
         addBtn.className = 'cp-add-btn'; addBtn.textContent = '+ New Challenge';
         addBtn.addEventListener('click', ()=>{ showingForm=!showingForm; renderPanel(); });
@@ -1989,7 +1995,7 @@
       cpBody.appendChild(hdr);
 
       // New challenge form
-      if(isArbitrator && isCurrentCycle && showingForm){
+      if(isArbitrator && showingForm){
         cpBody.appendChild(buildChallengeForm(cd.phase, cyc));
       }
 
@@ -2005,46 +2011,53 @@
         const order = {pending:0, refused:1, completed:2};
         return (order[a.status]||0)-(order[b.status]||0);
       });
-      sorted.forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator && isCurrentCycle)); });
+      sorted.forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator)); });
     }
 
     function buildChallengeForm(phase, cyc){
       const form = document.createElement('div');
       form.className = 'ch-form';
 
+      // Determine default challenger: lowest-rated gang not yet challenged this cycle
+      const alreadyChallenged = new Set(cyc.challenges.map(c=>c.challenger));
+      const defaultChallenger = [...Array(state.players).keys()]
+        .filter(i=>!alreadyChallenged.has(i))
+        .sort((a,b)=>(state.gangs[a].rating||0)-(state.gangs[b].rating||0))[0] ?? 0;
+
       // Challenger select
       const lbCh = document.createElement('label'); lbCh.textContent='Challenger';
       const selCh = document.createElement('select');
       for(let i=0;i<state.players;i++){
-        const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selCh.appendChild(o);
+        const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name;
+        if(i===defaultChallenger) o.selected=true;
+        selCh.appendChild(o);
       }
 
-      // Challenged select (defender — may be "None/Unclaimed" for occupation vs unclaimed)
+      // Challenged select — blank prompt first
       const lbDef = document.createElement('label'); lbDef.textContent='Challenged Gang';
       const selDef = document.createElement('select');
+      const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
       if(phase==='occupation'){
-        const noneOpt=document.createElement('option'); noneOpt.value=''; noneOpt.textContent='— Unclaimed —'; selDef.appendChild(noneOpt);
+        const unclaimedOpt=document.createElement('option'); unclaimedOpt.value='unclaimed'; unclaimedOpt.textContent='Unclaimed Territory'; selDef.appendChild(unclaimedOpt);
       }
       for(let i=0;i<state.players;i++){
         const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selDef.appendChild(o);
       }
 
-      // Territory select
+      // Territory select — blank prompt first
       const lbTerr = document.createElement('label'); lbTerr.textContent='Staked Territory';
       const selTerr = document.createElement('select');
       function populateTerritories(){
         selTerr.innerHTML='';
-        const cg = selDef.value===''?null:parseInt(selDef.value);
+        const raw=selDef.value;
+        const cg=(raw===''||raw==='unclaimed')?null:parseInt(raw);
         const avail = getAvailableTerritories(phase, cg);
-        if(avail.length===0){
-          const o=document.createElement('option'); o.value=''; o.textContent='No available territories'; selTerr.appendChild(o);
-        } else {
-          avail.forEach(n=>{
-            const o=document.createElement('option'); o.value=n.id;
-            const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
-            o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':''); selTerr.appendChild(o);
-          });
-        }
+        const prompt=document.createElement('option'); prompt.value=''; prompt.textContent='— Select Territory —'; selTerr.appendChild(prompt);
+        avail.forEach(n=>{
+          const o=document.createElement('option'); o.value=n.id;
+          const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
+          o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':''); selTerr.appendChild(o);
+        });
       }
       selDef.addEventListener('change', populateTerritories);
       populateTerritories();
@@ -2055,9 +2068,10 @@
       cancelBtn.addEventListener('click',()=>{ showingForm=false; renderPanel(); });
       saveBtn.addEventListener('click',()=>{
         const challenger=parseInt(selCh.value);
-        const challenged=selDef.value===''?null:parseInt(selDef.value);
+        const raw=selDef.value;
+        const challenged=(raw==='')?null:(raw==='unclaimed'?null:parseInt(raw));
         const territory=selTerr.value;
-        if(!territory){ return; }
+        if(!territory){ alert('Please select a territory.'); return; }
         const ch={
           id:'ch-'+Date.now(),
           challenger, challenged, territory,
@@ -2140,10 +2154,20 @@
       if(i<CYCLE_DEFS.length-1){ viewingCycleId=CYCLE_DEFS[i+1].id; showingForm=false; renderPanel(); }
     });
     cpAdvance.addEventListener('click',()=>{
-      const i=CYCLE_DEFS.findIndex(d=>d.id===state.currentCycleId);
-      if(i<CYCLE_DEFS.length-1){
-        state.currentCycleId=CYCLE_DEFS[i+1].id;
-        viewingCycleId=state.currentCycleId;
+      const curIdx=CYCLE_DEFS.findIndex(d=>d.id===state.currentCycleId);
+      const viewIdx=CYCLE_DEFS.findIndex(d=>d.id===viewingCycleId);
+      if(viewingCycleId===state.currentCycleId){
+        // Advance forward
+        if(curIdx<CYCLE_DEFS.length-1){
+          state.currentCycleId=CYCLE_DEFS[curIdx+1].id;
+          viewingCycleId=state.currentCycleId;
+          showingForm=false;
+          commit(); updateCycleBtn(); renderPanel();
+        }
+      } else if(viewIdx<curIdx){
+        // Roll back to this cycle
+        state.currentCycleId=viewingCycleId;
+        showingForm=false;
         commit(); updateCycleBtn(); renderPanel();
       }
     });
