@@ -2096,6 +2096,7 @@
       const card=document.createElement('div');
       card.className='ch-card'+(ch.status==='pending'?' ch-locked':'')+(ch.status!=='pending'?' ch-done':'');
 
+      // Top row: territory + badge
       const top=document.createElement('div'); top.className='ch-top';
       const terrDiv=document.createElement('div'); terrDiv.className='ch-territory';
       const lbl=nodeLabel(ch.territory); const sub=nodeSubLabel(ch.territory);
@@ -2135,37 +2136,50 @@
       }
       card.appendChild(gangsDiv);
 
-      // Result line for completed
+      // Result line + trash icon inline (completed/refused only)
       if(ch.status!=='pending'){
-        const rl=document.createElement('div'); rl.className='ch-result-line';
-        if(ch.status==='refused') rl.textContent='Refused — '+gangName(ch.challenger)+' claims territory';
-        else if(ch.result==='draw') rl.textContent='Draw — no ownership change';
-        else if(ch.result==='challenger') rl.textContent=gangName(ch.challenger)+' wins — claims territory';
-        else if(ch.result==='challenged') rl.textContent=gangName(ch.challenged)+' wins — holds territory';
+        const rl=document.createElement('div');
+        rl.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px';
+        const txt=document.createElement('span'); txt.className='ch-result-line'; txt.style.margin='0';
+        if(ch.status==='refused') txt.textContent='Refused — '+gangName(ch.challenger)+' claims territory';
+        else if(ch.result==='draw') txt.textContent='Draw — no ownership change';
+        else if(ch.result==='challenger') txt.textContent=gangName(ch.challenger)+' wins — claims territory';
+        else if(ch.result==='challenged') txt.textContent=gangName(ch.challenged)+' wins — holds territory';
+        rl.appendChild(txt);
+        if(canEdit){
+          const trashBtn=document.createElement('button');
+          trashBtn.title='Delete challenge';
+          trashBtn.style.cssText='background:transparent;border:0;color:var(--faint);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;flex:0 0 auto;transition:color .12s';
+          trashBtn.innerHTML='🗑';
+          trashBtn.addEventListener('mouseover',()=>trashBtn.style.color='#e86040');
+          trashBtn.addEventListener('mouseout',()=>trashBtn.style.color='var(--faint)');
+          trashBtn.addEventListener('click',()=>{
+            const cyc=state.cycles.find(c=>c.challenges.some(x=>x.id===ch.id));
+            if(cyc){ cyc.challenges=cyc.challenges.filter(x=>x.id!==ch.id); commit(); renderPanel(); }
+          });
+          rl.appendChild(trashBtn);
+        }
         card.appendChild(rl);
       }
 
+      // Pending actions: Refused | Record Result | 🗑
       if(canEdit && ch.status==='pending'){
         const actions=document.createElement('div'); actions.className='ch-actions';
         const refBtn=document.createElement('button'); refBtn.className='ch-btn'; refBtn.textContent='Refused';
         refBtn.addEventListener('click',()=>openResultModal(ch,'refused'));
         const resBtn=document.createElement('button'); resBtn.className='ch-btn'; resBtn.textContent='Record Result';
         resBtn.addEventListener('click',()=>openResultModal(ch,'game'));
-        const delBtn=document.createElement('button'); delBtn.className='ch-btn danger'; delBtn.textContent='Delete';
-        delBtn.addEventListener('click',()=>{
+        const trashBtn=document.createElement('button');
+        trashBtn.title='Delete challenge';
+        trashBtn.style.cssText='background:transparent;border:1px solid var(--edge);color:var(--faint);font-size:14px;cursor:pointer;padding:4px 8px;border-radius:2px;line-height:1;transition:color .12s,border-color .12s';
+        trashBtn.innerHTML='🗑';
+        trashBtn.addEventListener('mouseover',()=>{ trashBtn.style.color='#e86040'; trashBtn.style.borderColor='#e86040'; });
+        trashBtn.addEventListener('mouseout',()=>{ trashBtn.style.color='var(--faint)'; trashBtn.style.borderColor='var(--edge)'; });
+        trashBtn.addEventListener('click',()=>{
           const cyc=state.cycles.find(c=>c.challenges.some(x=>x.id===ch.id));
           if(cyc){ cyc.challenges=cyc.challenges.filter(x=>x.id!==ch.id); commit(); renderPanel(); }
         });
-        actions.appendChild(refBtn); actions.appendChild(resBtn); actions.appendChild(delBtn);
-        card.appendChild(actions);
-      } else if(canEdit && ch.status!=='pending'){
-        const actions=document.createElement('div'); actions.className='ch-actions';
-        const delBtn=document.createElement('button'); delBtn.className='ch-btn danger'; delBtn.textContent='Delete';
-        delBtn.addEventListener('click',()=>{
-          const cyc=state.cycles.find(c=>c.challenges.some(x=>x.id===ch.id));
-          if(cyc){ cyc.challenges=cyc.challenges.filter(x=>x.id!==ch.id); commit(); renderPanel(); }
-        });
-        actions.appendChild(delBtn);
+        actions.appendChild(refBtn); actions.appendChild(resBtn); actions.appendChild(trashBtn);
         card.appendChild(actions);
       }
       return card;
