@@ -106,16 +106,18 @@ location /necromunda {
 
 ## Security
 
-The session secret is read from a `.env` file in the repo root:
+The session secret is read from a `.env` file. The server checks `$DATA_DIR/.env` first (recommended — persists across deployments), then falls back to `.env` in the repo root.
 
-```
-SESSION_SECRET=your-strong-random-secret
-```
-
-Generate one with:
+Generate a secret:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Create the file (replace path with your `DATA_DIR`):
+
+```bash
+echo "SESSION_SECRET=<paste-output-here>" > /home/archetek/necromunda_data/.env
 ```
 
 The `.env` file is gitignored and never committed. Changing the secret invalidates active sessions (users get logged out) but does not affect stored passwords.

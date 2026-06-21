@@ -5,14 +5,16 @@ const path = require('path');
 const fs = require('fs');
 const db = require('./db');
 
-// Load .env file if present (simple key=value, no library needed)
-const envPath = path.join(__dirname, '..', '.env');
-if (fs.existsSync(envPath)) {
-  fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+// Load .env — prefer DATA_DIR location (persistent across deployments), fall back to repo root
+function loadEnv(p) {
+  if (!fs.existsSync(p)) return;
+  fs.readFileSync(p, 'utf8').split('\n').forEach(line => {
     const m = line.match(/^\s*([^#=]+?)\s*=\s*(.*?)\s*$/);
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
   });
 }
+if (process.env.DATA_DIR) loadEnv(path.join(process.env.DATA_DIR, '.env'));
+loadEnv(path.join(__dirname, '..', '.env'));
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 if (!SESSION_SECRET || SESSION_SECRET === 'CHANGE_ME_IN_PRODUCTION') {
