@@ -268,7 +268,165 @@
     .terricon{width:25px;height:25px}
   }
 
-  /* ===== MOBILE LAYOUT ===== */
+  /* ===== CYCLES PANEL ===== */
+  #cycleBtn {
+    position: absolute; bottom: 14px; left: 14px; z-index: 6;
+    background: rgba(6,11,9,.82); border: 1px solid var(--edge);
+    color: var(--tox); font-family: 'Oswald'; font-size: 11px; font-weight: 600;
+    letter-spacing: .2em; text-transform: uppercase;
+    padding: 7px 13px; border-radius: 3px; cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  #cycleBtn:hover { border-color: var(--tox); box-shadow: 0 0 10px -2px var(--tox); }
+  #cycleBtn .cb-phase { font-size: 9px; letter-spacing: .18em; color: var(--muted); display: block; margin-bottom: 1px; }
+  #cycleBtn .cb-label { display: block; }
+
+  /* Desktop: slide-in from left */
+  #cyclePanel {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 340px; z-index: 35;
+    background: var(--panel); border-right: 1px solid var(--edge);
+    display: flex; flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 40px rgba(0,0,0,.5);
+  }
+  #cyclePanel.open { transform: translateX(0); }
+  #cycleScrim {
+    display: none; position: fixed; inset: 0; z-index: 34;
+    background: rgba(0,0,0,.45);
+  }
+  #cycleScrim.show { display: block; }
+
+  .cp-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px; border-bottom: 1px solid var(--edge); flex: 0 0 auto;
+  }
+  .cp-head .kicker { font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--tox); }
+  .cp-head h2 { margin: 3px 0 0; font-size: 18px; text-transform: uppercase; color: #eef6f1; }
+  .cp-nav {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-bottom: 1px solid var(--edge);
+    flex: 0 0 auto;
+  }
+  .cp-nav-arrow {
+    background: transparent; border: 1px solid var(--edge); color: var(--tox);
+    width: 28px; height: 28px; border-radius: 2px; cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .12s;
+  }
+  .cp-nav-arrow:hover:not(:disabled) { border-color: var(--tox); }
+  .cp-nav-arrow:disabled { opacity: .3; cursor: default; }
+  .cp-nav-label {
+    flex: 1; text-align: center; font-family: 'Oswald'; font-size: 13px;
+    letter-spacing: .12em; text-transform: uppercase; color: #cdd8d2;
+  }
+  .cp-nav-label .cn-phase { font-size: 10px; letter-spacing: .22em; color: var(--muted); display: block; }
+  .cp-nav-advance {
+    background: var(--tox); border: 0; color: #04140d;
+    font-family: 'Oswald'; font-size: 10px; font-weight: 700; letter-spacing: .16em;
+    text-transform: uppercase; padding: 5px 10px; border-radius: 2px; cursor: pointer;
+    transition: opacity .12s;
+  }
+  .cp-nav-advance:hover { opacity: .85; }
+  .cp-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .cp-section-head {
+    font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--tox); margin: 12px 0 8px; display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .cp-add-btn {
+    background: transparent; border: 1px solid var(--edge); color: var(--tox);
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 2px; cursor: pointer; font-family: 'Oswald';
+    transition: border-color .12s;
+  }
+  .cp-add-btn:hover { border-color: var(--tox); }
+  .ch-card {
+    background: rgba(0,0,0,.22); border: 1px solid var(--edge-soft);
+    border-radius: 3px; padding: 10px 12px; margin-bottom: 8px;
+  }
+  .ch-card.ch-locked { border-color: rgba(212,160,23,.3); }
+  .ch-card.ch-done { opacity: .65; }
+  .ch-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .ch-territory {
+    flex: 1; font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: #e8f2ec; line-height: 1.3;
+  }
+  .ch-territory .ch-terr-sub { font-size: 9px; font-weight: 400; color: var(--muted); letter-spacing: .08em; display: block; margin-top: 1px; }
+  .ch-status-badge {
+    font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 2px; font-family: 'Oswald'; font-weight: 600; flex: 0 0 auto;
+  }
+  .ch-status-badge.pending { background: rgba(212,160,23,.18); color: #d4a017; border: 1px solid rgba(212,160,23,.3); }
+  .ch-status-badge.refused { background: rgba(232,100,60,.18); color: #e86040; border: 1px solid rgba(232,100,60,.3); }
+  .ch-status-badge.completed { background: rgba(95,217,160,.12); color: var(--tox); border: 1px solid rgba(95,217,160,.25); }
+  .ch-gangs { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text); margin-bottom: 8px; }
+  .ch-gang-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+  .ch-vs { color: var(--faint); font-size: 9px; letter-spacing: .1em; }
+  .ch-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ch-btn {
+    background: transparent; border: 1px solid var(--edge); color: var(--text);
+    font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-family: 'Oswald';
+    padding: 4px 10px; border-radius: 2px; cursor: pointer; transition: border-color .12s, color .12s;
+  }
+  .ch-btn:hover { border-color: var(--tox); color: var(--tox); }
+  .ch-btn.danger:hover { border-color: #e86040; color: #e86040; }
+  .ch-result-line { font-size: 10px; color: var(--muted); margin-top: 4px; letter-spacing: .06em; }
+  .cp-downtime { text-align: center; padding: 32px 0; color: var(--muted); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+  .cp-downtime .dt-icon { font-size: 32px; display: block; margin-bottom: 10px; }
+
+  /* Challenge form inside panel */
+  .ch-form { background: rgba(0,0,0,.28); border: 1px solid var(--edge); border-radius: 3px; padding: 12px; margin-bottom: 10px; }
+  .ch-form label { display: block; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin: 8px 0 3px; }
+  .ch-form label:first-child { margin-top: 0; }
+  .ch-form select { width: 100%; background: var(--void); border: 1px solid var(--edge); color: var(--text); font-family: 'Rajdhani'; font-size: 13px; padding: 7px 9px; border-radius: 2px; }
+  .ch-form-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .ch-form-btns .btn { flex: 1; font-size: 11px; padding: 8px; }
+
+  /* Result prompt modal */
+  #resultModal {
+    display: none; position: fixed; inset: 0; z-index: 50;
+    background: rgba(0,0,0,.65); align-items: center; justify-content: center;
+  }
+  #resultModal.show { display: flex; }
+  .rm-sheet {
+    background: var(--panel); border: 1px solid var(--edge); border-radius: 4px;
+    width: min(420px, 92vw); box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  }
+  .rm-head { padding: 16px 20px; border-bottom: 1px solid var(--edge); }
+  .rm-head .kicker { font-size: 10px; letter-spacing: .3em; color: var(--tox); text-transform: uppercase; }
+  .rm-head h3 { margin: 3px 0 0; font-size: 17px; font-family: 'Oswald'; text-transform: uppercase; color: #eef6f1; }
+  .rm-body { padding: 16px 20px; }
+  .rm-result-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .rm-result-btn {
+    flex: 1; min-width: 80px; background: rgba(0,0,0,.3); border: 1px solid var(--edge);
+    color: var(--text); font-family: 'Oswald'; font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; padding: 9px 6px; border-radius: 2px; cursor: pointer; transition: .14s;
+  }
+  .rm-result-btn:hover, .rm-result-btn.on { border-color: var(--tox); color: var(--tox); background: rgba(95,217,160,.07); }
+  .rm-result-btn.on { box-shadow: 0 0 10px -3px var(--tox); }
+  .rm-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .rm-stat-col h4 { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  .rm-stat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .rm-stat-label { font-size: 11px; color: var(--text); flex: 1; }
+  .rm-stat-input { width: 64px; background: var(--void); border: 1px solid var(--edge); color: var(--text); font-family: 'Rajdhani'; font-size: 14px; padding: 5px 7px; border-radius: 2px; text-align: center; }
+  .rm-foot { padding: 12px 20px; border-top: 1px solid var(--edge); display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* Mobile overrides for cycle panel */
+  @media (max-width: 1200px) {
+    #cycleBtn { bottom: 50px; }
+    #cyclePanel {
+      top: auto; left: 0; right: 0; bottom: 0; width: 100%;
+      height: 70vh; max-height: 70vh;
+      transform: translateY(100%);
+      border-right: none; border-top: 1px solid var(--edge);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+    }
+    #cyclePanel.open { transform: translateY(0); }
+  }
+
+
   @media (max-width: 1200px) {
     body { overflow: hidden; }
 
@@ -458,6 +616,10 @@
         <div id="nodes"></div>
       </div>
       <div class="vig"></div>
+      <button id="cycleBtn" aria-label="Cycles">
+        <span class="cb-phase" id="cycleBtnPhase">Phase</span>
+        <span class="cb-label" id="cycleBtnLabel">Cycles</span>
+      </button>
       <div id="minimap">
         <div id="minimapView"></div>
       </div>
@@ -484,6 +646,41 @@
     <button class="x" id="drawerClose" aria-label="Close">✕</button></div>
   <div class="dbody" id="drawerBody"></div>
 </aside>
+
+<div id="cycleScrim"></div>
+<aside id="cyclePanel" aria-label="Campaign cycles">
+  <div class="cp-head">
+    <div><div class="kicker" id="cpKicker">Dominion</div><h2 id="cpTitle">Cycles</h2></div>
+    <button class="x" id="cyclePanelClose" aria-label="Close">✕</button>
+  </div>
+  <div class="cp-nav">
+    <button class="cp-nav-arrow" id="cpPrev">◀</button>
+    <div class="cp-nav-label">
+      <span class="cn-phase" id="cpNavPhase"></span>
+      <span id="cpNavLabel"></span>
+    </div>
+    <button class="cp-nav-arrow" id="cpNext">▶</button>
+    <button class="cp-nav-advance" id="cpAdvance" style="display:none">Advance ▶</button>
+  </div>
+  <div class="cp-body" id="cpBody"></div>
+</aside>
+
+<div id="resultModal" role="dialog" aria-modal="true" aria-label="Record result">
+  <div class="rm-sheet">
+    <div class="rm-head">
+      <div class="kicker">Challenge Result</div>
+      <h3 id="rmTitle">Record Outcome</h3>
+    </div>
+    <div class="rm-body">
+      <div class="rm-result-btns" id="rmResultBtns"></div>
+      <div class="rm-stat-grid" id="rmStatGrid"></div>
+    </div>
+    <div class="rm-foot">
+      <button class="btn ghost" id="rmCancel">Cancel</button>
+      <button class="btn" id="rmConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal" id="modal" aria-label="Campaign setup">
   <div class="sheet">
@@ -762,10 +959,24 @@
   /* ============ STATE ============ */
   let state = null, selectedId = null;
 
+  const CYCLE_DEFS = [
+    {id:'occ-1',phase:'occupation',cycle:1,label:'Cycle 1'},
+    {id:'occ-2',phase:'occupation',cycle:2,label:'Cycle 2'},
+    {id:'occ-3',phase:'occupation',cycle:3,label:'Cycle 3'},
+    {id:'downtime',phase:'downtime',cycle:null,label:'Downtime'},
+    {id:'tak-1',phase:'takeover',cycle:1,label:'Cycle 1'},
+    {id:'tak-2',phase:'takeover',cycle:2,label:'Cycle 2'},
+    {id:'tak-3',phase:'takeover',cycle:3,label:'Cycle 3'},
+  ];
+
+  function defaultCycles(){
+    return CYCLE_DEFS.map(d=>({id:d.id,challenges:[]}));
+  }
+
   function defaultState(){
     const nodes={};
     LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null,label:null}:{terr:null,gang:null,label:null}; });
-    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[]};
+    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1'};
   }
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
   function mergeState(loaded){
@@ -785,6 +996,13 @@
       const p=loaded.pos&&loaded.pos[n.id];
       if(p&&isFinite(p.x)&&isFinite(p.y)) s.pos[n.id]={x:Math.max(2,Math.min(98,p.x)),y:Math.max(4,Math.min(96,p.y))}; });
     s.terrPool = Array.isArray(loaded.terrPool)?loaded.terrPool.filter(k=>TERR_BY_KEY[k]):[];
+    // cycles
+    const loadedCycles = Array.isArray(loaded.cycles) ? loaded.cycles : [];
+    s.cycles = CYCLE_DEFS.map(d=>{
+      const lc = loadedCycles.find(c=>c.id===d.id)||{};
+      return {id:d.id, challenges: Array.isArray(lc.challenges)?lc.challenges:[]};
+    });
+    s.currentCycleId = CYCLE_DEFS.find(d=>d.id===loaded.currentCycleId) ? loaded.currentCycleId : 'occ-1';
     return s;
   }
 
@@ -1098,6 +1316,7 @@
   function render(){
     document.getElementById('sectorName').textContent=state.sector;
     document.getElementById('campaignName').textContent=state.campaign;
+    if(window._updateCycleBtn) window._updateCycleBtn();
     nodesWrap.innerHTML='';
     LAYOUT.forEach(n=>{
       const data=state.nodes[n.id];
@@ -1593,6 +1812,409 @@
     window.addEventListener('resize', centreMap);
     // Run after layout
     setTimeout(centreMap, 0);
+  })();
+
+  /* ============ CYCLES PANEL ============ */
+  (function initCycles(){
+    const panel = document.getElementById('cyclePanel');
+    const scrim = document.getElementById('cycleScrim');
+    const btn = document.getElementById('cycleBtn');
+    const closeBtn = document.getElementById('cyclePanelClose');
+    const cpBody = document.getElementById('cpBody');
+    const cpNavPhase = document.getElementById('cpNavPhase');
+    const cpNavLabel = document.getElementById('cpNavLabel');
+    const cpPrev = document.getElementById('cpPrev');
+    const cpNext = document.getElementById('cpNext');
+    const cpAdvance = document.getElementById('cpAdvance');
+    const cycleBtnPhase = document.getElementById('cycleBtnPhase');
+    const cycleBtnLabel = document.getElementById('cycleBtnLabel');
+
+    // Viewing cycle (may differ from current/active)
+    let viewingCycleId = null;
+
+    function openPanel(){
+      viewingCycleId = state.currentCycleId;
+      renderPanel();
+      panel.classList.add('open');
+      scrim.classList.add('show');
+    }
+    function closePanel(){
+      panel.classList.remove('open');
+      scrim.classList.remove('show');
+    }
+    btn.addEventListener('click', openPanel);
+    closeBtn.addEventListener('click', closePanel);
+    scrim.addEventListener('click', closePanel);
+
+    function cycleDefFor(id){ return CYCLE_DEFS.find(d=>d.id===id); }
+    function phaseLabel(phase){ return phase==='occupation'?'Occupation':phase==='takeover'?'Takeover':'Downtime'; }
+
+    function updateCycleBtn(){
+      if(!state) return;
+      const cd = cycleDefFor(state.currentCycleId);
+      if(!cd) return;
+      cycleBtnPhase.textContent = phaseLabel(cd.phase);
+      cycleBtnLabel.textContent = cd.phase==='downtime' ? 'Downtime' : cd.label;
+    }
+
+    // Which territories are valid to challenge in a given phase
+    function validTerritories(phase){
+      // territory nodes only
+      return LAYOUT.filter(n=>{
+        if(n.type!=='territory') return false;
+        const d = state.nodes[n.id];
+        if(!d) return false;
+        if(phase==='occupation'){
+          // unclaimed preferred; allow claimed if no unclaimed exist
+          return true; // filter below
+        }
+        return true;
+      });
+    }
+
+    function isTerritoryLocked(nodeId){
+      // locked if any non-completed challenge in any cycle targets this node
+      for(const cyc of state.cycles){
+        for(const ch of cyc.challenges){
+          if(ch.territory===nodeId && ch.status==='pending') return true;
+        }
+      }
+      return false;
+    }
+
+    function getAvailableTerritories(phase){
+      const all = LAYOUT.filter(n=>n.type==='territory');
+      const locked = new Set();
+      for(const cyc of state.cycles){
+        for(const ch of cyc.challenges){
+          if(ch.status==='pending') locked.add(ch.territory);
+        }
+      }
+      if(phase==='occupation'){
+        const unclaimed = all.filter(n=>!locked.has(n.id)&&!state.nodes[n.id].gang);
+        if(unclaimed.length>0) return unclaimed;
+        return all.filter(n=>!locked.has(n.id));
+      } else {
+        // takeover: claimed territories only
+        return all.filter(n=>!locked.has(n.id)&&state.nodes[n.id].gang!==null&&state.nodes[n.id].gang!==undefined);
+      }
+    }
+
+    function gangName(gi){ return (gi!==null&&gi!==undefined&&state.gangs[gi])?state.gangs[gi].name:'Unknown'; }
+    function gangColor(gi){ return (gi!==null&&gi!==undefined&&state.gangs[gi])?state.gangs[gi].color:'#666'; }
+
+    function nodeLabel(nodeId){
+      const d = state.nodes[nodeId];
+      const n = LAYOUT.find(x=>x.id===nodeId);
+      if(!n) return nodeId;
+      const t = d&&d.terr ? TERR_BY_KEY[d.terr] : null;
+      return d&&d.label ? d.label : (t ? t.name : 'Territory Plot');
+    }
+    function nodeSubLabel(nodeId){
+      const d = state.nodes[nodeId];
+      const t = d&&d.terr ? TERR_BY_KEY[d.terr] : null;
+      return t ? t.name : '';
+    }
+
+    /* ---- Challenge form ---- */
+    let showingForm = false;
+    function renderPanel(){
+      if(!state) return;
+      const cd = cycleDefFor(viewingCycleId);
+      const curIdx = CYCLE_DEFS.findIndex(d=>d.id===state.currentCycleId);
+      const viewIdx = CYCLE_DEFS.findIndex(d=>d.id===viewingCycleId);
+      const isCurrentCycle = viewingCycleId === state.currentCycleId;
+
+      // Nav
+      cpNavPhase.textContent = phaseLabel(cd.phase);
+      cpNavLabel.textContent = cd.phase==='downtime' ? 'Downtime' : cd.label;
+      cpPrev.disabled = viewIdx <= 0;
+      cpNext.disabled = viewIdx >= CYCLE_DEFS.length - 1;
+      // Advance only on current cycle, arb only, and not the last
+      cpAdvance.style.display = (isArbitrator && isCurrentCycle && curIdx < CYCLE_DEFS.length-1) ? '' : 'none';
+
+      const cyc = state.cycles.find(c=>c.id===viewingCycleId)||{challenges:[]};
+
+      cpBody.innerHTML = '';
+      showingForm = false;
+
+      if(cd.phase==='downtime'){
+        const dt = document.createElement('div');
+        dt.className = 'cp-downtime';
+        dt.innerHTML = '<span class="dt-icon">⚙</span>Between the occupation and takeover phases.<br>Gangs recover, trade, and prepare.';
+        cpBody.appendChild(dt);
+        return;
+      }
+
+      // Challenges section header
+      const hdr = document.createElement('div');
+      hdr.className = 'cp-section-head';
+      hdr.innerHTML = '<span>Challenges</span>';
+      if(isArbitrator && isCurrentCycle){
+        const addBtn = document.createElement('button');
+        addBtn.className = 'cp-add-btn'; addBtn.textContent = '+ New Challenge';
+        addBtn.addEventListener('click', ()=>{ showingForm=!showingForm; renderPanel(); });
+        hdr.appendChild(addBtn);
+      }
+      cpBody.appendChild(hdr);
+
+      // New challenge form
+      if(isArbitrator && isCurrentCycle && showingForm){
+        cpBody.appendChild(buildChallengeForm(cd.phase, cyc));
+      }
+
+      if(cyc.challenges.length===0 && !showingForm){
+        const empty = document.createElement('div');
+        empty.style.cssText='color:var(--muted);font-size:11px;letter-spacing:.1em;text-align:center;padding:24px 0;text-transform:uppercase';
+        empty.textContent='No challenges yet';
+        cpBody.appendChild(empty);
+      }
+
+      // Pending first, then completed
+      const sorted = [...cyc.challenges].sort((a,b)=>{
+        const order = {pending:0, refused:1, completed:2};
+        return (order[a.status]||0)-(order[b.status]||0);
+      });
+      sorted.forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator && isCurrentCycle)); });
+    }
+
+    function buildChallengeForm(phase, cyc){
+      const form = document.createElement('div');
+      form.className = 'ch-form';
+
+      // Challenger select
+      const lbCh = document.createElement('label'); lbCh.textContent='Challenger';
+      const selCh = document.createElement('select');
+      for(let i=0;i<state.players;i++){
+        const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selCh.appendChild(o);
+      }
+
+      // Challenged select (defender — may be "None/Unclaimed" for occupation vs unclaimed)
+      const lbDef = document.createElement('label'); lbDef.textContent='Challenged Gang';
+      const selDef = document.createElement('select');
+      const noneOpt=document.createElement('option'); noneOpt.value=''; noneOpt.textContent='— Unclaimed —'; selDef.appendChild(noneOpt);
+      for(let i=0;i<state.players;i++){
+        const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selDef.appendChild(o);
+      }
+
+      // Territory select
+      const lbTerr = document.createElement('label'); lbTerr.textContent='Staked Territory';
+      const selTerr = document.createElement('select');
+      function populateTerritories(){
+        selTerr.innerHTML='';
+        const avail = getAvailableTerritories(phase);
+        if(avail.length===0){
+          const o=document.createElement('option'); o.value=''; o.textContent='No available territories'; selTerr.appendChild(o);
+        } else {
+          avail.forEach(n=>{
+            const o=document.createElement('option'); o.value=n.id;
+            const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
+            o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':''); selTerr.appendChild(o);
+          });
+        }
+      }
+      populateTerritories();
+      // Refresh territory list when challenger/defender changes (doesn't change locked status but good UX)
+
+      const btns=document.createElement('div'); btns.className='ch-form-btns';
+      const saveBtn=document.createElement('button'); saveBtn.className='btn'; saveBtn.textContent='Add Challenge';
+      const cancelBtn=document.createElement('button'); cancelBtn.className='btn ghost'; cancelBtn.textContent='Cancel';
+      cancelBtn.addEventListener('click',()=>{ showingForm=false; renderPanel(); });
+      saveBtn.addEventListener('click',()=>{
+        const challenger=parseInt(selCh.value);
+        const challenged=selDef.value===''?null:parseInt(selDef.value);
+        const territory=selTerr.value;
+        if(!territory){ return; }
+        const ch={
+          id:'ch-'+Date.now(),
+          challenger, challenged, territory,
+          status:'pending', result:null,
+        };
+        const cycleObj = state.cycles.find(c=>c.id===viewingCycleId);
+        cycleObj.challenges.push(ch);
+        commit();
+        showingForm=false;
+        renderPanel();
+      });
+      btns.appendChild(cancelBtn); btns.appendChild(saveBtn);
+
+      form.appendChild(lbCh); form.appendChild(selCh);
+      form.appendChild(lbDef); form.appendChild(selDef);
+      form.appendChild(lbTerr); form.appendChild(selTerr);
+      form.appendChild(btns);
+      return form;
+    }
+
+    function buildChallengeCard(ch, canEdit){
+      const card=document.createElement('div');
+      card.className='ch-card'+(ch.status==='pending'?' ch-locked':'')+(ch.status!=='pending'?' ch-done':'');
+
+      const top=document.createElement('div'); top.className='ch-top';
+      const terrDiv=document.createElement('div'); terrDiv.className='ch-territory';
+      const lbl=nodeLabel(ch.territory); const sub=nodeSubLabel(ch.territory);
+      terrDiv.textContent=lbl;
+      if(sub&&sub!==lbl){ const s=document.createElement('span'); s.className='ch-terr-sub'; s.textContent=sub; terrDiv.appendChild(s); }
+      const badge=document.createElement('span'); badge.className='ch-status-badge '+ch.status;
+      badge.textContent=ch.status==='pending'?'Pending':ch.status==='refused'?'Refused':'Done';
+      top.appendChild(terrDiv); top.appendChild(badge); card.appendChild(top);
+
+      // Gangs line
+      const gangsDiv=document.createElement('div'); gangsDiv.className='ch-gangs';
+      const dot1=document.createElement('span'); dot1.className='ch-gang-dot'; dot1.style.background=gangColor(ch.challenger); gangsDiv.appendChild(dot1);
+      gangsDiv.appendChild(document.createTextNode(gangName(ch.challenger)));
+      const vs=document.createElement('span'); vs.className='ch-vs'; vs.textContent='vs'; gangsDiv.appendChild(vs);
+      if(ch.challenged!==null&&ch.challenged!==undefined){
+        const dot2=document.createElement('span'); dot2.className='ch-gang-dot'; dot2.style.background=gangColor(ch.challenged); gangsDiv.appendChild(dot2);
+        gangsDiv.appendChild(document.createTextNode(gangName(ch.challenged)));
+      } else {
+        gangsDiv.appendChild(document.createTextNode('Unclaimed'));
+      }
+      card.appendChild(gangsDiv);
+
+      // Result line for completed
+      if(ch.status!=='pending'){
+        const rl=document.createElement('div'); rl.className='ch-result-line';
+        if(ch.status==='refused') rl.textContent='Refused — '+gangName(ch.challenger)+' claims territory';
+        else if(ch.result==='draw') rl.textContent='Draw — no ownership change';
+        else if(ch.result==='challenger') rl.textContent=gangName(ch.challenger)+' wins — claims territory';
+        else if(ch.result==='challenged') rl.textContent=gangName(ch.challenged)+' wins — holds territory';
+        card.appendChild(rl);
+      }
+
+      if(canEdit && ch.status==='pending'){
+        const actions=document.createElement('div'); actions.className='ch-actions';
+        const refBtn=document.createElement('button'); refBtn.className='ch-btn'; refBtn.textContent='Refused';
+        refBtn.addEventListener('click',()=>openResultModal(ch,'refused'));
+        const resBtn=document.createElement('button'); resBtn.className='ch-btn'; resBtn.textContent='Record Result';
+        resBtn.addEventListener('click',()=>openResultModal(ch,'game'));
+        const delBtn=document.createElement('button'); delBtn.className='ch-btn danger'; delBtn.textContent='Delete';
+        delBtn.addEventListener('click',()=>{
+          const cyc=state.cycles.find(c=>c.challenges.some(x=>x.id===ch.id));
+          if(cyc){ cyc.challenges=cyc.challenges.filter(x=>x.id!==ch.id); commit(); renderPanel(); }
+        });
+        actions.appendChild(refBtn); actions.appendChild(resBtn); actions.appendChild(delBtn);
+        card.appendChild(actions);
+      }
+      return card;
+    }
+
+    cpPrev.addEventListener('click',()=>{
+      const i=CYCLE_DEFS.findIndex(d=>d.id===viewingCycleId);
+      if(i>0){ viewingCycleId=CYCLE_DEFS[i-1].id; renderPanel(); }
+    });
+    cpNext.addEventListener('click',()=>{
+      const i=CYCLE_DEFS.findIndex(d=>d.id===viewingCycleId);
+      if(i<CYCLE_DEFS.length-1){ viewingCycleId=CYCLE_DEFS[i+1].id; renderPanel(); }
+    });
+    cpAdvance.addEventListener('click',()=>{
+      const i=CYCLE_DEFS.findIndex(d=>d.id===state.currentCycleId);
+      if(i<CYCLE_DEFS.length-1){
+        state.currentCycleId=CYCLE_DEFS[i+1].id;
+        viewingCycleId=state.currentCycleId;
+        commit(); updateCycleBtn(); renderPanel();
+      }
+    });
+
+    /* ---- Result modal ---- */
+    const resultModal=document.getElementById('resultModal');
+    const rmTitle=document.getElementById('rmTitle');
+    const rmResultBtns=document.getElementById('rmResultBtns');
+    const rmStatGrid=document.getElementById('rmStatGrid');
+    let rmChallenge=null, rmMode=null, rmSelectedResult=null;
+
+    function openResultModal(ch, mode){
+      rmChallenge=ch; rmMode=mode; rmSelectedResult=null;
+      rmTitle.textContent = mode==='refused' ? 'Challenge Refused' : 'Game Result';
+      rmResultBtns.innerHTML='';
+      rmStatGrid.innerHTML='';
+
+      if(mode==='refused'){
+        // Just confirm — challenger takes territory
+        const info=document.createElement('div');
+        info.style.cssText='color:var(--text);font-size:12px;margin-bottom:14px;line-height:1.5';
+        info.textContent=gangName(ch.challenger)+' refused — they automatically claim "'+nodeLabel(ch.territory)+'"';
+        rmResultBtns.appendChild(info);
+      } else {
+        // Game result buttons
+        const options=[
+          {value:'challenger',label:gangName(ch.challenger)+' Wins'},
+          {value:'challenged',label:ch.challenged!==null&&ch.challenged!==undefined?gangName(ch.challenged)+' Wins':'Defender Holds'},
+          {value:'draw',label:'Draw'},
+        ];
+        options.forEach(opt=>{
+          const b=document.createElement('button'); b.className='rm-result-btn'; b.textContent=opt.label;
+          b.addEventListener('click',()=>{
+            rmSelectedResult=opt.value;
+            rmResultBtns.querySelectorAll('.rm-result-btn').forEach(x=>x.classList.remove('on'));
+            b.classList.add('on');
+          });
+          rmResultBtns.appendChild(b);
+        });
+      }
+
+      // Stat update grid for gangs involved
+      const gangsInvolved=[];
+      gangsInvolved.push(ch.challenger);
+      if(ch.challenged!==null&&ch.challenged!==undefined) gangsInvolved.push(ch.challenged);
+
+      gangsInvolved.forEach(gi=>{
+        const col=document.createElement('div'); col.className='rm-stat-col';
+        const h4=document.createElement('h4');
+        const dot=document.createElement('span');
+        dot.style.cssText='display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:'+gangColor(gi);
+        h4.appendChild(dot); h4.appendChild(document.createTextNode(gangName(gi)));
+        col.appendChild(h4);
+
+        const g=state.gangs[gi];
+        [{field:'rating',label:'Rating'},{field:'rep',label:'Reputation'}].forEach(({field,label})=>{
+          const row=document.createElement('div'); row.className='rm-stat-row';
+          const lbl=document.createElement('span'); lbl.className='rm-stat-label'; lbl.textContent=label;
+          const inp=document.createElement('input'); inp.type='number'; inp.className='rm-stat-input';
+          inp.value=g[field]||0; inp.min=0; inp.dataset.gang=gi; inp.dataset.field=field;
+          row.appendChild(lbl); row.appendChild(inp); col.appendChild(row);
+        });
+        rmStatGrid.appendChild(col);
+      });
+
+      resultModal.classList.add('show');
+    }
+
+    document.getElementById('rmCancel').addEventListener('click',()=>resultModal.classList.remove('show'));
+    document.getElementById('rmConfirm').addEventListener('click',()=>{
+      if(!rmChallenge) return;
+      const ch=rmChallenge;
+
+      if(rmMode==='game' && !rmSelectedResult){ alert('Please select a result.'); return; }
+
+      const result = rmMode==='refused' ? 'refused' : rmSelectedResult;
+
+      // Apply territory ownership change
+      const nodeData = state.nodes[ch.territory];
+      if(result==='refused'||result==='challenger'){
+        // challenger claims
+        nodeData.gang=ch.challenger;
+      } else if(result==='challenged'){
+        // defender holds — no change unless it was unclaimed
+        if(ch.challenged!==null&&ch.challenged!==undefined) nodeData.gang=ch.challenged;
+      }
+      // draw: no change
+
+      // Update gang stats
+      rmStatGrid.querySelectorAll('.rm-stat-input').forEach(inp=>{
+        const gi=parseInt(inp.dataset.gang); const field=inp.dataset.field;
+        if(!isNaN(gi)&&state.gangs[gi]){ state.gangs[gi][field]=Math.max(0,parseInt(inp.value)||0); }
+      });
+
+      ch.status = result==='refused'?'refused':'completed';
+      ch.result = result==='refused'?null:result;
+
+      commit(); renderPanel(); buildHive(); render();
+      resultModal.classList.remove('show');
+    });
+    resultModal.addEventListener('click',e=>{ if(e.target===resultModal) resultModal.classList.remove('show'); });
+
+    // Expose updateCycleBtn so render() can call it
+    window._updateCycleBtn = updateCycleBtn;
   })();
 
   /* ============ SETUP MODAL WIRING ============ */
