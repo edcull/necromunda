@@ -2,7 +2,22 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const fs = require('fs');
 const db = require('./db');
+
+// Load .env file if present (simple key=value, no library needed)
+const envPath = path.join(__dirname, '..', '.env');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+    const m = line.match(/^\s*([^#=]+?)\s*=\s*(.*?)\s*$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+  });
+}
+
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET || SESSION_SECRET === 'CHANGE_ME_IN_PRODUCTION') {
+  console.warn('WARNING: SESSION_SECRET not set or still default. Set it in .env before deploying publicly.');
+}
 
 // Session store using better-sqlite3
 const SqliteStore = require('better-sqlite3-session-store')(session);
@@ -14,7 +29,7 @@ app.use(express.json());
 
 app.use(session({
   store: new SqliteStore({ client: db }),
-  secret: 'CHANGE_ME_IN_PRODUCTION', // TODO: set a strong secret via environment variable
+  secret: SESSION_SECRET || 'CHANGE_ME_IN_PRODUCTION',
   resave: false,
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: 'lax' }
