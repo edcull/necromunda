@@ -1935,7 +1935,7 @@
       cpNavPhase.textContent = phaseLabel(cd.phase);
       cpNavLabel.textContent = cd.phase==='downtime' ? 'Downtime' : cd.label;
       cpPrev.disabled = viewIdx <= 0;
-      cpNext.disabled = viewIdx >= CYCLE_DEFS.length - 1;
+      cpNext.disabled = viewIdx >= CYCLE_DEFS.length - 1 || viewIdx >= curIdx;
       // Advance on current cycle, arb only, not last; Roll Back when viewing a past cycle as arb
       if(isArbitrator && isCurrentCycle && curIdx < CYCLE_DEFS.length-1){
         cpAdvance.style.display=''; cpAdvance.textContent='Advance ▶';
