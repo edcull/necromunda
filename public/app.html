@@ -1882,7 +1882,7 @@
       return false;
     }
 
-    function getAvailableTerritories(phase){
+    function getAvailableTerritories(phase, challengedGang){
       const all = LAYOUT.filter(n=>n.type==='territory');
       const locked = new Set();
       for(const cyc of state.cycles){
@@ -1895,8 +1895,14 @@
         if(unclaimed.length>0) return unclaimed;
         return all.filter(n=>!locked.has(n.id));
       } else {
-        // takeover: claimed territories only
-        return all.filter(n=>!locked.has(n.id)&&state.nodes[n.id].gang!==null&&state.nodes[n.id].gang!==undefined);
+        // takeover: only territories owned by the challenged gang
+        return all.filter(n=>{
+          if(locked.has(n.id)) return false;
+          const g = state.nodes[n.id].gang;
+          if(g===null||g===undefined) return false;
+          if(challengedGang!==null&&challengedGang!==undefined) return g===challengedGang;
+          return true;
+        });
       }
     }
 
@@ -1945,6 +1951,31 @@
         return;
       }
 
+      // Challenge order strip for cycle 2+ (not first cycle of each phase)
+      if(cd.id!=='occ-1' && cd.id!=='tak-1' && cd.phase!=='downtime'){
+        const orderHdr=document.createElement('div'); orderHdr.className='cp-section-head';
+        orderHdr.innerHTML='<span>Challenge Order (Rating Low → High)</span>';
+        cpBody.appendChild(orderHdr);
+        const orderList=document.createElement('div');
+        orderList.style.cssText='display:flex;flex-direction:column;gap:4px;margin-bottom:10px';
+        const gangsOrdered=[...Array(state.players).keys()]
+          .map(i=>({i,g:state.gangs[i]}))
+          .sort((a,b)=>(a.g.rating||0)-(b.g.rating||0));
+        gangsOrdered.forEach(({i,g})=>{
+          const row=document.createElement('div');
+          row.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);padding:4px 6px;background:rgba(0,0,0,.18);border-radius:2px';
+          const dot=document.createElement('span');
+          dot.style.cssText='width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:'+g.color;
+          const name=document.createElement('span'); name.style.flex='1'; name.textContent=g.name;
+          const rat=document.createElement('span');
+          rat.style.cssText='color:var(--tox);font-family:\'Oswald\';font-size:11px;letter-spacing:.06em';
+          rat.textContent=(g.rating||0)+'pts';
+          row.appendChild(dot); row.appendChild(name); row.appendChild(rat);
+          orderList.appendChild(row);
+        });
+        cpBody.appendChild(orderList);
+      }
+
       // Challenges section header
       const hdr = document.createElement('div');
       hdr.className = 'cp-section-head';
@@ -1991,7 +2022,9 @@
       // Challenged select (defender — may be "None/Unclaimed" for occupation vs unclaimed)
       const lbDef = document.createElement('label'); lbDef.textContent='Challenged Gang';
       const selDef = document.createElement('select');
-      const noneOpt=document.createElement('option'); noneOpt.value=''; noneOpt.textContent='— Unclaimed —'; selDef.appendChild(noneOpt);
+      if(phase==='occupation'){
+        const noneOpt=document.createElement('option'); noneOpt.value=''; noneOpt.textContent='— Unclaimed —'; selDef.appendChild(noneOpt);
+      }
       for(let i=0;i<state.players;i++){
         const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selDef.appendChild(o);
       }
@@ -2001,7 +2034,8 @@
       const selTerr = document.createElement('select');
       function populateTerritories(){
         selTerr.innerHTML='';
-        const avail = getAvailableTerritories(phase);
+        const cg = selDef.value===''?null:parseInt(selDef.value);
+        const avail = getAvailableTerritories(phase, cg);
         if(avail.length===0){
           const o=document.createElement('option'); o.value=''; o.textContent='No available territories'; selTerr.appendChild(o);
         } else {
@@ -2012,8 +2046,8 @@
           });
         }
       }
+      selDef.addEventListener('change', populateTerritories);
       populateTerritories();
-      // Refresh territory list when challenger/defender changes (doesn't change locked status but good UX)
 
       const btns=document.createElement('div'); btns.className='ch-form-btns';
       const saveBtn=document.createElement('button'); saveBtn.className='btn'; saveBtn.textContent='Add Challenge';
