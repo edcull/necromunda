@@ -1958,7 +1958,7 @@
       }
 
       // Challenge order strip for cycle 2+ (not first cycle of each phase)
-      if(cd.id!=='occ-1' && cd.id!=='tak-1' && cd.phase!=='downtime'){
+      if(cd.id!=='occ-1' && cd.phase!=='downtime'){
         const orderHdr=document.createElement('div'); orderHdr.className='cp-section-head';
         orderHdr.innerHTML='<span>Challenge Order (Rating Low → High)</span>';
         cpBody.appendChild(orderHdr);
