@@ -2101,9 +2101,26 @@
       const lbl=nodeLabel(ch.territory); const sub=nodeSubLabel(ch.territory);
       terrDiv.textContent=lbl;
       if(sub&&sub!==lbl){ const s=document.createElement('span'); s.className='ch-terr-sub'; s.textContent=sub; terrDiv.appendChild(s); }
+
+      // Right column: badge + optional delete for completed
+      const rightCol=document.createElement('div');
+      rightCol.style.cssText='display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto';
       const badge=document.createElement('span'); badge.className='ch-status-badge '+ch.status;
       badge.textContent=ch.status==='pending'?'Pending':ch.status==='refused'?'Refused':'Done';
-      top.appendChild(terrDiv); top.appendChild(badge); card.appendChild(top);
+      rightCol.appendChild(badge);
+      if(canEdit && ch.status!=='pending'){
+        const delBtn=document.createElement('button');
+        delBtn.style.cssText='background:transparent;border:0;color:var(--faint);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;padding:0;font-family:\'Oswald\'';
+        delBtn.textContent='Delete';
+        delBtn.addEventListener('mouseover',()=>delBtn.style.color='#e86040');
+        delBtn.addEventListener('mouseout',()=>delBtn.style.color='var(--faint)');
+        delBtn.addEventListener('click',()=>{
+          const cyc=state.cycles.find(c=>c.challenges.some(x=>x.id===ch.id));
+          if(cyc){ cyc.challenges=cyc.challenges.filter(x=>x.id!==ch.id); commit(); renderPanel(); }
+        });
+        rightCol.appendChild(delBtn);
+      }
+      top.appendChild(terrDiv); top.appendChild(rightCol); card.appendChild(top);
 
       // Gangs line
       const gangsDiv=document.createElement('div'); gangsDiv.className='ch-gangs';
@@ -2140,15 +2157,6 @@
           if(cyc){ cyc.challenges=cyc.challenges.filter(x=>x.id!==ch.id); commit(); renderPanel(); }
         });
         actions.appendChild(refBtn); actions.appendChild(resBtn); actions.appendChild(delBtn);
-        card.appendChild(actions);
-      } else if(canEdit && ch.status!=='pending'){
-        const actions=document.createElement('div'); actions.className='ch-actions';
-        const delBtn=document.createElement('button'); delBtn.className='ch-btn danger'; delBtn.textContent='Delete';
-        delBtn.addEventListener('click',()=>{
-          const cyc=state.cycles.find(c=>c.challenges.some(x=>x.id===ch.id));
-          if(cyc){ cyc.challenges=cyc.challenges.filter(x=>x.id!==ch.id); commit(); renderPanel(); }
-        });
-        actions.appendChild(delBtn);
         card.appendChild(actions);
       }
       return card;
