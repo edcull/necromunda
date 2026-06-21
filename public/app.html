@@ -1936,7 +1936,6 @@
       const cyc = state.cycles.find(c=>c.id===viewingCycleId)||{challenges:[]};
 
       cpBody.innerHTML = '';
-      showingForm = false;
 
       if(cd.phase==='downtime'){
         const dt = document.createElement('div');
@@ -2100,11 +2099,11 @@
 
     cpPrev.addEventListener('click',()=>{
       const i=CYCLE_DEFS.findIndex(d=>d.id===viewingCycleId);
-      if(i>0){ viewingCycleId=CYCLE_DEFS[i-1].id; renderPanel(); }
+      if(i>0){ viewingCycleId=CYCLE_DEFS[i-1].id; showingForm=false; renderPanel(); }
     });
     cpNext.addEventListener('click',()=>{
       const i=CYCLE_DEFS.findIndex(d=>d.id===viewingCycleId);
-      if(i<CYCLE_DEFS.length-1){ viewingCycleId=CYCLE_DEFS[i+1].id; renderPanel(); }
+      if(i<CYCLE_DEFS.length-1){ viewingCycleId=CYCLE_DEFS[i+1].id; showingForm=false; renderPanel(); }
     });
     cpAdvance.addEventListener('click',()=>{
       const i=CYCLE_DEFS.findIndex(d=>d.id===state.currentCycleId);
