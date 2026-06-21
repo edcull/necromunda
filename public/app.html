@@ -2145,24 +2145,27 @@
         card.appendChild(rl);
       }
 
-      // Pending actions: Refused | Record Result | 🗑
+      // Pending actions: [Refused | Record Result] ... [🗑]
       if(canEdit && ch.status==='pending'){
-        const actions=document.createElement('div'); actions.className='ch-actions';
+        const actions=document.createElement('div');
+        actions.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px';
+        const leftBtns=document.createElement('div'); leftBtns.className='ch-actions'; leftBtns.style.margin='0';
         const refBtn=document.createElement('button'); refBtn.className='ch-btn'; refBtn.textContent='Refused';
         refBtn.addEventListener('click',()=>openResultModal(ch,'refused'));
         const resBtn=document.createElement('button'); resBtn.className='ch-btn'; resBtn.textContent='Record Result';
         resBtn.addEventListener('click',()=>openResultModal(ch,'game'));
+        leftBtns.appendChild(refBtn); leftBtns.appendChild(resBtn);
         const trashBtn=document.createElement('button');
         trashBtn.title='Delete challenge';
-        trashBtn.style.cssText='background:transparent;border:1px solid var(--edge);color:var(--faint);font-size:14px;cursor:pointer;padding:4px 8px;border-radius:2px;line-height:1;transition:color .12s,border-color .12s';
+        trashBtn.style.cssText='background:transparent;border:0;color:var(--faint);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;flex:0 0 auto;transition:color .12s';
         trashBtn.innerHTML='🗑';
-        trashBtn.addEventListener('mouseover',()=>{ trashBtn.style.color='#e86040'; trashBtn.style.borderColor='#e86040'; });
-        trashBtn.addEventListener('mouseout',()=>{ trashBtn.style.color='var(--faint)'; trashBtn.style.borderColor='var(--edge)'; });
+        trashBtn.addEventListener('mouseover',()=>trashBtn.style.color='#e86040');
+        trashBtn.addEventListener('mouseout',()=>trashBtn.style.color='var(--faint)');
         trashBtn.addEventListener('click',()=>{
           const cyc=state.cycles.find(c=>c.challenges.some(x=>x.id===ch.id));
           if(cyc){ cyc.challenges=cyc.challenges.filter(x=>x.id!==ch.id); commit(); renderPanel(); }
         });
-        actions.appendChild(refBtn); actions.appendChild(resBtn); actions.appendChild(trashBtn);
+        actions.appendChild(leftBtns); actions.appendChild(trashBtn);
         card.appendChild(actions);
       }
       return card;
