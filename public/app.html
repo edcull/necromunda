@@ -1665,7 +1665,7 @@
     const dflt = {
       enabled: true,
       availability: item.availability ? item.availability.replace(/\d+$/, '') : 'C',
-      availValue: parseInt(item.availability) || null,
+      availValue: parseInt((item.availability||'').replace(/^[A-Z]+/,'')) || null,
       cost: item.cost != null ? item.cost : (item.costMod != null ? item.costMod : null),
     };
     const ov = (state.tradingPost || {})[tpKey(catKey, item.name)] || {};
@@ -1970,7 +1970,7 @@
       if (!item) return;
       const ov = tpOverride(catKey, item);
       const al = ov.availability;
-      const val = ov.availValue != null ? ov.availValue : (parseInt(item.availability) || 0);
+      const val = ov.availValue != null ? ov.availValue : (parseInt((item.availability||'').replace(/^[A-Z]+/,'')) || 0);
       let hidden = false;
       if (al === 'C' && !showC) hidden = true;
       if (al === 'R' && val > maxR) hidden = true;
