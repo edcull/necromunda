@@ -1688,7 +1688,6 @@
     });
     sel.value=(current==null)?'':String(current);
     const line=el('div','ownerline'); fillOwner(line,current);
-    if(isArbitrator) line.style.display='none';
     sel.addEventListener('change',()=>{ const v=sel.value===''?null:Number(sel.value); fillOwner(line,v); onChange(v); });
     f.appendChild(sel); f.appendChild(line); return f;
   }
@@ -2629,7 +2628,7 @@
     stage.addEventListener('pointerdown', e => {
       if(!isMobile) return;
       // Only pan on the stage background / panLayer itself, not node buttons or UI controls
-      if(e.target.closest('.node') || e.target.closest('#cycleBtn')) return;
+      if(e.target.closest('.node') || e.target.closest('#cycleBtn') || e.target.closest('#triumphsMapBtn')) return;
       active = true;
       startX = e.clientX; startY = e.clientY;
       baseX = panX; baseY = panY;
@@ -3118,7 +3117,7 @@
         col.appendChild(h4);
 
         const g=state.gangs[gi];
-        [{field:'rating',label:'Rating'},{field:'rep',label:'Reputation'},{field:'wealth',label:'Wealth'},{field:'outOfAction',label:'Kills'}].forEach(({field,label})=>{
+        [{field:'rating',label:'Rating'},{field:'wealth',label:'Wealth'},{field:'rep',label:'Reputation'},{field:'outOfAction',label:'Kills'}].forEach(({field,label})=>{
           const row=document.createElement('div'); row.className='rm-stat-row';
           const lbl=document.createElement('span'); lbl.className='rm-stat-label'; lbl.textContent=label;
           const inp=document.createElement('input'); inp.type='number'; inp.className='rm-stat-input';
