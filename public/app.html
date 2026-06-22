@@ -618,6 +618,9 @@
   .tp-table td:nth-child(2), .tp-table th:nth-child(2) { text-align: center; }
   .tp-table td:nth-child(3), .tp-table th:nth-child(3) { text-align: right; }
   .tp-avail { font-size: 11px; letter-spacing: .05em; color: var(--tox); }
+  .tp-row-c td { color: #7ec8a0; }
+  .tp-row-r td { color: #7ab0e0; }
+  .tp-row-i td { color: #e07a7a; }
   /* Config table controls */
   .tp-cfg td { vertical-align: middle; }
   .tp-cfg td:first-child { width: 28px; text-align: center; }
@@ -1707,13 +1710,16 @@
     const stdRows = visible.map(it => {
       const ov = tpOverride(sec.key, it);
       const al = tpEffectiveAvail(ov);
+      const rowCls = ov.availability === 'R' ? 'tp-row-r' : ov.availability === 'I' ? 'tp-row-i' : 'tp-row-c';
       const costVal = ov.cost != null ? (ov.cost === 0 ? 'Free' : ov.cost + ' cr') : tpCostStr(it);
-      return `<tr><td>${it.name}</td><td class="tp-avail">${al}</td><td>${costVal}</td></tr>`;
+      return `<tr class="${rowCls}"><td>${it.name}</td><td class="tp-avail">${al}</td><td>${costVal}</td></tr>`;
     }).join('');
     const customRows = customs.map(it => {
-      const al = it.availability === 'C' ? 'C' : (it.availability + (it.availValue != null ? it.availValue : ''));
+      const alType = it.availability || 'C';
+      const al = alType === 'C' ? 'C' : (alType + (it.availValue != null ? it.availValue : ''));
+      const rowCls = alType === 'R' ? 'tp-row-r' : alType === 'I' ? 'tp-row-i' : 'tp-row-c';
       const costVal = it.cost != null ? (it.cost === 0 ? 'Free' : it.cost + ' cr') : '—';
-      return `<tr><td>${it.name}</td><td class="tp-avail">${al}</td><td>${costVal}</td></tr>`;
+      return `<tr class="${rowCls}"><td>${it.name}</td><td class="tp-avail">${al}</td><td>${costVal}</td></tr>`;
     }).join('');
     const total = visible.length + customs.length;
     return `<details class="tp-section">
