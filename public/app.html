@@ -373,8 +373,12 @@
   .ch-btn:hover { border-color: var(--tox); color: var(--tox); }
   .ch-btn.danger:hover { border-color: #e86040; color: #e86040; }
   .ch-result-line { font-size: 10px; color: var(--muted); margin-top: 4px; letter-spacing: .06em; }
-  .cp-downtime { text-align: center; padding: 32px 0; color: var(--muted); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
-  .cp-downtime .dt-icon { font-size: 32px; display: block; margin-bottom: 10px; }
+  .cp-downtime { padding: 8px 0 24px; }
+  .cp-downtime .dt-intro { text-align:center; color:var(--muted); font-size:11px; letter-spacing:.12em; text-transform:uppercase; margin-bottom:18px; }
+  .cp-downtime .dt-icon { font-size:28px; display:block; margin-bottom:8px; }
+  .cp-downtime .dt-action { margin-bottom:14px; }
+  .cp-downtime .dt-action-head { font-family:'Oswald'; font-size:12px; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--tox); margin-bottom:4px; }
+  .cp-downtime .dt-action-body { font-size:12px; color:var(--muted); line-height:1.55; letter-spacing:.03em; }
 
   /* Challenge form inside panel */
   .ch-form { background: rgba(0,0,0,.28); border: 1px solid var(--edge); border-radius: 3px; padding: 12px; margin-bottom: 10px; }
@@ -1964,7 +1968,13 @@
       if(cd.phase==='downtime'){
         const dt = document.createElement('div');
         dt.className = 'cp-downtime';
-        dt.innerHTML = '<span class="dt-icon">⚙</span>Between the occupation and takeover phases.<br>Gangs recover, trade, and prepare.';
+        dt.innerHTML = `
+          <div class="dt-intro"><span class="dt-icon">⚙</span>Between the occupation and takeover phases.<br>Gangs recover, trade, and prepare.</div>
+          <div class="dt-action"><div class="dt-action-head">A. Fighters Recover</div><div class="dt-action-body">Any In Recovery boxes on the gang roster are cleared.</div></div>
+          <div class="dt-action"><div class="dt-action-head">B. Captives Are Returned</div><div class="dt-action-body">Any Captured fighters are released. The gang that had Captured them receives half their credits value (rounding up to the nearest 5 credits).</div></div>
+          <div class="dt-action"><div class="dt-action-head">C. Experienced Juves and Prospects Are Promoted</div><div class="dt-action-body">If any gang contains any Juves or Prospects with three or more Advancements, they may be promoted. Their characteristics and credits value are unaffected, but their Type is changed as described in their fighter entry.</div></div>
+          <div class="dt-action"><div class="dt-action-head">D. Fresh Recruitment</div><div class="dt-action-body">All gangs gain 250 credits to spend on new equipment from their Gang Equipment List or to recruit new fighters, vehicles and/or Hangers-on. These credits must be spent now and cannot be added to the gang's Stash. Gangs may supplement these credits with extra credits from their Stash.</div></div>
+        `;
         cpBody.appendChild(dt);
         return;
       }
