@@ -270,7 +270,7 @@
 
   /* ===== CYCLES PANEL ===== */
   #cycleBtn {
-    position: absolute; bottom: 14px; left: 14px; z-index: 6;
+    position: absolute; top: 14px; left: 14px; z-index: 6;
     background: rgba(6,11,9,.82); border: 1px solid var(--edge);
     color: var(--tox); font-family: 'Oswald'; font-size: 11px; font-weight: 600;
     letter-spacing: .2em; text-transform: uppercase;
@@ -415,7 +415,7 @@
 
   /* Mobile overrides for cycle panel */
   @media (max-width: 1200px) {
-    #cycleBtn { bottom: 50px; }
+    #cycleBtn { top: 14px; }
     #cyclePanel {
       top: auto; left: 0; right: 0; bottom: 0; width: 100%;
       height: 70vh; max-height: 70vh;
@@ -1786,8 +1786,8 @@
 
     stage.addEventListener('pointerdown', e => {
       if(!isMobile) return;
-      // Only pan on the stage background / panLayer itself, not node buttons
-      if(e.target.closest('.node')) return;
+      // Only pan on the stage background / panLayer itself, not node buttons or UI controls
+      if(e.target.closest('.node') || e.target.closest('#cycleBtn')) return;
       active = true;
       startX = e.clientX; startY = e.clientY;
       baseX = panX; baseY = panY;
