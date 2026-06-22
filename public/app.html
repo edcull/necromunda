@@ -2782,7 +2782,8 @@
       const allChallenged = alreadyChallenged.size >= state.players;
       for(let i=0;i<state.players;i++){
         if(!allChallenged && alreadyChallenged.has(i)) continue;
-        const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name;
+        const g = state.gangs[i];
+        const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':'');
         if(i===defaultChallenger) o.selected=true;
         selCh.appendChild(o);
       }
@@ -2796,7 +2797,7 @@
         const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
         for(let i=0;i<state.players;i++){
           if(i===chIdx) continue;
-          const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selDef.appendChild(o);
+          const g=state.gangs[i]; const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':''); selDef.appendChild(o);
         }
       }
       populateDefender();
