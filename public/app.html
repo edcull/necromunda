@@ -2036,10 +2036,13 @@
         .filter(i=>!alreadyChallenged.has(i))
         .sort((a,b)=>(state.gangs[a].rating||0)-(state.gangs[b].rating||0))[0] ?? 0;
 
-      // Challenger select
+      // Challenger select — exclude gangs that have already challenged this cycle,
+      // unless all gangs have challenged (then show all)
       const lbCh = document.createElement('label'); lbCh.textContent='Challenger';
       const selCh = document.createElement('select');
+      const allChallenged = alreadyChallenged.size >= state.players;
       for(let i=0;i<state.players;i++){
+        if(!allChallenged && alreadyChallenged.has(i)) continue;
         const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name;
         if(i===defaultChallenger) o.selected=true;
         selCh.appendChild(o);
