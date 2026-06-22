@@ -621,6 +621,10 @@
   .tp-row-c td { color: #7ec8a0; }
   .tp-row-r td { color: #7ab0e0; }
   .tp-row-i td { color: #e07a7a; }
+  /* Keep inputs/selects their own colour inside coloured rows */
+  .tp-row-c input:not([type=checkbox]), .tp-row-c select,
+  .tp-row-r input:not([type=checkbox]), .tp-row-r select,
+  .tp-row-i input:not([type=checkbox]), .tp-row-i select { color: #eef6f1; }
   /* Config table controls */
   .tp-cfg td { vertical-align: middle; }
   .tp-cfg td:first-child { width: 28px; text-align: center; }
@@ -1744,7 +1748,7 @@
       const costVal = ov.cost != null ? ov.cost : '';
       // Defaults from JSON
       const dfltAl = it.availability ? it.availability.replace(/\d+$/, '') : 'C';
-      const dfltAlVal = parseInt(it.availability) || null;
+      const dfltAlVal = parseInt((it.availability||'').replace(/^[A-Z]+/,'')) || null;
       const dfltCost = it.cost != null ? it.cost : (it.costMod != null ? it.costMod : null);
       const alModified = stored && (stored.availability !== dfltAl || stored.availValue !== dfltAlVal);
       const costModified = stored && stored.cost != null && stored.cost !== dfltCost;
@@ -1753,7 +1757,8 @@
       const costCell = hasNote
         ? `<span style="font-size:11px;color:var(--tox-dim)">${it.costNote}</span>`
         : `<input class="tp-cost-inp${costModified?' tp-modified':''}" type="number" min="0" data-k="${k}" data-f="cost" value="${costVal}" ${disabled?'disabled':''}>`;
-      return `<tr class="${disabled ? 'tp-disabled' : ''}" data-k="${k}">
+      const rowColCls = alType==='R' ? 'tp-row-r' : alType==='I' ? 'tp-row-i' : 'tp-row-c';
+      return `<tr class="${disabled ? 'tp-disabled' : rowColCls}" data-k="${k}">
         <td><input type="checkbox" data-k="${k}" data-f="enabled" ${ov.enabled ? 'checked' : ''}></td>
         <td${disabledMod?' class="tp-modified"':''}>${it.name}</td>
         <td><div class="tp-al-wrap">
@@ -1763,7 +1768,7 @@
             <option value="I" ${alType==='I'?'selected':''}>I</option>
           </select>
           <input type="number" min="1" max="15" class="${alModified?'tp-modified':''}" data-k="${k}" data-f="availValue"
-            value="${alVal}" style="display:${alType==='C'?'none':'inline-block'}" ${disabled?'disabled':''}>
+            value="${alVal}" style="visibility:${alType==='C'?'hidden':'visible'}" ${disabled?'disabled':''}>
         </div></td>
         <td>${costCell}</td>
       </tr>`;
@@ -1802,14 +1807,22 @@
         if (f === 'enabled') {
           state.tradingPost[k].enabled = el.checked;
           const row = el.closest('tr');
-          row.classList.toggle('tp-disabled', !el.checked);
+          const alSel = row.querySelector('select[data-f="availability"]');
+          const alT = alSel ? alSel.value : 'C';
+          row.className = el.checked ? (alT==='R'?'tp-row-r':alT==='I'?'tp-row-i':'tp-row-c') : 'tp-disabled';
+          row.setAttribute('data-k', k);
           row.querySelectorAll('select,input:not([type=checkbox])').forEach(i => i.disabled = !el.checked);
           const nameCell = row.querySelector('td:nth-child(2)');
           if (nameCell) nameCell.classList.toggle('tp-modified', !el.checked);
         } else if (f === 'availability') {
           state.tradingPost[k].availability = el.value;
           const valInp = el.closest('.tp-al-wrap').querySelector('input[type=number]');
-          valInp.style.display = el.value === 'C' ? 'none' : 'inline-block';
+          valInp.style.visibility = el.value === 'C' ? 'hidden' : 'visible';
+          const row = el.closest('tr');
+          if (!row.classList.contains('tp-disabled')) {
+            row.className = el.value==='R'?'tp-row-r':el.value==='I'?'tp-row-i':'tp-row-c';
+            row.setAttribute('data-k', k);
+          }
           const mod = el.value !== dfltAl;
           el.classList.toggle('tp-modified', mod);
           if (valInp) valInp.classList.toggle('tp-modified', mod);
