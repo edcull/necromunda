@@ -1195,7 +1195,7 @@
     out.push(grid);
 
     // 8. scale bar (top-left) + compass (top-right)
-    const mile=266.7, sbx=78, sby=58, seg=mile/4;
+    const mile=266.7, sbx=130, sby=58, seg=mile/4;
     let sb=rect(sbx-8,sby-30,mile+18,34,{fill:'rgba(6,11,9,.55)',stroke:'rgba(95,217,160,.22)','stroke-width':1,rx:2});
     for(let i=0;i<4;i++) sb+=rect(sbx+i*seg,sby-6,seg,5,{fill:i%2?'rgba(95,217,160,0)':'rgba(95,217,160,.45)',stroke:'rgba(95,217,160,.45)','stroke-width':1});
     sb+=txt(sbx-2,sby-9,'0',{fill:'rgba(95,217,160,.6)','font-family':'monospace','font-size':'10'});
