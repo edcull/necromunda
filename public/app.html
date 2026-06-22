@@ -1970,15 +1970,20 @@
       }
 
       // Challenge order strip for cycle 2+ (not first cycle of each phase)
-      if(cd.id!=='occ-1' && cd.phase!=='downtime'){
+      if(cd.phase!=='downtime'){
+        const isRandom = cd.id==='occ-1';
         const orderHdr=document.createElement('div'); orderHdr.className='cp-section-head';
-        orderHdr.innerHTML='<span>Challenge Order (Rating Low → High)</span>';
+        orderHdr.innerHTML='<span>Challenge Order ('+(isRandom?'Random':'Rating Low → High')+')</span>';
         cpBody.appendChild(orderHdr);
         const orderList=document.createElement('div');
         orderList.style.cssText='display:flex;flex-direction:column;gap:4px;margin-bottom:10px';
+        // Stable per-cycle hash for tiebreaks and random ordering
+        function cycleHash(cycId,i){ let h=0; for(const c of cycId+':'+i) h=(Math.imul(31,h)+c.charCodeAt(0))|0; return h; }
         const gangsOrdered=[...Array(state.players).keys()]
           .map(i=>({i,g:state.gangs[i]}))
-          .sort((a,b)=>(a.g.rating||0)-(b.g.rating||0));
+          .sort((a,b)=>isRandom
+            ? cycleHash(cd.id,a.i)-cycleHash(cd.id,b.i)
+            : ((a.g.rating||0)-(b.g.rating||0)) || (cycleHash(cd.id,a.i)-cycleHash(cd.id,b.i)));
         gangsOrdered.forEach(({i,g})=>{
           const row=document.createElement('div');
           row.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);padding:4px 6px;background:rgba(0,0,0,.18);border-radius:2px';
