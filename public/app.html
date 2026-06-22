@@ -1683,28 +1683,41 @@
   }
 
   /* ---- Reference view (player-facing) ---- */
-  function renderTpRefSection(sec, items) {
+  function renderTpRefSection(sec, items, maxR, maxI) {
     const visible = items.filter(it => {
       const ov = tpOverride(sec.key, it);
-      return ov.enabled && ov.availability === 'C';
+      if (!ov.enabled) return false;
+      const al = ov.availability;
+      const val = ov.availValue != null ? ov.availValue : 0;
+      if (al === 'C') return true;
+      if (al === 'R') return maxR != null && val <= maxR;
+      if (al === 'I') return maxI != null && val <= maxI;
+      return false;
     });
-    // Custom items for this category
-    const customs = tpCustomItems().filter(it =>
-      it.category === sec.key && it.enabled !== false && it.availability === 'C' && it.name
-    );
+    const customs = tpCustomItems().filter(it => {
+      if (it.category !== sec.key || it.enabled === false || !it.name) return false;
+      const al = it.availability || 'C';
+      const val = it.availValue != null ? it.availValue : 0;
+      if (al === 'C') return true;
+      if (al === 'R') return maxR != null && val <= maxR;
+      if (al === 'I') return maxI != null && val <= maxI;
+      return false;
+    });
     if (!visible.length && !customs.length) return '';
     const stdRows = visible.map(it => {
       const ov = tpOverride(sec.key, it);
+      const al = tpEffectiveAvail(ov);
       const costVal = ov.cost != null ? (ov.cost === 0 ? 'Free' : ov.cost + ' cr') : tpCostStr(it);
-      return `<tr><td>${it.name}</td><td class="tp-avail">C</td><td>${costVal}</td></tr>`;
+      return `<tr><td>${it.name}</td><td class="tp-avail">${al}</td><td>${costVal}</td></tr>`;
     }).join('');
     const customRows = customs.map(it => {
+      const al = it.availability === 'C' ? 'C' : (it.availability + (it.availValue != null ? it.availValue : ''));
       const costVal = it.cost != null ? (it.cost === 0 ? 'Free' : it.cost + ' cr') : '—';
-      return `<tr><td>${it.name}</td><td class="tp-avail">C</td><td>${costVal}</td></tr>`;
+      return `<tr><td>${it.name}</td><td class="tp-avail">${al}</td><td>${costVal}</td></tr>`;
     }).join('');
     const total = visible.length + customs.length;
     return `<details class="tp-section">
-      <summary><span>${sec.label}</span><span class="tp-count">(${total} Common)</span></summary>
+      <summary><span>${sec.label}</span><span class="tp-count">(${total})</span></summary>
       <table class="tp-table">
         <thead><tr><th>Name</th><th>AL</th><th>Cost</th></tr></thead>
         <tbody>${stdRows}${customRows}</tbody>
@@ -2007,11 +2020,36 @@
       wireTpFilter(body);
       wireTpCustom(body);
     } else {
-      const html = TP_SECTIONS.map(sec => {
-        const items = _tpData[sec.key] || [];
-        return renderTpRefSection(sec, items);
-      }).join('');
-      body.innerHTML = html || '<p style="color:var(--muted);font-size:13px">No common items available.</p>';
+      const seekBar = `<div class="tp-filter" id="tpSeekBar">
+        <div class="tp-filter-group">
+          <input type="checkbox" id="tpSeek">
+          <span class="tp-filter-label" style="text-transform:none;letter-spacing:0;font-size:13px">Seek Rare &amp; Illegal Equipment</span>
+        </div>
+        <div class="tp-filter-group" id="tpRollGroup" style="display:none">
+          <span class="tp-filter-label">Availability Roll</span>
+          <input type="number" id="tpRoll" min="1" max="15" value="8"
+            style="width:50px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
+        </div>
+      </div>
+      <div id="tpRefSections"></div>`;
+      body.innerHTML = seekBar;
+      function renderRefSections() {
+        const seeking = body.querySelector('#tpSeek').checked;
+        const roll = parseInt(body.querySelector('#tpRoll').value) || 8;
+        const maxR = seeking ? roll : null;
+        const maxI = seeking ? Math.max(0, roll - 4) : null;
+        const html = TP_SECTIONS.map(sec => {
+          const items = _tpData[sec.key] || [];
+          return renderTpRefSection(sec, items, maxR, maxI);
+        }).join('');
+        body.querySelector('#tpRefSections').innerHTML = html || '<p style="color:var(--muted);font-size:13px">No items available.</p>';
+      }
+      renderRefSections();
+      body.querySelector('#tpSeek').addEventListener('change', function() {
+        body.querySelector('#tpRollGroup').style.display = this.checked ? '' : 'none';
+        renderRefSections();
+      });
+      body.querySelector('#tpRoll').addEventListener('input', renderRefSections);
     }
   }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
