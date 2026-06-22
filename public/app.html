@@ -253,7 +253,7 @@
   .gang-type-tag{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--tox);padding:4px 0}
   .hideout-stats{display:flex;gap:10px;margin-bottom:14px}
   .hstat{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--edge-soft);border-radius:2px;padding:8px 10px}
-  .hstat-label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .hstat-label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;white-space:nowrap}
   .hstat-val{display:block;font-size:18px;font-family:'Oswald';font-weight:600;letter-spacing:.04em}
   .hstat-rep{color:var(--amber)} .hstat-rat{color:var(--tox)} .hstat-weal{color:#a0b4ff} .hstat-ooa{color:#e07878}
   .hstat-inp{display:block;width:100%;font-size:18px;font-family:'Oswald';font-weight:600;letter-spacing:.04em;background:transparent;border:none;border-bottom:1px solid var(--edge-soft);outline:none;padding:0;margin:0}
@@ -741,7 +741,7 @@
       </div>
       <div class="legend-body">
         <h3>Gangs</h3>
-        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button><button id="sortWeal">Wealth</button><button id="sortOoa">OOA</button></div>
+        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button><button id="sortWeal">Wealth</button><button id="sortOoa">Kills</button></div>
         <ul id="legendList"></ul>
       </div>
     </div>
@@ -1561,7 +1561,7 @@
     re.appendChild(repInp); stats.appendChild(re);
 
     const ra=el('div','hstat');
-    ra.appendChild(el('span','hstat-label','Gang Rating'));
+    ra.appendChild(el('span','hstat-label','Rating'));
     const ratInp=document.createElement('input'); ratInp.type='number'; ratInp.min='0'; ratInp.value=ownerG.rating||0; ratInp.className='hstat-inp hstat-rat'; ratInp.readOnly=!isArbitrator;
     ratInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.rating=parseInt(ratInp.value)||0; commit(); });
     ra.appendChild(ratInp); stats.appendChild(ra);
@@ -1573,7 +1573,7 @@
     rw.appendChild(wealInp); stats.appendChild(rw);
 
     const ro=el('div','hstat');
-    ro.appendChild(el('span','hstat-label','Enemies OOA'));
+    ro.appendChild(el('span','hstat-label','Kills'));
     const ooaInp=document.createElement('input'); ooaInp.type='number'; ooaInp.min='0'; ooaInp.value=ownerG.outOfAction||0; ooaInp.className='hstat-inp hstat-ooa'; ooaInp.readOnly=!isArbitrator;
     ooaInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.outOfAction=parseInt(ooaInp.value)||0; commit(); renderLegend(); });
     ro.appendChild(ooaInp); stats.appendChild(ro);
@@ -2407,7 +2407,7 @@
   function buildGangRows(){
     const host=document.getElementById('gangRows'); host.innerHTML='';
     const hdr=el('div','gang-row gang-row-hdr');
-    ['#','','','Name','Type','Rep','Rating','Wealth','OOA'].forEach(t=>{ hdr.appendChild(el('span','gang-hdr-cell',t)); });
+    ['#','','','Name','Type','Rep','Rating','Wealth','Kills'].forEach(t=>{ hdr.appendChild(el('span','gang-hdr-cell',t)); });
     host.appendChild(hdr);
     state.gangs.slice(0,state.players).forEach((g,i)=>{
       const row=el('div','gang-row'); row.appendChild(el('span','num',String(i+1)));
