@@ -671,6 +671,17 @@
   .tp-filter input[type=range] { width: 90px; accent-color: var(--tox); cursor: pointer; }
   .tp-filter input[type=checkbox] { cursor: pointer; accent-color: var(--tox); }
   tr.tp-filter-hidden { display: none; }
+  .triumph-card{background:rgba(0,0,0,.25);border:1px solid var(--edge-soft);border-radius:2px;padding:12px 14px;margin-bottom:10px}
+  .triumph-name{font-family:'Oswald';font-size:16px;text-transform:uppercase;color:#eef6f1;letter-spacing:.06em;margin-bottom:3px}
+  .triumph-criteria{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+  .triumph-rows{display:flex;flex-direction:column;gap:4px}
+  .triumph-row{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:2px;background:rgba(255,255,255,.03)}
+  .triumph-row.triumph-leader{background:rgba(127,220,160,.08);outline:1px solid rgba(127,220,160,.2)}
+  .triumph-row .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+  .triumph-gang{flex:1;font-size:13px;color:var(--text)}
+  .triumph-val{font-size:15px;font-family:'Oswald';font-weight:600;color:var(--tox);min-width:28px;text-align:right}
+  .triumph-row.triumph-leader .triumph-val{color:#7fdca0}
+  .triumph-inp{width:60px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:14px;font-family:'Oswald';padding:2px 6px;text-align:right}
 </style>
 
 <div class="wrap">
@@ -824,7 +835,7 @@
     <div class="mhead"><div><div class="kicker">Campaign</div><h2>Triumphs</h2></div>
       <button class="x" id="triumphsModalClose">✕</button></div>
     <div class="mbody" id="triumphsModalBody">
-      <p style="color:var(--muted);font-size:13px;text-align:center;padding:32px 0">Coming soon.</p>
+      <div id="triumphsContent"></div>
     </div>
     <div class="mfoot"><button class="btn" id="triumphsModalDone">Close</button></div>
   </div>
@@ -1131,6 +1142,7 @@
     s.currentCycleId = CYCLE_DEFS.find(d=>d.id===loaded.currentCycleId) ? loaded.currentCycleId : 'occ-1';
     const rawTp = (loaded.tradingPost && typeof loaded.tradingPost === 'object') ? loaded.tradingPost : {};
     s.tradingPost = { ...rawTp, customItems: Array.isArray(rawTp.customItems) ? rawTp.customItems : [] };
+    s.triumphs = (loaded.triumphs && typeof loaded.triumphs === 'object') ? loaded.triumphs : {};
     return s;
   }
 
@@ -1659,6 +1671,7 @@
     });
     sel.value=(current==null)?'':String(current);
     const line=el('div','ownerline'); fillOwner(line,current);
+    if(isArbitrator) line.style.display='none';
     sel.addEventListener('change',()=>{ const v=sel.value===''?null:Number(sel.value); fillOwner(line,v); onChange(v); });
     f.appendChild(sel); f.appendChild(line); return f;
   }
@@ -2257,9 +2270,63 @@
         body.querySelector(id).addEventListener('change', onSeekChange));
     }
   }
+  const TRIUMPHS = [
+    { key: 'dominator',   label: 'Dominator',   criteria: 'Most Territories at the end of the campaign.',                                                              auto: gi => Object.values(state.nodes).filter(n => n.gang === gi && n.terr).length },
+    { key: 'slaughterer', label: 'Slaughterer',  criteria: 'Most enemy fighters taken Out of Action and vehicles Wrecked across the whole campaign.',                   auto: null },
+    { key: 'creditor',    label: 'Creditor',     criteria: 'Largest Wealth at the end of the campaign.',                                                               auto: null },
+    { key: 'warmonger',   label: 'Warmonger',    criteria: 'Most battles fought across the whole campaign.',                                                            auto: gi => state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status==='done'&&(ch.challenger===gi||ch.challenged===gi)).length },
+    { key: 'powerbroker', label: 'Powerbroker',  criteria: 'Highest Reputation at the end of the campaign.',                                                           auto: gi => state.gangs[gi]?.rep || 0 },
+  ];
+
   const triumphsModal = document.getElementById('triumphsModal');
+
+  function renderTriumphs() {
+    const body = document.getElementById('triumphsContent');
+    if (!body) return;
+    if (!state.triumphs) state.triumphs = {};
+    body.innerHTML = '';
+    TRIUMPHS.forEach(t => {
+      const card = el('div', 'triumph-card');
+      card.appendChild(el('div', 'triumph-name', t.label));
+      card.appendChild(el('div', 'triumph-criteria', t.criteria));
+      const rows = el('div', 'triumph-rows');
+      for (let i = 0; i < state.players; i++) {
+        const g = state.gangs[i];
+        const row = el('div', 'triumph-row');
+        const dot = el('span', 'dot'); dot.style.background = g.color; row.appendChild(dot);
+        row.appendChild(el('span', 'triumph-gang', g.name));
+        const val = t.auto ? t.auto(i) : ((state.triumphs[t.key] || {})[i] ?? '');
+        if (t.auto) {
+          row.appendChild(el('span', 'triumph-val', String(val)));
+        } else {
+          const inp = document.createElement('input');
+          inp.type = 'number'; inp.min = '0'; inp.value = val;
+          inp.className = 'triumph-inp';
+          inp.addEventListener('change', () => {
+            if (!state.triumphs[t.key]) state.triumphs[t.key] = {};
+            state.triumphs[t.key][i] = parseInt(inp.value) || 0;
+            scheduleSave();
+          });
+          row.appendChild(inp);
+        }
+        rows.appendChild(row);
+      }
+      // Highlight leader(s)
+      const vals = Array.from({length: state.players}, (_, i) =>
+        t.auto ? t.auto(i) : ((state.triumphs[t.key] || {})[i] ?? 0));
+      const max = Math.max(...vals);
+      if (max > 0) {
+        rows.querySelectorAll('.triumph-row').forEach((row, i) => {
+          if (vals[i] === max) row.classList.add('triumph-leader');
+        });
+      }
+      card.appendChild(rows);
+      body.appendChild(card);
+    });
+  }
+
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); triumphsModal.classList.remove('show'); }
-  document.getElementById('triumphsBtn').addEventListener('click', () => triumphsModal.classList.add('show'));
+  document.getElementById('triumphsBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
   document.getElementById('triumphsModalClose').addEventListener('click', () => triumphsModal.classList.remove('show'));
   document.getElementById('triumphsModalDone').addEventListener('click', () => triumphsModal.classList.remove('show'));
 
