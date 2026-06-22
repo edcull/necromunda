@@ -2310,7 +2310,7 @@
     { key: 'dominator',   label: 'Dominator',   criteria: 'Most Territories at the end of the campaign.',                                                              auto: gi => Object.values(state.nodes).filter(n => n.gang === gi && n.terr).length },
     { key: 'slaughterer', label: 'Slaughterer',  criteria: 'Most enemy fighters taken Out of Action and vehicles Wrecked across the whole campaign.',                   auto: gi => state.gangs[gi]?.outOfAction || 0 },
     { key: 'creditor',    label: 'Creditor',     criteria: 'Largest Wealth at the end of the campaign.',                                                               auto: gi => state.gangs[gi]?.wealth ?? 1000 },
-    { key: 'warmonger',   label: 'Warmonger',    criteria: () => state?.simultaneousGames?.enabled ? 'Most battles won across the whole campaign.' : 'Most battles fought across the whole campaign.',  auto: gi => state.simultaneousGames?.enabled ? state.cycles.flatMap(c=>c.challenges).filter(ch=>(ch.result==='challenger'&&Number(ch.challenger)===gi)||(ch.result==='challenged'&&Number(ch.challenged)===gi)).length : state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status!=='pending'&&(Number(ch.challenger)===gi||Number(ch.challenged)===gi)).length },
+    { key: 'warmonger',   label: 'Warmonger',    criteria: 'Most battles fought across the whole campaign.',                                                            auto: gi => state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status!=='pending'&&(Number(ch.challenger)===gi||Number(ch.challenged)===gi)).length },
     { key: 'powerbroker', label: 'Powerbroker',  criteria: 'Highest Reputation at the end of the campaign.',                                                           auto: gi => state.gangs[gi]?.rep || 0 },
   ];
 
@@ -2921,7 +2921,7 @@
       const allChallenged = alreadyChallenged.size >= state.players;
       for(let i=0;i<state.players;i++){
         if(!allChallenged && alreadyChallenged.has(i)) continue;
-        if(batchLocked.has(i)) continue;
+        if(!allChallenged && batchLocked.has(i)) continue;
         const g = state.gangs[i];
         const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':'');
         if(i===defaultChallenger) o.selected=true;
@@ -2937,8 +2937,8 @@
         const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
         for(let i=0;i<state.players;i++){
           if(i===chIdx) continue;
-          if(batchLocked.has(i)) continue;
-          if(mustChallenge.has(i)) continue; // must issue their own challenge before being challenged
+          if(!allChallenged && batchLocked.has(i)) continue;
+          if(!allChallenged && mustChallenge.has(i)) continue;
           const g=state.gangs[i]; const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':''); selDef.appendChild(o);
         }
       }
