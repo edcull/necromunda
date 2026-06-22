@@ -2627,9 +2627,7 @@
         }
       }
       if(phase==='occupation'){
-        const unclaimed = all.filter(n=>!locked.has(n.id)&&!state.nodes[n.id].gang);
-        if(unclaimed.length>0) return unclaimed;
-        return all.filter(n=>!locked.has(n.id));
+        return all.filter(n=>!locked.has(n.id)&&!state.nodes[n.id].gang);
       } else {
         // takeover: only territories owned by the challenged gang
         return all.filter(n=>{
@@ -2812,12 +2810,16 @@
         const raw=selDef.value;
         const cg=(raw===''||raw==='unclaimed')?null:parseInt(raw);
         const avail = getAvailableTerritories(phase, cg);
-        const prompt=document.createElement('option'); prompt.value=''; prompt.textContent='— Select Territory —'; selTerr.appendChild(prompt);
-        avail.forEach(n=>{
-          const o=document.createElement('option'); o.value=n.id;
-          const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
-          o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':''); selTerr.appendChild(o);
-        });
+        if(avail.length===0 && phase==='occupation'){
+          const o=document.createElement('option'); o.value=''; o.textContent='— No unclaimed territories —'; selTerr.appendChild(o);
+        } else {
+          const prompt=document.createElement('option'); prompt.value=''; prompt.textContent='— Select Territory —'; selTerr.appendChild(prompt);
+          avail.forEach(n=>{
+            const o=document.createElement('option'); o.value=n.id;
+            const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
+            o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':''); selTerr.appendChild(o);
+          });
+        }
       }
       selDef.addEventListener('change', populateTerritories);
       populateTerritories();
