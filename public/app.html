@@ -631,6 +631,17 @@
   .tp-al-wrap input[type=number] { width: 44px; }
   .tp-cost-inp { background: var(--surface); border: 1px solid var(--edge); color: #eef6f1;
     border-radius: 4px; font-size: 12px; padding: 2px 4px; width: 60px; text-align: right; }
+  .tp-name-inp { background: var(--surface); border: 1px solid var(--edge); color: #eef6f1;
+    border-radius: 4px; font-size: 12px; padding: 2px 6px; width: 120px; }
+  .tp-cat-sel { background: var(--surface); border: 1px solid var(--edge); color: #eef6f1;
+    border-radius: 4px; font-size: 12px; padding: 2px 4px; width: 120px; }
+  .tp-del-btn { background: none; border: none; color: var(--tox-dim); cursor: pointer;
+    font-size: 14px; padding: 2px 4px; line-height: 1; }
+  .tp-del-btn:hover { color: var(--err, #e05); }
+  .tp-add-row td { padding-top: 10px; }
+  .tp-add-btn { font-size: 12px; padding: 5px 12px; }
+  .tp-modified { color: #f0c060; }
+  select.tp-modified, input.tp-modified { border-color: #f0c060; color: #f0c060; }
   /* Filter bar */
   .tp-filter { display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
     padding: 10px 0 14px; border-bottom: 1px solid var(--edge); margin-bottom: 4px; }
@@ -1060,7 +1071,7 @@
   function defaultState(){
     const nodes={};
     LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null,label:null}:{terr:null,gang:null,label:null}; });
-    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{}};
+    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]}};
   }
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
   function mergeState(loaded){
@@ -1087,7 +1098,8 @@
       return {id:d.id, challenges: Array.isArray(lc.challenges)?lc.challenges:[]};
     });
     s.currentCycleId = CYCLE_DEFS.find(d=>d.id===loaded.currentCycleId) ? loaded.currentCycleId : 'occ-1';
-    s.tradingPost = (loaded.tradingPost && typeof loaded.tradingPost === 'object') ? loaded.tradingPost : {};
+    const rawTp = (loaded.tradingPost && typeof loaded.tradingPost === 'object') ? loaded.tradingPost : {};
+    s.tradingPost = { ...rawTp, customItems: Array.isArray(rawTp.customItems) ? rawTp.customItems : [] };
     return s;
   }
 
@@ -1676,17 +1688,26 @@
       const ov = tpOverride(sec.key, it);
       return ov.enabled && ov.availability === 'C';
     });
-    if (!visible.length) return '';
-    const rows = visible.map(it => {
+    // Custom items for this category
+    const customs = tpCustomItems().filter(it =>
+      it.category === sec.key && it.enabled !== false && it.availability === 'C' && it.name
+    );
+    if (!visible.length && !customs.length) return '';
+    const stdRows = visible.map(it => {
       const ov = tpOverride(sec.key, it);
       const costVal = ov.cost != null ? (ov.cost === 0 ? 'Free' : ov.cost + ' cr') : tpCostStr(it);
       return `<tr><td>${it.name}</td><td class="tp-avail">C</td><td>${costVal}</td></tr>`;
     }).join('');
+    const customRows = customs.map(it => {
+      const costVal = it.cost != null ? (it.cost === 0 ? 'Free' : it.cost + ' cr') : '—';
+      return `<tr><td>${it.name}</td><td class="tp-avail">C</td><td>${costVal}</td></tr>`;
+    }).join('');
+    const total = visible.length + customs.length;
     return `<details class="tp-section">
-      <summary><span>${sec.label}</span><span class="tp-count">(${visible.length} Common)</span></summary>
+      <summary><span>${sec.label}</span><span class="tp-count">(${total} Common)</span></summary>
       <table class="tp-table">
         <thead><tr><th>Name</th><th>AL</th><th>Cost</th></tr></thead>
-        <tbody>${rows}</tbody>
+        <tbody>${stdRows}${customRows}</tbody>
       </table>
     </details>`;
   }
@@ -1697,24 +1718,32 @@
     const rows = items.map(it => {
       const ov = tpOverride(sec.key, it);
       const k = tpKey(sec.key, it.name);
+      const stored = (state.tradingPost || {})[k];
       const disabled = !ov.enabled;
       const alType = ov.availability;
       const alVal = ov.availValue != null ? ov.availValue : '';
       const costVal = ov.cost != null ? ov.cost : '';
+      // Defaults from JSON
+      const dfltAl = it.availability ? it.availability.replace(/\d+$/, '') : 'C';
+      const dfltAlVal = parseInt(it.availability) || null;
+      const dfltCost = it.cost != null ? it.cost : (it.costMod != null ? it.costMod : null);
+      const alModified = stored && (stored.availability !== dfltAl || stored.availValue !== dfltAlVal);
+      const costModified = stored && stored.cost != null && stored.cost !== dfltCost;
+      const disabledMod = stored && stored.enabled === false;
       const hasNote = it.costNote && it.cost == null && it.costMod == null;
       const costCell = hasNote
         ? `<span style="font-size:11px;color:var(--tox-dim)">${it.costNote}</span>`
-        : `<input class="tp-cost-inp" type="number" min="0" data-k="${k}" data-f="cost" value="${costVal}" ${disabled?'disabled':''}>`;
+        : `<input class="tp-cost-inp${costModified?' tp-modified':''}" type="number" min="0" data-k="${k}" data-f="cost" value="${costVal}" ${disabled?'disabled':''}>`;
       return `<tr class="${disabled ? 'tp-disabled' : ''}" data-k="${k}">
         <td><input type="checkbox" data-k="${k}" data-f="enabled" ${ov.enabled ? 'checked' : ''}></td>
-        <td>${it.name}</td>
+        <td${disabledMod?' class="tp-modified"':''}>${it.name}</td>
         <td><div class="tp-al-wrap">
-          <select data-k="${k}" data-f="availability" ${disabled?'disabled':''}>
+          <select class="${alModified?'tp-modified':''}" data-k="${k}" data-f="availability" ${disabled?'disabled':''}>
             <option value="C" ${alType==='C'?'selected':''}>C</option>
             <option value="R" ${alType==='R'?'selected':''}>R</option>
             <option value="I" ${alType==='I'?'selected':''}>I</option>
           </select>
-          <input type="number" min="1" max="15" data-k="${k}" data-f="availValue"
+          <input type="number" min="1" max="15" class="${alModified?'tp-modified':''}" data-k="${k}" data-f="availValue"
             value="${alVal}" style="display:${alType==='C'?'none':'inline-block'}" ${disabled?'disabled':''}>
         </div></td>
         <td>${costCell}</td>
@@ -1745,19 +1774,36 @@
           const item = items.find(i => i.name === name);
           if (item) state.tradingPost[k] = { ...tpOverride(catKey, item) };
         }
+        const [catKey, ...nameParts] = k.split(':');
+        const itemName = nameParts.join(':');
+        const srcItem = (_tpData[catKey]||[]).find(i=>i.name===itemName);
+        const dfltAl   = srcItem ? (srcItem.availability||'C').replace(/\d+$/,'') : 'C';
+        const dfltAlVal= srcItem ? (parseInt(srcItem.availability)||null) : null;
+        const dfltCost = srcItem ? (srcItem.cost!=null?srcItem.cost:(srcItem.costMod!=null?srcItem.costMod:null)) : null;
         if (f === 'enabled') {
           state.tradingPost[k].enabled = el.checked;
           const row = el.closest('tr');
           row.classList.toggle('tp-disabled', !el.checked);
           row.querySelectorAll('select,input:not([type=checkbox])').forEach(i => i.disabled = !el.checked);
+          const nameCell = row.querySelector('td:nth-child(2)');
+          if (nameCell) nameCell.classList.toggle('tp-modified', !el.checked);
         } else if (f === 'availability') {
           state.tradingPost[k].availability = el.value;
           const valInp = el.closest('.tp-al-wrap').querySelector('input[type=number]');
           valInp.style.display = el.value === 'C' ? 'none' : 'inline-block';
+          const mod = el.value !== dfltAl;
+          el.classList.toggle('tp-modified', mod);
+          if (valInp) valInp.classList.toggle('tp-modified', mod);
         } else if (f === 'availValue') {
           state.tradingPost[k].availValue = parseInt(el.value) || null;
+          const mod = (parseInt(el.value)||null) !== dfltAlVal;
+          el.classList.toggle('tp-modified', mod);
+          const sel = el.closest('.tp-al-wrap').querySelector('select');
+          if (sel) sel.classList.toggle('tp-modified', mod);
         } else if (f === 'cost') {
-          state.tradingPost[k].cost = el.value !== '' ? parseInt(el.value) : null;
+          const newCost = el.value !== '' ? parseInt(el.value) : null;
+          state.tradingPost[k].cost = newCost;
+          el.classList.toggle('tp-modified', newCost != null && newCost !== dfltCost);
         }
         // Refresh the summary count
         const details = el.closest('details');
@@ -1791,6 +1837,108 @@
     } catch (e) {
       body.innerHTML = '<p style="color:var(--err);font-size:13px">Failed to load trading post data.</p>';
     }
+  }
+
+  function tpUid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+  function tpCustomItems() {
+    if (!state.tradingPost) state.tradingPost = { customItems: [] };
+    if (!Array.isArray(state.tradingPost.customItems)) state.tradingPost.customItems = [];
+    return state.tradingPost.customItems;
+  }
+
+  function renderTpCustomSection() {
+    const items = tpCustomItems();
+    const catOptions = TP_SECTIONS.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+    const rows = items.map(it => {
+      const alType = it.availability || 'C';
+      const alVal  = it.availValue != null ? it.availValue : '';
+      return `<tr data-cid="${it.id}" class="${it.enabled===false?'tp-disabled':''}">
+        <td><input type="checkbox" data-cid="${it.id}" data-f="enabled" ${it.enabled!==false?'checked':''}></td>
+        <td><select class="tp-cat-sel" data-cid="${it.id}" data-f="category">
+          ${TP_SECTIONS.map(s=>`<option value="${s.key}"${it.category===s.key?' selected':''}>${s.label}</option>`).join('')}
+        </select></td>
+        <td><input class="tp-name-inp" type="text" data-cid="${it.id}" data-f="name" value="${it.name||''}" placeholder="Item name"></td>
+        <td><div class="tp-al-wrap">
+          <select data-cid="${it.id}" data-f="availability">
+            <option value="C" ${alType==='C'?'selected':''}>C</option>
+            <option value="R" ${alType==='R'?'selected':''}>R</option>
+            <option value="I" ${alType==='I'?'selected':''}>I</option>
+          </select>
+          <input type="number" min="1" max="15" data-cid="${it.id}" data-f="availValue"
+            value="${alVal}" style="display:${alType==='C'?'none':'inline-block'}">
+        </div></td>
+        <td><input class="tp-cost-inp" type="number" min="0" data-cid="${it.id}" data-f="cost" value="${it.cost!=null?it.cost:''}"></td>
+        <td><button class="tp-del-btn" data-cid="${it.id}" title="Remove">✕</button></td>
+      </tr>`;
+    }).join('');
+    const colgroup = `<colgroup><col style="width:28px"><col style="width:130px"><col><col style="width:110px"><col style="width:75px"><col style="width:30px"></colgroup>`;
+    return `<details class="tp-section" id="tpCustomSection" open>
+      <summary><span>Custom Items</span><span class="tp-count">(${items.length} item${items.length!==1?'s':''})</span></summary>
+      <table class="tp-table tp-cfg" id="tpCustomTable">
+        ${colgroup}
+        <thead><tr><th></th><th>Category</th><th>Name</th><th>AL</th><th style="text-align:right">Cost</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="tp-add-row"><td colspan="6">
+          <button class="btn ghost tp-add-btn" id="tpAddCustom">+ Add item</button>
+        </td></tr></tfoot>
+      </table>
+    </details>`;
+  }
+
+  function wireTpCustom(body) {
+    function save() { scheduleSave(); refreshCustomCount(body); }
+
+    function refreshCustomCount(body) {
+      const sec = body.querySelector('#tpCustomSection .tp-count');
+      if (sec) { const n = tpCustomItems().length; sec.textContent = `(${n} item${n!==1?'s':''})`; }
+    }
+
+    body.addEventListener('change', e => {
+      const el = e.target;
+      const cid = el.dataset.cid;
+      const f   = el.dataset.f;
+      if (!cid || !f) return;
+      const items = tpCustomItems();
+      const it = items.find(i => i.id === cid);
+      if (!it) return;
+      if (f === 'enabled') {
+        it.enabled = el.checked;
+        el.closest('tr').classList.toggle('tp-disabled', !el.checked);
+      } else if (f === 'category') {
+        it.category = el.value;
+      } else if (f === 'name') {
+        it.name = el.value;
+      } else if (f === 'availability') {
+        it.availability = el.value;
+        const valInp = el.closest('.tp-al-wrap').querySelector('input[type=number]');
+        if (valInp) valInp.style.display = el.value === 'C' ? 'none' : 'inline-block';
+      } else if (f === 'availValue') {
+        it.availValue = parseInt(el.value) || null;
+      } else if (f === 'cost') {
+        it.cost = el.value !== '' ? parseInt(el.value) : null;
+      }
+      save();
+    });
+
+    body.querySelector('#tpAddCustom').addEventListener('click', () => {
+      const items = tpCustomItems();
+      items.push({ id: tpUid(), category: TP_SECTIONS[0].key, name: '', availability: 'C', availValue: null, cost: null, enabled: true });
+      // Re-render just the custom section
+      const sec = body.querySelector('#tpCustomSection');
+      if (sec) { const tmp = document.createElement('div'); tmp.innerHTML = renderTpCustomSection(); sec.replaceWith(tmp.firstElementChild); wireTpCustom(body); }
+      save();
+    });
+
+    body.querySelectorAll('.tp-del-btn[data-cid]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cid = btn.dataset.cid;
+        state.tradingPost.customItems = tpCustomItems().filter(i => i.id !== cid);
+        const sec = body.querySelector('#tpCustomSection');
+        if (sec) { const tmp = document.createElement('div'); tmp.innerHTML = renderTpCustomSection(); sec.replaceWith(tmp.firstElementChild); wireTpCustom(body); }
+        save();
+      });
+    });
   }
 
   function applyTpFilter(body, showC, maxR, maxI) {
@@ -1853,10 +2001,11 @@
       const html = TP_SECTIONS.map(sec => {
         const items = _tpData[sec.key] || [];
         return renderTpCfgSection(sec, items);
-      }).join('');
+      }).join('') + renderTpCustomSection();
       body.innerHTML = filterBar + (html || '<p style="color:var(--muted);font-size:13px">No items.</p>');
       wireTpCfg(body);
       wireTpFilter(body);
+      wireTpCustom(body);
     } else {
       const html = TP_SECTIONS.map(sec => {
         const items = _tpData[sec.key] || [];
