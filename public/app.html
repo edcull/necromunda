@@ -601,7 +601,7 @@
   .tp-section { border-bottom: 1px solid var(--edge); }
   .tp-section summary {
     cursor: pointer; list-style: none; padding: 11px 4px;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center;
     font-size: 13px; letter-spacing: .1em; text-transform: uppercase;
     color: var(--tox); user-select: none;
   }
@@ -613,11 +613,24 @@
   .tp-table { width: 100%; border-collapse: collapse; margin: 4px 0 12px; font-size: 13px; }
   .tp-table th { text-align: left; color: var(--tox); font-weight: 600; font-size: 11px;
     letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px 6px; border-bottom: 1px solid var(--edge); }
-  .tp-table td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,.04); color: #c8d8cc; }
+  .tp-table td { padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,.04); color: #c8d8cc; }
   .tp-table tr:last-child td { border-bottom: none; }
   .tp-table td:nth-child(2), .tp-table th:nth-child(2) { text-align: center; }
   .tp-table td:nth-child(3), .tp-table th:nth-child(3) { text-align: right; }
   .tp-avail { font-size: 11px; letter-spacing: .05em; color: var(--tox); }
+  /* Config table controls */
+  .tp-cfg td { vertical-align: middle; }
+  .tp-cfg td:first-child { width: 28px; text-align: center; }
+  .tp-cfg td:last-child { text-align: right; }
+  .tp-cfg tr.tp-disabled td { opacity: .35; }
+  .tp-cfg tr.tp-disabled td:first-child { opacity: 1; }
+  .tp-al-wrap { display: flex; gap: 4px; align-items: center; justify-content: center; }
+  .tp-al-wrap select, .tp-al-wrap input[type=number] { background: var(--surface); border: 1px solid var(--edge);
+    color: #eef6f1; border-radius: 4px; font-size: 12px; padding: 2px 4px; }
+  .tp-al-wrap select { width: 46px; }
+  .tp-al-wrap input[type=number] { width: 44px; }
+  .tp-cost-inp { background: var(--surface); border: 1px solid var(--edge); color: #eef6f1;
+    border-radius: 4px; font-size: 12px; padding: 2px 4px; width: 60px; text-align: right; }
 </style>
 
 <div class="wrap">
@@ -1037,7 +1050,7 @@
   function defaultState(){
     const nodes={};
     LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null,label:null}:{terr:null,gang:null,label:null}; });
-    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1'};
+    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{}};
   }
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
   function mergeState(loaded){
@@ -1064,6 +1077,7 @@
       return {id:d.id, challenges: Array.isArray(lc.challenges)?lc.challenges:[]};
     });
     s.currentCycleId = CYCLE_DEFS.find(d=>d.id===loaded.currentCycleId) ? loaded.currentCycleId : 'occ-1';
+    s.tradingPost = (loaded.tradingPost && typeof loaded.tradingPost === 'object') ? loaded.tradingPost : {};
     return s;
   }
 
@@ -1619,6 +1633,25 @@
     { key: 'exoticBeasts',       label: 'Exotic Beasts' },
   ];
 
+  function tpKey(catKey, name) { return catKey + ':' + name; }
+
+  function tpOverride(catKey, item) {
+    // Returns effective {enabled, availability, availValue, cost} merged with defaults
+    const dflt = {
+      enabled: true,
+      availability: item.availability ? item.availability.replace(/\d+$/, '') : 'C',
+      availValue: parseInt(item.availability) || null,
+      cost: item.cost != null ? item.cost : (item.costMod != null ? item.costMod : null),
+    };
+    const ov = (state.tradingPost || {})[tpKey(catKey, item.name)] || {};
+    return { ...dflt, ...ov };
+  }
+
+  function tpEffectiveAvail(ov) {
+    if (ov.availability === 'C') return 'C';
+    return ov.availability + (ov.availValue != null ? ov.availValue : '');
+  }
+
   function tpCostStr(item) {
     if (item.costNote) return item.costNote;
     if (item.cost === 0) return 'Free';
@@ -1627,14 +1660,20 @@
     return '—';
   }
 
-  function renderTpSection(sec, items) {
-    const common = items.filter(it => it.availability === 'C');
-    if (!common.length) return '';
-    const rows = common.map(it =>
-      `<tr><td>${it.name}</td><td class="tp-avail">${it.availability}</td><td>${tpCostStr(it)}</td></tr>`
-    ).join('');
+  /* ---- Reference view (player-facing) ---- */
+  function renderTpRefSection(sec, items) {
+    const visible = items.filter(it => {
+      const ov = tpOverride(sec.key, it);
+      return ov.enabled && ov.availability === 'C';
+    });
+    if (!visible.length) return '';
+    const rows = visible.map(it => {
+      const ov = tpOverride(sec.key, it);
+      const costVal = ov.cost != null ? (ov.cost === 0 ? 'Free' : ov.cost + ' cr') : tpCostStr(it);
+      return `<tr><td>${it.name}</td><td class="tp-avail">C</td><td>${costVal}</td></tr>`;
+    }).join('');
     return `<details class="tp-section">
-      <summary><span>${sec.label}</span><span class="tp-count">(${common.length} Common)</span></summary>
+      <summary><span>${sec.label}</span><span class="tp-count">(${visible.length} Common)</span></summary>
       <table class="tp-table">
         <thead><tr><th>Name</th><th>AL</th><th>Cost</th></tr></thead>
         <tbody>${rows}</tbody>
@@ -1642,11 +1681,95 @@
     </details>`;
   }
 
+  /* ---- Config view (arbitrator-facing) ---- */
+  function renderTpCfgSection(sec, items) {
+    if (!items.length) return '';
+    const rows = items.map(it => {
+      const ov = tpOverride(sec.key, it);
+      const k = tpKey(sec.key, it.name);
+      const disabled = !ov.enabled;
+      const alType = ov.availability;
+      const alVal = ov.availValue != null ? ov.availValue : '';
+      const costVal = ov.cost != null ? ov.cost : '';
+      const hasNote = it.costNote && it.cost == null && it.costMod == null;
+      const costCell = hasNote
+        ? `<span style="font-size:11px;color:var(--tox-dim)">${it.costNote}</span>`
+        : `<input class="tp-cost-inp" type="number" min="0" data-k="${k}" data-f="cost" value="${costVal}" ${disabled?'disabled':''}>`;
+      return `<tr class="${disabled ? 'tp-disabled' : ''}" data-k="${k}">
+        <td><input type="checkbox" data-k="${k}" data-f="enabled" ${ov.enabled ? 'checked' : ''}></td>
+        <td>${it.name}</td>
+        <td><div class="tp-al-wrap">
+          <select data-k="${k}" data-f="availability" ${disabled?'disabled':''}>
+            <option value="C" ${alType==='C'?'selected':''}>C</option>
+            <option value="R" ${alType==='R'?'selected':''}>R</option>
+            <option value="I" ${alType==='I'?'selected':''}>I</option>
+          </select>
+          <input type="number" min="1" max="15" data-k="${k}" data-f="availValue"
+            value="${alVal}" style="display:${alType==='C'?'none':'inline-block'}" ${disabled?'disabled':''}>
+        </div></td>
+        <td>${costCell}</td>
+      </tr>`;
+    }).join('');
+    const total = items.length;
+    const en = items.filter(it => tpOverride(sec.key, it).enabled).length;
+    return `<details class="tp-section">
+      <summary><span>${sec.label}</span><span class="tp-count">(${en}/${total} enabled)</span></summary>
+      <table class="tp-table tp-cfg">
+        <thead><tr><th></th><th>Name</th><th>AL</th><th style="text-align:right">Cost</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </details>`;
+  }
+
+  function wireTpCfg(body) {
+    body.querySelectorAll('[data-k][data-f]').forEach(el => {
+      el.addEventListener('change', () => {
+        const k = el.dataset.k, f = el.dataset.f;
+        if (!state.tradingPost) state.tradingPost = {};
+        if (!state.tradingPost[k]) {
+          // Initialise from defaults before first edit
+          const [catKey, ...nameParts] = k.split(':');
+          const name = nameParts.join(':');
+          const sec = TP_SECTIONS.find(s => s.key === catKey);
+          const items = _tpData[catKey] || [];
+          const item = items.find(i => i.name === name);
+          if (item) state.tradingPost[k] = { ...tpOverride(catKey, item) };
+        }
+        if (f === 'enabled') {
+          state.tradingPost[k].enabled = el.checked;
+          const row = el.closest('tr');
+          row.classList.toggle('tp-disabled', !el.checked);
+          row.querySelectorAll('select,input:not([type=checkbox])').forEach(i => i.disabled = !el.checked);
+        } else if (f === 'availability') {
+          state.tradingPost[k].availability = el.value;
+          const valInp = el.closest('.tp-al-wrap').querySelector('input[type=number]');
+          valInp.style.display = el.value === 'C' ? 'none' : 'inline-block';
+        } else if (f === 'availValue') {
+          state.tradingPost[k].availValue = parseInt(el.value) || null;
+        } else if (f === 'cost') {
+          state.tradingPost[k].cost = el.value !== '' ? parseInt(el.value) : null;
+        }
+        // Refresh the summary count
+        const details = el.closest('details');
+        if (details) {
+          const [catKey] = k.split(':');
+          const items = _tpData[catKey] || [];
+          const en = items.filter(it => tpOverride(catKey, it).enabled).length;
+          const cnt = details.querySelector('.tp-count');
+          if (cnt) cnt.textContent = `(${en}/${items.length} enabled)`;
+        }
+        scheduleSave();
+      });
+    });
+  }
+
   async function openTradeModal(fromArb = false) {
     _tradeFromArb = fromArb;
     tradeModal.classList.add('show');
+    // Update kicker label
+    document.querySelector('#tradeModal .kicker').textContent = fromArb ? 'Configuration' : 'Reference';
     const body = document.getElementById('tradeModalBody');
-    if (_tpData) { renderTpBody(body); return; }
+    if (_tpData) { renderTpBody(body); return; }  // data cached, re-render for current mode
     body.innerHTML = '<p style="color:var(--muted);font-size:13px">Loading…</p>';
     try {
       const [wpnRes, eqpRes] = await Promise.all([
@@ -1661,11 +1784,20 @@
   }
 
   function renderTpBody(body) {
-    const html = TP_SECTIONS.map(sec => {
-      const items = _tpData[sec.key] || [];
-      return renderTpSection(sec, items);
-    }).join('');
-    body.innerHTML = html || '<p style="color:var(--muted);font-size:13px">No common items found.</p>';
+    if (_tradeFromArb) {
+      const html = TP_SECTIONS.map(sec => {
+        const items = _tpData[sec.key] || [];
+        return renderTpCfgSection(sec, items);
+      }).join('');
+      body.innerHTML = html || '<p style="color:var(--muted);font-size:13px">No items.</p>';
+      wireTpCfg(body);
+    } else {
+      const html = TP_SECTIONS.map(sec => {
+        const items = _tpData[sec.key] || [];
+        return renderTpRefSection(sec, items);
+      }).join('');
+      body.innerHTML = html || '<p style="color:var(--muted);font-size:13px">No common items available.</p>';
+    }
   }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
 
