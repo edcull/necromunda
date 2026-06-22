@@ -1,7 +1,27 @@
 'use strict';
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const db = require('../db');
 const router = express.Router();
+
+function loadStaticJson(name) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'static-data', name), 'utf8'));
+  } catch { return null; }
+}
+
+router.get('/necromunda/api/static/trading-post-weapons', (req, res) => {
+  const data = loadStaticJson('trading_post_weapons.json');
+  if (!data) return res.status(404).json({ error: 'Not found' });
+  res.json(data);
+});
+
+router.get('/necromunda/api/static/trading-post-equipment', (req, res) => {
+  const data = loadStaticJson('trading_post_equipment.json');
+  if (!data) return res.status(404).json({ error: 'Not found' });
+  res.json(data);
+});
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid confusion
 function genId() {
