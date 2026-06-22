@@ -2986,6 +2986,7 @@
           const o=document.createElement('option'); o.value=''; o.textContent='— No unclaimed territories —'; selTerr.appendChild(o);
         } else if(avail.length===0 && phase==='takeover'){
           const o=document.createElement('option'); o.value='special'; o.textContent='Special Scenario — no territory at stake'; selTerr.appendChild(o);
+          const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
         } else {
           const prompt=document.createElement('option'); prompt.value=''; prompt.textContent='— Select Territory —'; selTerr.appendChild(prompt);
           avail.forEach(n=>{
@@ -2993,6 +2994,7 @@
             const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
             o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':''); selTerr.appendChild(o);
           });
+          const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
         }
       }
       selDef.addEventListener('change', populateTerritories);
@@ -3037,6 +3039,8 @@
       const terrDiv=document.createElement('div'); terrDiv.className='ch-territory';
       if(ch.territory==='special'){
         terrDiv.textContent='Special Scenario';
+      } else if(ch.territory==='rescue'){
+        terrDiv.textContent='Rescue Mission';
       } else {
         const lbl=nodeLabel(ch.territory); const sub=nodeSubLabel(ch.territory);
         terrDiv.textContent=lbl;
@@ -3211,8 +3215,8 @@
 
       const result = rmMode==='refused' ? 'refused' : rmSelectedResult;
 
-      // Apply territory ownership change (skipped for special scenario)
-      if(ch.territory !== 'special'){
+      // Apply territory ownership change (skipped for special scenario / rescue mission)
+      if(ch.territory !== 'special' && ch.territory !== 'rescue'){
         const nodeData = state.nodes[ch.territory];
         if(result==='refused'||result==='challenger'){
           nodeData.gang=ch.challenger;
