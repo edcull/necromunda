@@ -2984,9 +2984,6 @@
         const avail = getAvailableTerritories(phase, cg);
         if(avail.length===0 && phase==='occupation'){
           const o=document.createElement('option'); o.value=''; o.textContent='— No unclaimed territories —'; selTerr.appendChild(o);
-        } else if(avail.length===0 && phase==='takeover'){
-          const o=document.createElement('option'); o.value='special'; o.textContent='Special Scenario — no territory at stake'; selTerr.appendChild(o);
-          const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
         } else {
           const prompt=document.createElement('option'); prompt.value=''; prompt.textContent='— Select Territory —'; selTerr.appendChild(prompt);
           avail.forEach(n=>{
@@ -2994,7 +2991,14 @@
             const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
             o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':''); selTerr.appendChild(o);
           });
-          const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
+          if(avail.length===0){
+            // No territories owned by defender — special scenario only
+            const o=document.createElement('option'); o.value='special'; o.textContent='Special Scenario — no territory at stake'; selTerr.appendChild(o);
+          }
+          // Rescue Mission always available in Takeover — challenger may issue it regardless of defender's holdings
+          if(phase==='takeover'){
+            const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
+          }
         }
       }
       selDef.addEventListener('change', populateTerritories);
