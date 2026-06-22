@@ -683,6 +683,7 @@
       <span class="save-tag" id="saveTag"></span>
       <a href="/necromunda" class="btn ghost icon-btn" style="text-decoration:none" title="Back to campaigns" aria-label="Back to campaigns">⌂</a>
       <button class="btn ghost" id="tradingPostBtn">⚖ Trading Post</button>
+      <button class="btn icon-btn" id="triumphsBtn" title="Triumphs" aria-label="Triumphs">🏆</button>
       <button class="btn icon-btn" id="arbitratorBtn" title="Arbitrator" aria-label="Arbitrator">⚔</button>
     </div>
   </div>
@@ -815,6 +816,17 @@
       <p style="color:var(--muted);font-size:13px">Loading…</p>
     </div>
     <div class="mfoot"><button class="btn" id="tradeModalDone">Close</button></div>
+  </div>
+</div>
+
+<div class="modal" id="triumphsModal" aria-label="Triumphs">
+  <div class="sheet" style="width:min(560px,100%)">
+    <div class="mhead"><div><div class="kicker">Campaign</div><h2>Triumphs</h2></div>
+      <button class="x" id="triumphsModalClose">✕</button></div>
+    <div class="mbody" id="triumphsModalBody">
+      <p style="color:var(--muted);font-size:13px;text-align:center;padding:32px 0">Coming soon.</p>
+    </div>
+    <div class="mfoot"><button class="btn" id="triumphsModalDone">Close</button></div>
   </div>
 </div>
 
@@ -2245,7 +2257,11 @@
         body.querySelector(id).addEventListener('change', onSeekChange));
     }
   }
-  function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
+  const triumphsModal = document.getElementById('triumphsModal');
+  function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); triumphsModal.classList.remove('show'); }
+  document.getElementById('triumphsBtn').addEventListener('click', () => triumphsModal.classList.add('show'));
+  document.getElementById('triumphsModalClose').addEventListener('click', () => triumphsModal.classList.remove('show'));
+  document.getElementById('triumphsModalDone').addEventListener('click', () => triumphsModal.classList.remove('show'));
 
   function closeConfigModal(){ closeModal(); renderArbModal(); arbModal.classList.add('show'); }
   document.getElementById('terrModalClose').addEventListener('click', closeConfigModal);
