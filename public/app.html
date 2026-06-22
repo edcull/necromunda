@@ -129,7 +129,7 @@
   .lbl .sub.owner{color:var(--c)}
 
   .legend{position:absolute;left:14px;bottom:14px;z-index:5;background:rgba(6,11,9,.74);border:1px solid var(--edge);
-    backdrop-filter:blur(2px);padding:9px 12px 10px;border-radius:2px;max-width:270px}
+    backdrop-filter:blur(2px);padding:9px 12px 10px;border-radius:2px;max-width:220px}
   .legend-toggle{display:none}
   .legend-body{}
   .legend h3{font-size:10px;letter-spacing:.24em;color:var(--tox);text-transform:uppercase;margin:0 0 7px}
@@ -748,7 +748,7 @@
       </div>
       <div class="legend-body">
         <h3>Gangs</h3>
-        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button><button id="sortWeal">Wealth</button><button id="sortOoa">Kills</button></div>
+        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div>
         <ul id="legendList"></ul>
       </div>
     </div>
@@ -1533,11 +1533,9 @@
       li.appendChild(el('span','ct',n));
       li.appendChild(el('span','ct-rep',rep));
       li.appendChild(el('span','ct-rat',rat));
-      li.appendChild(el('span','ct-weal',weal));
-      li.appendChild(el('span','ct-ooa',ooa));
       ul.appendChild(li);
     });
-    ['sortTerr','sortRep','sortRat','sortWeal','sortOoa'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on', (id==='sortTerr'&&legendSort==='terr')||(id==='sortRep'&&legendSort==='rep')||(id==='sortRat'&&legendSort==='rat')||(id==='sortWeal'&&legendSort==='weal')||(id==='sortOoa'&&legendSort==='ooa')); });
+    ['sortTerr','sortRep','sortRat'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on', (id==='sortTerr'&&legendSort==='terr')||(id==='sortRep'&&legendSort==='rep')||(id==='sortRat'&&legendSort==='rat')); });
   }
   function countHoldings(gi){ let n=0; for(const id in state.nodes) if(state.nodes[id].gang===gi) n++; return n; }
   function gangTerrList(gi){ const t=[]; for(const id in state.nodes){ const d=state.nodes[id]; if(d.gang===gi&&d.terr){const tr=TERR_BY_KEY[d.terr];if(tr)t.push({...tr,customLabel:d.label||null,nodeId:id});} } return t; }
@@ -1619,8 +1617,6 @@
   document.getElementById('sortTerr').addEventListener('click',()=>{ legendSort='terr'; renderLegend(); });
   document.getElementById('sortRep').addEventListener('click',()=>{ legendSort='rep'; renderLegend(); });
   document.getElementById('sortRat').addEventListener('click',()=>{ legendSort='rat'; renderLegend(); });
-  document.getElementById('sortWeal').addEventListener('click',()=>{ legendSort='weal'; renderLegend(); });
-  document.getElementById('sortOoa').addEventListener('click',()=>{ legendSort='ooa'; renderLegend(); });
 
   /* Legend collapse toggle (mobile only) */
   document.getElementById('legendToggle').addEventListener('click', () => {
