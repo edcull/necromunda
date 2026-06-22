@@ -3131,11 +3131,11 @@
         col.appendChild(h4);
 
         const g=state.gangs[gi];
-        [{field:'rating',label:'Rating'},{field:'rep',label:'Reputation'}].forEach(({field,label})=>{
+        [{field:'rating',label:'Rating'},{field:'rep',label:'Reputation'},{field:'wealth',label:'Wealth'},{field:'outOfAction',label:'Kills'}].forEach(({field,label})=>{
           const row=document.createElement('div'); row.className='rm-stat-row';
           const lbl=document.createElement('span'); lbl.className='rm-stat-label'; lbl.textContent=label;
           const inp=document.createElement('input'); inp.type='number'; inp.className='rm-stat-input';
-          inp.value=g[field]||0; inp.min=0; inp.dataset.gang=gi; inp.dataset.field=field;
+          inp.value=field==='wealth'?(g.wealth!=null?g.wealth:1000):(g[field]||0); inp.min=0; inp.dataset.gang=gi; inp.dataset.field=field;
           row.appendChild(lbl); row.appendChild(inp); col.appendChild(row);
         });
         rmStatGrid.appendChild(col);
