@@ -2310,7 +2310,7 @@
     { key: 'dominator',   label: 'Dominator',   criteria: 'Most Territories at the end of the campaign.',                                                              auto: gi => Object.values(state.nodes).filter(n => n.gang === gi && n.terr).length },
     { key: 'slaughterer', label: 'Slaughterer',  criteria: 'Most enemy fighters taken Out of Action and vehicles Wrecked across the whole campaign.',                   auto: gi => state.gangs[gi]?.outOfAction || 0 },
     { key: 'creditor',    label: 'Creditor',     criteria: 'Largest Wealth at the end of the campaign.',                                                               auto: gi => state.gangs[gi]?.wealth ?? 1000 },
-    { key: 'warmonger',   label: 'Warmonger',    criteria: state.simultaneousGames?.enabled ? 'Most battles won across the whole campaign.' : 'Most battles fought across the whole campaign.',  auto: gi => state.simultaneousGames?.enabled ? state.cycles.flatMap(c=>c.challenges).filter(ch=>(ch.result==='challenger'&&Number(ch.challenger)===gi)||(ch.result==='challenged'&&Number(ch.challenged)===gi)).length : state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status!=='pending'&&(Number(ch.challenger)===gi||Number(ch.challenged)===gi)).length },
+    { key: 'warmonger',   label: 'Warmonger',    criteria: () => state?.simultaneousGames?.enabled ? 'Most battles won across the whole campaign.' : 'Most battles fought across the whole campaign.',  auto: gi => state.simultaneousGames?.enabled ? state.cycles.flatMap(c=>c.challenges).filter(ch=>(ch.result==='challenger'&&Number(ch.challenger)===gi)||(ch.result==='challenged'&&Number(ch.challenged)===gi)).length : state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status!=='pending'&&(Number(ch.challenger)===gi||Number(ch.challenged)===gi)).length },
     { key: 'powerbroker', label: 'Powerbroker',  criteria: 'Highest Reputation at the end of the campaign.',                                                           auto: gi => state.gangs[gi]?.rep || 0 },
   ];
 
@@ -2324,7 +2324,7 @@
     TRIUMPHS.forEach(t => {
       const card = el('div', 'triumph-card');
       card.appendChild(el('div', 'triumph-name', t.label));
-      card.appendChild(el('div', 'triumph-criteria', t.criteria));
+      card.appendChild(el('div', 'triumph-criteria', typeof t.criteria === 'function' ? t.criteria() : t.criteria));
       const allVals = Array.from({length: state.players}, (_, i) => ({i, val: t.auto(i)}));
       allVals.sort((a, b) => b.val - a.val);
       const top3 = allVals.slice(0, 3);
