@@ -245,8 +245,18 @@
   .terr-held-card{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.2);border:1px solid var(--edge-soft);border-radius:2px;padding:7px 10px}
   .terr-held-card .tile{--c:var(--tox);width:32px;height:32px;flex:0 0 auto;display:grid;place-items:center;border:1px solid var(--edge);border-radius:6px;background:rgba(0,0,0,.3)}
   .terr-held-card .tile .terricon{width:20px;height:20px;color:var(--ink)}
+  .terr-held-card{align-items:flex-start}
+  .terr-held-card .tile{margin-top:3px}
   .terr-held-card .tinfo .tname{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#e8f2ec;line-height:1.2}
   .terr-held-card .tinfo .tmeta{font-size:10px;color:var(--muted);letter-spacing:.08em;margin-top:2px}
+  .terr-boonlist{margin-top:6px}
+  .terr-boonlist li::before{width:4px;height:4px;margin-top:6px}
+  .terr-boonlist .btag{font-size:9px;padding:1px 5px}
+  .terr-boonlist .btxt{font-size:12px}
+  .terr-enh-badge{display:inline-block;margin-top:5px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--amber);background:rgba(240,150,42,.12);border:1px solid rgba(240,150,42,.3);border-radius:2px;padding:1px 6px}
+  .terr-boonlist .btag{color:var(--tox);background:var(--tox-dim);border-color:var(--edge)}
+  .terr-held-card.enhanced .terr-boonlist .btag{color:var(--amber);background:rgba(240,150,42,.12);border-color:rgba(240,150,42,.3)}
+  .terr-held-card.enhanced .terr-boonlist li::before{background:var(--amber)}
   .emoji-btn{background:transparent;border:1px solid var(--edge);border-radius:2px;width:34px;height:34px;font-size:15px;flex:0 0 auto}
   .emoji-btn:hover{border-color:var(--tox)}
   .palette{position:absolute;top:42px;left:0;z-index:5;background:#0a100e;border:1px solid var(--edge);border-radius:3px;padding:8px;display:none;grid-template-columns:repeat(8,1fr);gap:3px;width:264px;box-shadow:0 14px 40px rgba(0,0,0,.6)}
@@ -1478,6 +1488,16 @@
   function countHoldings(gi){ let n=0; for(const id in state.nodes) if(state.nodes[id].gang===gi) n++; return n; }
   function gangTerrList(gi){ const t=[]; for(const id in state.nodes){ const d=state.nodes[id]; if(d.gang===gi&&d.terr){const tr=TERR_BY_KEY[d.terr];if(tr)t.push({...tr,customLabel:d.label||null,nodeId:id});} } return t; }
   function findHideoutNodeId(gi){ for(const id in state.nodes){ const d=state.nodes[id]; const n=LAYOUT.find(x=>x.id===id); if(n&&n.type==='hideout'&&d.gang===gi) return id; } return null; }
+  function effectiveBoons(terr, gangType) {
+    const base = (terr.boon || []).slice();
+    if (!terr.enh || terr.house !== gangType) return base;
+    terr.enh.forEach(eb => {
+      const idx = base.findIndex(b => b.t === eb.t);
+      if (idx >= 0) base[idx] = eb; else base.push(eb);
+    });
+    return base;
+  }
+
   function hideoutStats(ownerG,gi){ const wrap=el('div'); if(!ownerG) return wrap;
     const stats=el('div','hideout-stats');
     const re=el('div','hstat'); re.appendChild(el('span','hstat-label','Reputation')); re.appendChild(el('span','hstat-val hstat-rep',String(ownerG.rep||0))); stats.appendChild(re);
@@ -1488,13 +1508,21 @@
       const tf=el('div','field'); tf.appendChild(el('label',null,'Territories Held'));
       const list=el('div','terr-held');
       terrs.forEach(t=>{
-        const card=el('div','terr-held-card');
+        const enhanced = t.enh && t.house === ownerG.type;
+        const card=el('div','terr-held-card'+(enhanced?' enhanced':''));
         card.style.cursor='pointer';
         card.addEventListener('click',()=>{ if(t.nodeId) openEditor(t.nodeId); });
         const tile=el('div','tile'); tile.innerHTML=svgIcon(t.key); card.appendChild(tile);
         const info=el('div','tinfo');
         info.appendChild(el('div','tname',t.customLabel||t.name));
-        info.appendChild(el('div','tmeta',t.name));
+        if (t.customLabel) info.appendChild(el('div','tmeta',t.name));
+        const boons = effectiveBoons(t, ownerG.type);
+        const ul = el('ul','boonlist terr-boonlist');
+        boons.forEach(b => {
+          const li = el('li'); li.appendChild(el('span','btag',b.t)); li.appendChild(el('span','btxt',b.d)); ul.appendChild(li);
+        });
+        info.appendChild(ul);
+        if (enhanced) info.appendChild(el('div','terr-enh-badge','Enhanced Boon'));
         card.appendChild(info); list.appendChild(card);
       });
       tf.appendChild(list); wrap.appendChild(tf);
@@ -1537,7 +1565,6 @@
         const ownerG=gangOf(data.gang);
         if(ownerG && ownerG.type){ const tf=el('div','field'); tf.appendChild(el('label',null,'Gang Type')); tf.appendChild(el('div','gang-type-tag',ownerG.type)); drawerBody.appendChild(tf); }
         drawerBody.appendChild(hideoutStats(ownerG, data.gang));
-        drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
       }else{
         drawerBody.appendChild(terrField(data.terr, key=>{
           if(key){ for(const oid in state.nodes){ if(oid!==id && state.nodes[oid].terr===key) state.nodes[oid].terr=null; } }
@@ -1567,7 +1594,6 @@
       if(node.type==='hideout'){
         if(ownerG && ownerG.type){ const tf=el('div','field'); tf.appendChild(el('label',null,'Gang Type')); tf.appendChild(el('div','gang-type-tag',ownerG.type)); drawerBody.appendChild(tf); }
         drawerBody.appendChild(hideoutStats(ownerG, data.gang));
-        drawerBody.appendChild(el('p','empty-note','A hideout is the home settlement of a single gang and anchors that gang\u2019s presence in the sector.'));
       }else{
         drawerBody.appendChild(terrCard(data.terr));
       }
