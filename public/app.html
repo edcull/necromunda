@@ -3117,7 +3117,7 @@
         col.appendChild(h4);
 
         const g=state.gangs[gi];
-        [{field:'rating',label:'Rating'},{field:'rep',label:'Reputation'},{field:'wealth',label:'Wealth'},{field:'outOfAction',label:'Kills'}].forEach(({field,label})=>{
+        [{field:'rating',label:'Rating'},{field:'wealth',label:'Wealth'},{field:'rep',label:'Reputation'},{field:'outOfAction',label:'Kills'}].forEach(({field,label})=>{
           const row=document.createElement('div'); row.className='rm-stat-row';
           const lbl=document.createElement('span'); lbl.className='rm-stat-label'; lbl.textContent=label;
           const inp=document.createElement('input'); inp.type='number'; inp.className='rm-stat-input';
