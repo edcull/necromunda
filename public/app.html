@@ -2858,7 +2858,7 @@
       const hdr = document.createElement('div');
       hdr.className = 'cp-section-head';
       hdr.innerHTML = '<span>Challenges</span>';
-      if(isArbitrator){
+      if(isArbitrator && isCurrentCycle){
         const addBtn = document.createElement('button');
         addBtn.className = 'cp-add-btn'; addBtn.textContent = '+ New Challenge';
         addBtn.addEventListener('click', ()=>{ showingForm=!showingForm; renderPanel(); });
@@ -2893,19 +2893,19 @@
           cpBody.appendChild(hdr);
           const batch = mandatory.slice(b*batchSize, (b+1)*batchSize)
             .sort((a,z)=>(statusOrder[a.status]||0)-(statusOrder[z.status]||0));
-          batch.forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator)); });
+          batch.forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator && isCurrentCycle)); });
         }
         if(additional.length > 0){
           const hdr = document.createElement('div'); hdr.className='ch-batch-hdr';
           hdr.textContent = 'Additional Games';
           cpBody.appendChild(hdr);
           additional.sort((a,z)=>(statusOrder[a.status]||0)-(statusOrder[z.status]||0))
-            .forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator)); });
+            .forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator && isCurrentCycle)); });
         }
       } else {
         // No simultaneous games — sort by status
         [...cyc.challenges].sort((a,b)=>(statusOrder[a.status]||0)-(statusOrder[b.status]||0))
-          .forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator)); });
+          .forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator && isCurrentCycle)); });
       }
     }
 
