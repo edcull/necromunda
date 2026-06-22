@@ -241,6 +241,8 @@
   .hstat-label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
   .hstat-val{display:block;font-size:18px;font-family:'Oswald';font-weight:600;letter-spacing:.04em}
   .hstat-rep{color:var(--amber)} .hstat-rat{color:var(--tox)}
+  .hstat-inp{display:block;width:100%;font-size:18px;font-family:'Oswald';font-weight:600;letter-spacing:.04em;background:transparent;border:none;border-bottom:1px solid var(--edge-soft);outline:none;padding:0;margin:0}
+  .hstat-inp:focus{border-bottom-color:var(--tox)}
   .terr-held{margin:6px 0 0;display:grid;gap:6px}
   .terr-held-card{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.2);border:1px solid var(--edge-soft);border-radius:2px;padding:7px 10px}
   .terr-held-card .tile{--c:var(--tox);width:32px;height:32px;flex:0 0 auto;display:grid;place-items:center;border:1px solid var(--edge);border-radius:6px;background:rgba(0,0,0,.3)}
@@ -1504,10 +1506,21 @@
 
   function hideoutStats(ownerG,gi){ const wrap=el('div'); if(!ownerG) return wrap;
     const isSpyrer = ownerG.type === 'Spyrers';
-    const stats=el('div','hideout-stats');
     const repLabel = isSpyrer ? 'Terror Level' : 'Reputation';
-    const re=el('div','hstat'); re.appendChild(el('span','hstat-label',repLabel)); re.appendChild(el('span','hstat-val hstat-rep',String(ownerG.rep||0))); stats.appendChild(re);
-    const ra=el('div','hstat'); ra.appendChild(el('span','hstat-label','Gang Rating')); ra.appendChild(el('span','hstat-val hstat-rat',(ownerG.rating||0)+'pts')); stats.appendChild(ra);
+    const stats=el('div','hideout-stats');
+
+    const re=el('div','hstat');
+    re.appendChild(el('span','hstat-label',repLabel));
+    const repInp=document.createElement('input'); repInp.type='number'; repInp.min='0'; repInp.value=ownerG.rep||0; repInp.className='hstat-inp hstat-rep';
+    repInp.addEventListener('change',()=>{ ownerG.rep=parseInt(repInp.value)||0; commit(); });
+    re.appendChild(repInp); stats.appendChild(re);
+
+    const ra=el('div','hstat');
+    ra.appendChild(el('span','hstat-label','Gang Rating'));
+    const ratInp=document.createElement('input'); ratInp.type='number'; ratInp.min='0'; ratInp.value=ownerG.rating||0; ratInp.className='hstat-inp hstat-rat';
+    ratInp.addEventListener('change',()=>{ ownerG.rating=parseInt(ratInp.value)||0; commit(); });
+    ra.appendChild(ratInp); stats.appendChild(ra);
+
     wrap.appendChild(stats);
 
     if (isSpyrer) {
