@@ -1555,29 +1555,22 @@
     const repLabel = isSpyrer ? 'Terror Level' : 'Reputation';
     const stats=el('div','hideout-stats');
 
-    const re=el('div','hstat');
-    re.appendChild(el('span','hstat-label',repLabel));
-    const repInp=document.createElement('input'); repInp.type='number'; repInp.min='0'; repInp.value=ownerG.rep||0; repInp.className='hstat-inp hstat-rep'; repInp.readOnly=!isArbitrator;
-    repInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.rep=parseInt(repInp.value)||0; commit(); });
-    re.appendChild(repInp); stats.appendChild(re);
-
-    const ra=el('div','hstat');
-    ra.appendChild(el('span','hstat-label','Rating'));
-    const ratInp=document.createElement('input'); ratInp.type='number'; ratInp.min='0'; ratInp.value=ownerG.rating||0; ratInp.className='hstat-inp hstat-rat'; ratInp.readOnly=!isArbitrator;
-    ratInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.rating=parseInt(ratInp.value)||0; commit(); });
-    ra.appendChild(ratInp); stats.appendChild(ra);
-
-    const rw=el('div','hstat');
-    rw.appendChild(el('span','hstat-label','Wealth'));
-    const wealInp=document.createElement('input'); wealInp.type='number'; wealInp.min='0'; wealInp.value=ownerG.wealth!=null?ownerG.wealth:1000; wealInp.className='hstat-inp hstat-weal'; wealInp.readOnly=!isArbitrator;
-    wealInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.wealth=parseInt(wealInp.value)||0; commit(); renderLegend(); });
-    rw.appendChild(wealInp); stats.appendChild(rw);
-
-    const ro=el('div','hstat');
-    ro.appendChild(el('span','hstat-label','Kills'));
-    const ooaInp=document.createElement('input'); ooaInp.type='number'; ooaInp.min='0'; ooaInp.value=ownerG.outOfAction||0; ooaInp.className='hstat-inp hstat-ooa'; ooaInp.readOnly=!isArbitrator;
-    ooaInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.outOfAction=parseInt(ooaInp.value)||0; commit(); renderLegend(); });
-    ro.appendChild(ooaInp); stats.appendChild(ro);
+    function hstatCard(label, value, colorClass, onChange) {
+      const card=el('div','hstat');
+      card.appendChild(el('span','hstat-label',label));
+      if (isArbitrator) {
+        const inp=document.createElement('input'); inp.type='number'; inp.min='0'; inp.value=value; inp.className='hstat-inp '+colorClass;
+        inp.addEventListener('change',()=>onChange(parseInt(inp.value)||0));
+        card.appendChild(inp);
+      } else {
+        card.appendChild(el('span','hstat-val '+colorClass,String(value)));
+      }
+      return card;
+    }
+    stats.appendChild(hstatCard(repLabel, ownerG.rep||0, 'hstat-rep', v=>{ ownerG.rep=v; commit(); }));
+    stats.appendChild(hstatCard('Rating', ownerG.rating||0, 'hstat-rat', v=>{ ownerG.rating=v; commit(); }));
+    stats.appendChild(hstatCard('Wealth', ownerG.wealth!=null?ownerG.wealth:1000, 'hstat-weal', v=>{ ownerG.wealth=v; commit(); renderLegend(); }));
+    stats.appendChild(hstatCard('Kills', ownerG.outOfAction||0, 'hstat-ooa', v=>{ ownerG.outOfAction=v; commit(); renderLegend(); }));
 
     wrap.appendChild(stats);
 
