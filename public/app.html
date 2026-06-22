@@ -593,9 +593,6 @@
     /* Territories in hideout drawer: single column */
     .terr-held { grid-template-columns: 1fr !important; }
 
-    /* Territories in hideout drawer: single column */
-    .terr-held { grid-template-columns: 1fr !important; }
-
     /* Prevent horizontal scroll */
     html, body { overflow-x: hidden; max-width: 100vw; }
     .sheet { max-width: 100vw; box-sizing: border-box; }
@@ -1163,12 +1160,15 @@
     if(!isArbitrator) return;
     const { ok } = await apiFetch('PATCH', `/api/campaigns/${campaignId}/state`, { state });
     if(ok) flashSaved();
-    else { saveTag.textContent='Save failed'; saveTag.classList.remove('on'); }
+    else { updateSaveTag('error'); }
   }
   const saveTag=document.getElementById('saveTag');
-  function flashSaving(){ saveTag.textContent='Saving…'; saveTag.classList.remove('on'); }
-  function flashSaved(){ saveTag.textContent='✓ Saved'; saveTag.classList.add('on');
-    clearTimeout(flashSaved._t); flashSaved._t=setTimeout(()=>{saveTag.textContent='';saveTag.classList.remove('on');},1400); }
+  let _saveTagTimer;
+  function updateSaveTag(state){ clearTimeout(_saveTagTimer); saveTag.classList.toggle('on', state==='saved');
+    saveTag.textContent = state==='saving'?'Saving…': state==='saved'?'✓ Saved':'Save failed';
+    if(state==='saved') _saveTagTimer=setTimeout(()=>{saveTag.textContent='';saveTag.classList.remove('on');},1400); }
+  function flashSaving(){ updateSaveTag('saving'); }
+  function flashSaved(){ updateSaveTag('saved'); }
 
   /* ============ HELPERS ============ */
   const NEUTRAL='#6c7a74';
@@ -1600,9 +1600,9 @@
       tf.appendChild(list); wrap.appendChild(tf);
     }
     return wrap; }
-  document.getElementById('sortTerr').addEventListener('click',()=>{ legendSort='terr'; renderLegend(); });
-  document.getElementById('sortRep').addEventListener('click',()=>{ legendSort='rep'; renderLegend(); });
-  document.getElementById('sortRat').addEventListener('click',()=>{ legendSort='rat'; renderLegend(); });
+  [['sortTerr','terr'],['sortRep','rep'],['sortRat','rat']].forEach(([id,val])=>{
+    document.getElementById(id).addEventListener('click',()=>{ legendSort=val; renderLegend(); });
+  });
 
   /* Legend collapse toggle (mobile only) */
   document.getElementById('legendToggle').addEventListener('click', () => {
@@ -2324,20 +2324,18 @@
     });
   }
 
-  function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); triumphsModal.classList.remove('show'); }
-  document.getElementById('triumphsMapBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
-  document.getElementById('triumphsModalClose').addEventListener('click', () => triumphsModal.classList.remove('show'));
-  document.getElementById('triumphsModalDone').addEventListener('click', () => triumphsModal.classList.remove('show'));
-
+  const ALL_MODALS = [modal, terrModal, gangModal, tradeModal, triumphsModal];
+  function closeModal(){ ALL_MODALS.forEach(m => m.classList.remove('show')); }
   function closeConfigModal(){ closeModal(); renderArbModal(); arbModal.classList.add('show'); }
-  document.getElementById('terrModalClose').addEventListener('click', closeConfigModal);
-  document.getElementById('terrModalDone').addEventListener('click', closeConfigModal);
-  document.getElementById('gangModalClose').addEventListener('click', closeConfigModal);
-  document.getElementById('gangModalDone').addEventListener('click', closeConfigModal);
   let _tradeFromArb = false;
   function closeTrade(){ closeModal(); if(_tradeFromArb){ renderArbModal(); arbModal.classList.add('show'); } }
-  document.getElementById('tradeModalClose').addEventListener('click', closeTrade);
-  document.getElementById('tradeModalDone').addEventListener('click', closeTrade);
+  document.getElementById('triumphsMapBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
+  [['triumphsModalClose', () => triumphsModal.classList.remove('show')],
+   ['triumphsModalDone',  () => triumphsModal.classList.remove('show')],
+   ['terrModalClose', closeConfigModal], ['terrModalDone', closeConfigModal],
+   ['gangModalClose', closeConfigModal], ['gangModalDone', closeConfigModal],
+   ['tradeModalClose', closeTrade],      ['tradeModalDone', closeTrade],
+  ].forEach(([id, fn]) => document.getElementById(id).addEventListener('click', fn));
 
   function setPlayers(N){ N=clamp(N|0,3,8); if(N===state.players) return; state.players=N; buildWorld(N);
     const nn={}; LAYOUT.forEach(n=>{ nn[n.id]= state.nodes[n.id] || (n.type==='hideout'?{gang:null}:{terr:null,gang:null}); });
@@ -2390,6 +2388,7 @@
     const hdr=el('div','gang-row gang-row-hdr');
     ['#','','','Name','Type','Rep','Rating','Wealth','Kills'].forEach(t=>{ hdr.appendChild(el('span','gang-hdr-cell',t)); });
     host.appendChild(hdr);
+    function statCell(lbl,inp){ const c=el('div','stat-cell'); c.appendChild(el('span','stat-cell-lbl',lbl)); c.appendChild(inp); return c; }
     state.gangs.slice(0,state.players).forEach((g,i)=>{
       const row=el('div','gang-row'); row.appendChild(el('span','num',String(i+1)));
       const sp=el('div','swatch-pick');
@@ -2416,19 +2415,12 @@
       gs.value=g.type||'';
       gs.addEventListener('change',()=>{ g.type=gs.value||null; scheduleSave(); });
       gt.appendChild(gs); row.appendChild(gt);
-      function statCell(lbl,inp){ const c=el('div','stat-cell'); c.appendChild(el('span','stat-cell-lbl',lbl)); c.appendChild(inp); return c; }
-      const ri=document.createElement('input'); ri.type='number'; ri.min=0; ri.max=99; ri.step=1; ri.value=g.rep||0; ri.title='Reputation'; ri.placeholder='Rep';
-      ri.addEventListener('input',()=>{ g.rep=Math.max(0,parseInt(ri.value)||0); scheduleSave(); renderLegend(); });
-      row.appendChild(statCell('Rep',ri));
-      const rri=document.createElement('input'); rri.type='number'; rri.min=0; rri.max=9999; rri.step=1; rri.value=g.rating||0; rri.title='Gang Rating'; rri.placeholder='Rating';
-      rri.addEventListener('input',()=>{ g.rating=Math.max(0,parseInt(rri.value)||0); scheduleSave(); renderLegend(); });
-      row.appendChild(statCell('Rating',rri));
-      const wi=document.createElement('input'); wi.type='number'; wi.min=0; wi.max=99999; wi.step=1; wi.value=g.wealth!=null?g.wealth:1000; wi.title='Wealth'; wi.placeholder='Wealth';
-      wi.addEventListener('input',()=>{ g.wealth=Math.max(0,parseInt(wi.value)||0); scheduleSave(); renderLegend(); });
-      row.appendChild(statCell('Wealth',wi));
-      const oi=document.createElement('input'); oi.type='number'; oi.min=0; oi.max=9999; oi.step=1; oi.value=g.outOfAction||0; oi.title='Enemies Out of Action'; oi.placeholder='OOA';
-      oi.addEventListener('input',()=>{ g.outOfAction=Math.max(0,parseInt(oi.value)||0); scheduleSave(); renderLegend(); });
-      row.appendChild(statCell('Kills',oi));
+      [{label:'Rep',field:'rep',max:99,val:g.rep||0},{label:'Rating',field:'rating',max:9999,val:g.rating||0},{label:'Wealth',field:'wealth',max:99999,val:g.wealth!=null?g.wealth:1000},{label:'Kills',field:'outOfAction',max:9999,val:g.outOfAction||0}]
+        .forEach(({label,field,max,val})=>{
+          const inp=document.createElement('input'); inp.type='number'; inp.min=0; inp.max=max; inp.step=1; inp.value=val; inp.title=label; inp.placeholder=label;
+          inp.addEventListener('input',()=>{ g[field]=Math.max(0,parseInt(inp.value)||0); scheduleSave(); renderLegend(); });
+          row.appendChild(statCell(label,inp));
+        });
       host.appendChild(row);
     });
   }
