@@ -1498,17 +1498,34 @@
     return base;
   }
 
+  const SPYRER_BASE_CAMP_BOON = [
+    { t: 'Special', d: 'Recovery Systems: During the Wrap-up of each battle the Spyre Hunting Party gang takes part in, one Spyrer may perform post-battle actions even if they are in Convalescence. A Spyre Hunting Party gang may never lose control of their Spyrer Base Camp Territory.' }
+  ];
+
   function hideoutStats(ownerG,gi){ const wrap=el('div'); if(!ownerG) return wrap;
+    const isSpyrer = ownerG.type === 'Spyrers';
     const stats=el('div','hideout-stats');
-    const re=el('div','hstat'); re.appendChild(el('span','hstat-label','Reputation')); re.appendChild(el('span','hstat-val hstat-rep',String(ownerG.rep||0))); stats.appendChild(re);
+    const repLabel = isSpyrer ? 'Terror Level' : 'Reputation';
+    const re=el('div','hstat'); re.appendChild(el('span','hstat-label',repLabel)); re.appendChild(el('span','hstat-val hstat-rep',String(ownerG.rep||0))); stats.appendChild(re);
     const ra=el('div','hstat'); ra.appendChild(el('span','hstat-label','Gang Rating')); ra.appendChild(el('span','hstat-val hstat-rat',(ownerG.rating||0)+'pts')); stats.appendChild(ra);
     wrap.appendChild(stats);
+
+    if (isSpyrer) {
+      const tf=el('div','field'); tf.appendChild(el('label',null,'Spyrer Base Camp'));
+      const card=el('div','terr-held-card');
+      const ul = el('ul','boonlist terr-boonlist');
+      SPYRER_BASE_CAMP_BOON.forEach(b => {
+        const li = el('li'); li.appendChild(el('span','btag',b.t)); li.appendChild(el('span','btxt',b.d)); ul.appendChild(li);
+      });
+      card.appendChild(ul); tf.appendChild(card); wrap.appendChild(tf);
+    }
+
     const terrs=gangTerrList(gi);
     if(terrs.length){
       const tf=el('div','field'); tf.appendChild(el('label',null,'Territories Held'));
       const list=el('div','terr-held');
       terrs.forEach(t=>{
-        const enhanced = t.enh && t.house === ownerG.type;
+        const enhanced = !isSpyrer && t.enh && t.house === ownerG.type;
         const card=el('div','terr-held-card'+(enhanced?' enhanced':''));
         card.style.cursor='pointer';
         card.addEventListener('click',()=>{ if(t.nodeId) openEditor(t.nodeId); });
@@ -1516,12 +1533,14 @@
         const info=el('div','tinfo');
         info.appendChild(el('div','tname',t.customLabel||t.name));
         if (t.customLabel) info.appendChild(el('div','tmeta',t.name));
-        const boons = effectiveBoons(t, ownerG.type);
-        const ul = el('ul','boonlist terr-boonlist');
-        boons.forEach(b => {
-          const li = el('li'); li.appendChild(el('span','btag',b.t)); li.appendChild(el('span','btxt',b.d)); ul.appendChild(li);
-        });
-        info.appendChild(ul);
+        if (!isSpyrer) {
+          const boons = effectiveBoons(t, ownerG.type);
+          const ul = el('ul','boonlist terr-boonlist');
+          boons.forEach(b => {
+            const li = el('li'); li.appendChild(el('span','btag',b.t)); li.appendChild(el('span','btxt',b.d)); ul.appendChild(li);
+          });
+          info.appendChild(ul);
+        }
         card.appendChild(info); list.appendChild(card);
       });
       tf.appendChild(list); wrap.appendChild(tf);
