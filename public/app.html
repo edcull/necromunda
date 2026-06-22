@@ -1576,12 +1576,13 @@
   function openTradeModal(){ tradeModal.classList.add('show'); }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
 
-  document.getElementById('terrModalClose').addEventListener('click', closeModal);
-  document.getElementById('terrModalDone').addEventListener('click', closeModal);
-  document.getElementById('gangModalClose').addEventListener('click', closeModal);
-  document.getElementById('gangModalDone').addEventListener('click', closeModal);
-  document.getElementById('tradeModalClose').addEventListener('click', closeModal);
-  document.getElementById('tradeModalDone').addEventListener('click', closeModal);
+  function closeConfigModal(){ closeModal(); renderArbModal(); arbModal.classList.add('show'); }
+  document.getElementById('terrModalClose').addEventListener('click', closeConfigModal);
+  document.getElementById('terrModalDone').addEventListener('click', closeConfigModal);
+  document.getElementById('gangModalClose').addEventListener('click', closeConfigModal);
+  document.getElementById('gangModalDone').addEventListener('click', closeConfigModal);
+  document.getElementById('tradeModalClose').addEventListener('click', closeConfigModal);
+  document.getElementById('tradeModalDone').addEventListener('click', closeConfigModal);
 
   function setPlayers(N){ N=clamp(N|0,3,8); if(N===state.players) return; state.players=N; buildWorld(N);
     const nn={}; LAYOUT.forEach(n=>{ nn[n.id]= state.nodes[n.id] || (n.type==='hideout'?{gang:null}:{terr:null,gang:null}); });
@@ -1621,9 +1622,9 @@
     c.textContent=sel+' selected · target '+target+' (3 per player)';
     c.classList.toggle('over', sel<target);
   }
-  document.getElementById('modalClose').addEventListener('click',closeModal);
-  document.getElementById('modalDone').addEventListener('click',closeModal);
-  modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
+  document.getElementById('modalClose').addEventListener('click',closeConfigModal);
+  document.getElementById('modalDone').addEventListener('click',closeConfigModal);
+  modal.addEventListener('click',e=>{ if(e.target===modal) closeConfigModal(); });
   document.getElementById('inSector').addEventListener('input',e=>{ state.sector=e.target.value||'Unnamed Sector'; scheduleSave(); render(); });
   document.getElementById('inCampaign').addEventListener('input',e=>{ state.campaign=e.target.value||'Campaign'; scheduleSave(); render(); });
 
@@ -1699,7 +1700,7 @@
         ['⚙ Campaign Configuration', openSetupModal],
         ['⬡ Territory Configuration', openTerrModal],
         ['☠ Gang Configuration',      openGangModal],
-        ['⚖ Trading Post',            openTradeModal],
+        ['⚖ Trading Post Configuration', openTradeModal],
       ];
       cfgBtns.forEach(([label, fn]) => {
         const b = el('button','btn',label);
@@ -2399,10 +2400,6 @@
     window._updateCycleBtn = updateCycleBtn;
   })();
 
-  /* ============ SETUP MODAL WIRING ============ */
-  document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
-  document.getElementById('modalDone').addEventListener('click', () => modal.classList.remove('show'));
-  modal.addEventListener('click', e => { if(e.target === modal) modal.classList.remove('show'); });
 
   /* ============ INIT ============ */
   (async function init(){
