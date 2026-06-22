@@ -1690,13 +1690,13 @@
   }
 
   /* ---- Reference view (player-facing) ---- */
-  function renderTpRefSection(sec, items, maxR, maxI) {
+  function renderTpRefSection(sec, items, maxR, maxI, hideCommon) {
     const visible = items.filter(it => {
       const ov = tpOverride(sec.key, it);
       if (!ov.enabled) return false;
       const al = ov.availability;
       const val = ov.availValue != null ? ov.availValue : 0;
-      if (al === 'C') return true;
+      if (al === 'C') return !hideCommon;
       if (al === 'R') return maxR != null && val <= maxR;
       if (al === 'I') return maxI != null && val <= maxI;
       return false;
@@ -1705,7 +1705,7 @@
       if (it.category !== sec.key || it.enabled === false || !it.name) return false;
       const al = it.availability || 'C';
       const val = it.availValue != null ? it.availValue : 0;
-      if (al === 'C') return true;
+      if (al === 'C') return !hideCommon;
       if (al === 'R') return maxR != null && val <= maxR;
       if (al === 'I') return maxI != null && val <= maxI;
       return false;
@@ -2039,63 +2039,80 @@
       wireTpFilter(body);
       wireTpCustom(body);
     } else {
-      const seekBar = `<div class="tp-filter" id="tpSeekBar">
-        <div class="tp-filter-group">
-          <input type="checkbox" id="tpSeek">
-          <span class="tp-filter-label" style="text-transform:none;letter-spacing:0;font-size:13px">Seek Rare &amp; Illegal Equipment</span>
-        </div>
-        <div id="tpRollGroup" style="display:none;width:100%">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:10px;align-items:center">
-            <span style="font-size:12px;color:var(--tox)">Roll 2D6</span>
+      const INP = 'width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center';
+      const seekBar = `<div id="tpSeekBar" style="padding-bottom:12px;margin-bottom:4px;border-bottom:1px solid var(--edge)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;align-items:start">
+
+          <!-- Col 1 top: seek checkbox -->
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:#eef6f1;font-weight:600">
+            <input type="checkbox" id="tpSeek"> Seek Rare &amp; Illegal Equipment
+          </label>
+          <!-- Col 2 top: availability roll result -->
+          <div id="tpRollDisplay" style="display:none">
+            <div style="font-size:12px;color:#c8d8cc;margin-bottom:4px">Roll 2D6</div>
             <input type="number" id="tpRoll2d6" min="2" max="12" value="7"
-              style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
-            <label style="font-size:12px;color:var(--tox);display:flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="tpLeader"> Gang Leader making trade action
-            </label>
-            <span style="font-size:11px;color:var(--tox-dim)">+1</span>
-            <span style="font-size:12px;color:var(--tox)">Champions making trade action</span>
-            <input type="number" id="tpChampions" min="0" max="10" value="0"
-              style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
-            <span style="font-size:12px;color:var(--tox)">Gang Reputation</span>
-            <input type="number" id="tpRep" min="0" value="0"
-              style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
-            <span style="font-size:12px;color:var(--tox)">Modifier</span>
-            <input type="number" id="tpMod" value="0"
-              style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
-            <label style="font-size:12px;color:var(--tox);display:flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="tpOutlaw"> Outlaw Gang
-            </label>
-            <span style="font-size:11px;color:var(--tox-dim)">Illegal items up to full roll value</span>
+              style="width:60px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:15px;padding:4px 8px;text-align:center;margin-bottom:8px">
+            <div style="font-size:11px;color:#7a9a82;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">Availability Roll</div>
+            <div style="font-size:26px;font-weight:700;color:var(--tox);line-height:1" id="tpRollTotal">—</div>
+            <div style="font-size:11px;color:#7a9a82;margin-top:3px" id="tpRollBreakdown"></div>
+            <div style="font-size:12px;color:#c8d8cc;margin-top:6px;line-height:1.5" id="tpRollHint"></div>
           </div>
-          <div style="font-size:13px;color:#eef6f1;padding:8px 0 4px;border-top:1px solid var(--edge)">
-            Availability Roll: <strong id="tpRollTotal" style="color:var(--tox)">7</strong>
-            <span id="tpRollBreakdown" style="font-size:11px;color:var(--tox-dim);margin-left:8px"></span>
+
+          <!-- Col 1 bottom: modifiers -->
+          <div id="tpModGroup" style="display:none;display:none">
+            <div style="display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center">
+              <label style="font-size:12px;color:#c8d8cc;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="tpLeader"> Gang Leader making trade action
+              </label>
+              <span style="font-size:11px;color:#7a9a82">+1</span>
+              <span style="font-size:12px;color:#c8d8cc">Champions making trade action</span>
+              <input type="number" id="tpChampions" min="0" max="10" value="0" style="${INP}">
+              <span style="font-size:12px;color:#c8d8cc">Gang Reputation</span>
+              <input type="number" id="tpRep" min="0" value="0" style="${INP}">
+            </div>
           </div>
-          <div id="tpRollHint" style="font-size:11px;color:var(--tox-dim);margin-top:4px;line-height:1.6"></div>
+
+          <!-- Col 2 bottom: options -->
+          <div id="tpOptGroup" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center">
+              <label style="font-size:12px;color:#c8d8cc;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="tpOutlaw"> Outlaw Gang
+              </label>
+              <span style="font-size:11px;color:#7a9a82">I = roll</span>
+              <span style="font-size:12px;color:#c8d8cc">Modifier</span>
+              <input type="number" id="tpMod" value="0" style="${INP}">
+              <label style="font-size:12px;color:#c8d8cc;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="tpHideCommon"> Hide Common items
+              </label>
+              <span></span>
+            </div>
+          </div>
+
         </div>
       </div>
       <div id="tpRefSections"></div>`;
       body.innerHTML = seekBar;
       function calcRoll() {
-        const base     = parseInt(body.querySelector('#tpRoll2d6').value)    || 0;
-        const leader   = body.querySelector('#tpLeader').checked ? 1 : 0;
-        const champs   = parseInt(body.querySelector('#tpChampions').value)  || 0;
-        const rep      = Math.floor((parseInt(body.querySelector('#tpRep').value) || 0) / 10);
-        const mod      = parseInt(body.querySelector('#tpMod').value)        || 0;
-        const total    = base + leader + champs + rep + mod;
-        const parts    = [];
-        if (leader)  parts.push('+1 leader');
-        if (champs)  parts.push(`+${champs} champion${champs!==1?'s':''}`);
-        if (rep)     parts.push(`+${rep} rep`);
-        if (mod)     parts.push((mod>0?'+':'')+mod+' mod');
+        const base   = Math.min(12, Math.max(2, parseInt(body.querySelector('#tpRoll2d6')?.value) || 2));
+        const leader = body.querySelector('#tpLeader').checked ? 1 : 0;
+        const champs = parseInt(body.querySelector('#tpChampions').value) || 0;
+        const rep    = Math.floor((parseInt(body.querySelector('#tpRep').value) || 0) / 10);
+        const mod    = parseInt(body.querySelector('#tpMod').value) || 0;
+        const total  = base + leader + champs + rep + mod;
+        const parts  = [];
+        if (leader) parts.push('+1 leader');
+        if (champs) parts.push(`+${champs} champ${champs!==1?'s':''}`);
+        if (rep)    parts.push(`+${rep} rep`);
+        if (mod)    parts.push((mod>0?'+':'')+mod+' mod');
         body.querySelector('#tpRollTotal').textContent = total;
-        body.querySelector('#tpRollBreakdown').textContent = parts.length ? '('+parts.join(', ')+')' : '';
+        body.querySelector('#tpRollBreakdown').textContent = parts.length ? parts.join(' · ') : '';
         return total;
       }
       function renderRefSections() {
-        const seeking = body.querySelector('#tpSeek').checked;
-        const roll    = seeking ? calcRoll() : 0;
-        const outlaw  = body.querySelector('#tpOutlaw').checked;
+        const seeking    = body.querySelector('#tpSeek').checked;
+        const roll       = seeking ? calcRoll() : 0;
+        const outlaw     = body.querySelector('#tpOutlaw').checked;
+        const hideCommon = body.querySelector('#tpHideCommon').checked;
         const maxR = seeking ? roll : null;
         const maxI = seeking ? (outlaw ? roll : Math.max(0, roll - 4)) : null;
         const hint = body.querySelector('#tpRollHint');
@@ -2103,26 +2120,30 @@
           if (!seeking) {
             hint.textContent = '';
           } else {
-            const rPart = maxR > 0 ? `Rare up to R${maxR}` : 'no Rare items';
-            const iPart = maxI > 0 ? `Illegal up to I${maxI}` : 'no Illegal items';
-            const outlawNote = outlaw ? ' (Outlaw Gang)' : ` (Illegal = roll − 4)`;
-            hint.textContent = `Showing: Common · ${rPart} · ${iPart}${outlawNote}`;
+            const rPart = maxR > 0 ? `R≤${maxR}` : 'no Rare';
+            const iPart = maxI > 0 ? `I≤${maxI}` : 'no Illegal';
+            const cPart = hideCommon ? '' : 'Common · ';
+            hint.textContent = `Showing: ${cPart}${rPart} · ${iPart}`;
           }
         }
         const html = TP_SECTIONS.map(sec => {
           const items = _tpData[sec.key] || [];
-          return renderTpRefSection(sec, items, maxR, maxI);
+          return renderTpRefSection(sec, items, maxR, maxI, hideCommon);
         }).join('');
         body.querySelector('#tpRefSections').innerHTML = html || '<p style="color:var(--muted);font-size:13px">No items available.</p>';
       }
       renderRefSections();
       body.querySelector('#tpSeek').addEventListener('change', function() {
-        body.querySelector('#tpRollGroup').style.display = this.checked ? '' : 'none';
+        const on = this.checked;
+        body.querySelector('#tpRollDisplay').style.display = on ? '' : 'none';
+        body.querySelector('#tpModGroup').style.display   = on ? '' : 'none';
+        body.querySelector('#tpOptGroup').style.display   = on ? '' : 'none';
         renderRefSections();
       });
-      ['#tpRoll2d6','#tpLeader','#tpChampions','#tpRep','#tpMod','#tpOutlaw'].forEach(id => {
-        body.querySelector(id).addEventListener(id==='#tpLeader'||id==='#tpOutlaw'?'change':'input', renderRefSections);
-      });
+      ['#tpRoll2d6','#tpChampions','#tpRep','#tpMod'].forEach(id =>
+        body.querySelector(id).addEventListener('input', renderRefSections));
+      ['#tpLeader','#tpOutlaw','#tpHideCommon'].forEach(id =>
+        body.querySelector(id).addEventListener('change', renderRefSections));
     }
   }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
