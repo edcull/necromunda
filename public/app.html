@@ -2921,7 +2921,7 @@
       const allChallenged = alreadyChallenged.size >= state.players;
       for(let i=0;i<state.players;i++){
         if(!allChallenged && alreadyChallenged.has(i)) continue;
-        if(batchLocked.has(i)) continue;
+        if(!allChallenged && batchLocked.has(i)) continue;
         const g = state.gangs[i];
         const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':'');
         if(i===defaultChallenger) o.selected=true;
@@ -2937,8 +2937,8 @@
         const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
         for(let i=0;i<state.players;i++){
           if(i===chIdx) continue;
-          if(batchLocked.has(i)) continue;
-          if(mustChallenge.has(i)) continue; // must issue their own challenge before being challenged
+          if(!allChallenged && batchLocked.has(i)) continue;
+          if(!allChallenged && mustChallenge.has(i)) continue;
           const g=state.gangs[i]; const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':''); selDef.appendChild(o);
         }
       }
