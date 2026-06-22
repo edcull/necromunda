@@ -2339,32 +2339,6 @@
         rows.appendChild(row);
       });
       card.appendChild(rows);
-      // Arbitrator winner selection
-      if (isArbitrator) {
-        const winnerKey = 'winner_' + t.key;
-        const saved = state.triumphs[winnerKey] ?? null;
-        const sel = document.createElement('select');
-        sel.className = 'triumph-winner-sel';
-        const none = el('option', null, '— Awarded to —'); none.value = ''; sel.appendChild(none);
-        for (let i = 0; i < state.players; i++) {
-          const o = el('option', null, state.gangs[i].name); o.value = String(i); sel.appendChild(o);
-        }
-        sel.value = saved != null ? String(saved) : '';
-        sel.addEventListener('change', () => {
-          state.triumphs[winnerKey] = sel.value === '' ? null : parseInt(sel.value);
-          scheduleSave();
-        });
-        card.appendChild(sel);
-      } else {
-        const winnerKey = 'winner_' + t.key;
-        const wi = state.triumphs[winnerKey];
-        if (wi != null && state.gangs[wi]) {
-          const aw = el('div', 'triumph-awarded');
-          const dot = el('span', 'dot'); dot.style.background = state.gangs[wi].color; aw.appendChild(dot);
-          aw.appendChild(el('span', null, 'Awarded to ' + state.gangs[wi].name));
-          card.appendChild(aw);
-        }
-      }
       body.appendChild(card);
     });
   }
