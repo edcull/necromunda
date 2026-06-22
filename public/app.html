@@ -139,11 +139,13 @@
   .legend .ct{margin-left:auto;color:rgba(95,217,160,.85);font-size:10px;font-variant-numeric:tabular-nums}
   .legend .ct-rep{color:rgba(232,162,61,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
   .legend .ct-rat{color:rgba(95,217,160,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
+  .legend .ct-weal{color:rgba(160,180,255,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
   .legend-sort{display:flex;gap:4px;margin-bottom:8px;width:100%} .legend-sort button{flex:1}
   .legend-sort button{background:transparent;border:1px solid rgba(95,217,160,.15);color:rgba(95,217,160,.3);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border-radius:2px;font-family:'Rajdhani';transition:.15s}
   #sortTerr{border-color:rgba(95,217,160,.15);color:rgba(95,217,160,.3)} #sortTerr.on{border-color:var(--tox);color:var(--tox)}
   #sortRep{border-color:rgba(232,162,61,.15);color:rgba(232,162,61,.3)} #sortRep.on{border-color:var(--amber);color:var(--amber)}
   #sortRat{border-color:rgba(95,217,160,.15);color:rgba(95,217,160,.3)} #sortRat.on{border-color:var(--tox-bright);color:var(--tox-bright)}
+  #sortWeal{border-color:rgba(160,180,255,.15);color:rgba(160,180,255,.3)} #sortWeal.on{border-color:#a0b4ff;color:#a0b4ff}
   .hint{position:absolute;right:14px;bottom:14px;z-index:5;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 
   /* ---------- drawer ---------- */
@@ -240,7 +242,7 @@
   .hstat{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--edge-soft);border-radius:2px;padding:8px 10px}
   .hstat-label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
   .hstat-val{display:block;font-size:18px;font-family:'Oswald';font-weight:600;letter-spacing:.04em}
-  .hstat-rep{color:var(--amber)} .hstat-rat{color:var(--tox)}
+  .hstat-rep{color:var(--amber)} .hstat-rat{color:var(--tox)} .hstat-weal{color:#a0b4ff}
   .hstat-inp{display:block;width:100%;font-size:18px;font-family:'Oswald';font-weight:600;letter-spacing:.04em;background:transparent;border:none;border-bottom:1px solid var(--edge-soft);outline:none;padding:0;margin:0}
   .hstat-inp:focus{border-bottom-color:var(--tox)}
   .terr-held{margin:6px 0 0;display:grid;gap:6px}
@@ -724,7 +726,7 @@
       </div>
       <div class="legend-body">
         <h3>Gangs</h3>
-        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button></div>
+        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button><button id="sortWeal">Wealth</button></div>
         <ul id="legendList"></ul>
       </div>
     </div>
@@ -1123,7 +1125,7 @@
     const d=defaultState();
     const s={players:N,sector:loaded.sector||d.sector,campaign:loaded.campaign||d.campaign,gangs:[],nodes:{},pos:{},terrPool:null};
     for(let i=0;i<8;i++){ const g=(loaded.gangs&&loaded.gangs[i])||DEFAULT_GANGS[i];
-      s.gangs.push({name:g.name||DEFAULT_GANGS[i].name,icon:g.icon||DEFAULT_GANGS[i].icon,color:g.color||DEFAULT_GANGS[i].color,type:g.type||null,rep:Number(g.rep)||0,rating:Number(g.rating)||0}); }
+      s.gangs.push({name:g.name||DEFAULT_GANGS[i].name,icon:g.icon||DEFAULT_GANGS[i].icon,color:g.color||DEFAULT_GANGS[i].color,type:g.type||null,rep:Number(g.rep)||0,rating:Number(g.rating)||0,wealth:g.wealth!=null?Number(g.wealth):1000}); }
     LAYOUT.forEach(n=>{ const ex=(loaded.nodes&&loaded.nodes[n.id])||{};
       const hasG=Object.prototype.hasOwnProperty.call(ex,'gang');
       const lbl=(typeof ex.label==='string'&&ex.label.trim())?ex.label.trim():null;
@@ -1497,19 +1499,21 @@
   let legendSort='terr';
   function renderLegend(){
     const ul=document.getElementById('legendList'); ul.innerHTML='';
-    const rows=state.gangs.slice(0,state.players).map((g,i)=>({g,i,n:countHoldings(i),rep:Number(g.rep)||0,rat:Number(g.rating)||0}));
+    const rows=state.gangs.slice(0,state.players).map((g,i)=>({g,i,n:countHoldings(i),rep:Number(g.rep)||0,rat:Number(g.rating)||0,weal:g.wealth!=null?Number(g.wealth):1000}));
     if(legendSort==='rep') rows.sort((a,b)=>b.rep-a.rep||a.i-b.i);
     else if(legendSort==='rat') rows.sort((a,b)=>b.rat-a.rat||a.i-b.i);
+    else if(legendSort==='weal') rows.sort((a,b)=>b.weal-a.weal||a.i-b.i);
     else rows.sort((a,b)=>b.n-a.n||a.i-b.i);
-    rows.forEach(({g,i,n,rep,rat})=>{
+    rows.forEach(({g,i,n,rep,rat,weal})=>{
       const li=el('li'); const sw=el('span','swatch',g.icon); sw.style.background=g.color;
       li.appendChild(sw); li.appendChild(el('span',null,g.name));
       li.appendChild(el('span','ct',n));
       li.appendChild(el('span','ct-rep',rep));
       li.appendChild(el('span','ct-rat',rat));
+      li.appendChild(el('span','ct-weal',weal));
       ul.appendChild(li);
     });
-    ['sortTerr','sortRep','sortRat'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on', (id==='sortTerr'&&legendSort==='terr')||(id==='sortRep'&&legendSort==='rep')||(id==='sortRat'&&legendSort==='rat')); });
+    ['sortTerr','sortRep','sortRat','sortWeal'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on', (id==='sortTerr'&&legendSort==='terr')||(id==='sortRep'&&legendSort==='rep')||(id==='sortRat'&&legendSort==='rat')||(id==='sortWeal'&&legendSort==='weal')); });
   }
   function countHoldings(gi){ let n=0; for(const id in state.nodes) if(state.nodes[id].gang===gi) n++; return n; }
   function gangTerrList(gi){ const t=[]; for(const id in state.nodes){ const d=state.nodes[id]; if(d.gang===gi&&d.terr){const tr=TERR_BY_KEY[d.terr];if(tr)t.push({...tr,customLabel:d.label||null,nodeId:id});} } return t; }
@@ -1544,6 +1548,12 @@
     const ratInp=document.createElement('input'); ratInp.type='number'; ratInp.min='0'; ratInp.value=ownerG.rating||0; ratInp.className='hstat-inp hstat-rat';
     ratInp.addEventListener('change',()=>{ ownerG.rating=parseInt(ratInp.value)||0; commit(); });
     ra.appendChild(ratInp); stats.appendChild(ra);
+
+    const rw=el('div','hstat');
+    rw.appendChild(el('span','hstat-label','Wealth'));
+    const wealInp=document.createElement('input'); wealInp.type='number'; wealInp.min='0'; wealInp.value=ownerG.wealth!=null?ownerG.wealth:1000; wealInp.className='hstat-inp hstat-weal';
+    wealInp.addEventListener('change',()=>{ ownerG.wealth=parseInt(wealInp.value)||0; commit(); renderLegend(); });
+    rw.appendChild(wealInp); stats.appendChild(rw);
 
     wrap.appendChild(stats);
 
@@ -1586,6 +1596,7 @@
   document.getElementById('sortTerr').addEventListener('click',()=>{ legendSort='terr'; renderLegend(); });
   document.getElementById('sortRep').addEventListener('click',()=>{ legendSort='rep'; renderLegend(); });
   document.getElementById('sortRat').addEventListener('click',()=>{ legendSort='rat'; renderLegend(); });
+  document.getElementById('sortWeal').addEventListener('click',()=>{ legendSort='weal'; renderLegend(); });
 
   /* Legend collapse toggle (mobile only) */
   document.getElementById('legendToggle').addEventListener('click', () => {
@@ -2273,7 +2284,7 @@
   const TRIUMPHS = [
     { key: 'dominator',   label: 'Dominator',   criteria: 'Most Territories at the end of the campaign.',                                                              auto: gi => Object.values(state.nodes).filter(n => n.gang === gi && n.terr).length },
     { key: 'slaughterer', label: 'Slaughterer',  criteria: 'Most enemy fighters taken Out of Action and vehicles Wrecked across the whole campaign.',                   auto: null },
-    { key: 'creditor',    label: 'Creditor',     criteria: 'Largest Wealth at the end of the campaign.',                                                               auto: null },
+    { key: 'creditor',    label: 'Creditor',     criteria: 'Largest Wealth at the end of the campaign.',                                                               auto: gi => state.gangs[gi]?.wealth ?? 1000 },
     { key: 'warmonger',   label: 'Warmonger',    criteria: 'Most battles fought across the whole campaign.',                                                            auto: gi => state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status==='done'&&(ch.challenger===gi||ch.challenged===gi)).length },
     { key: 'powerbroker', label: 'Powerbroker',  criteria: 'Highest Reputation at the end of the campaign.',                                                           auto: gi => state.gangs[gi]?.rep || 0 },
   ];
