@@ -1195,7 +1195,7 @@
     out.push(grid);
 
     // 8. scale bar (top-left) + compass (top-right)
-    const mile=266.7, sbx=78, sby=58, seg=mile/4;
+    const mile=266.7, sbx=130, sby=58, seg=mile/4;
     let sb=rect(sbx-8,sby-30,mile+18,34,{fill:'rgba(6,11,9,.55)',stroke:'rgba(95,217,160,.22)','stroke-width':1,rx:2});
     for(let i=0;i<4;i++) sb+=rect(sbx+i*seg,sby-6,seg,5,{fill:i%2?'rgba(95,217,160,0)':'rgba(95,217,160,.45)',stroke:'rgba(95,217,160,.45)','stroke-width':1});
     sb+=txt(sbx-2,sby-9,'0',{fill:'rgba(95,217,160,.6)','font-family':'monospace','font-size':'10'});
@@ -1427,7 +1427,9 @@
     drawerBody.innerHTML='';
     if(isArbitrator){
       if(node.type==='hideout'){
-        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); openEditor(id); }, 'Gang Name', false));
+        drawerBody.appendChild(gangField(data.gang, gi=>{
+          if(gi!=null){ for(const oid in state.nodes){ if(oid!==id && state.nodes[oid].gang===gi){ const on=LAYOUT.find(x=>x.id===oid); if(on&&on.type==='hideout') state.nodes[oid].gang=null; } } }
+          data.gang=gi; commit(); openEditor(id); }, 'Gang Name', false, true));
         const ownerG=gangOf(data.gang);
         if(ownerG && ownerG.type){ const tf=el('div','field'); tf.appendChild(el('label',null,'Gang Type')); tf.appendChild(el('div','gang-type-tag',ownerG.type)); drawerBody.appendChild(tf); }
         drawerBody.appendChild(hideoutStats(ownerG, data.gang));
@@ -1468,11 +1470,20 @@
     }
     drawer.classList.add('show'); scrim.classList.add('show'); render();
   }
-  function gangField(current,onChange,label,allowNone){
+  function gangField(current,onChange,label,allowNone,greyTaken){
     const f=el('div','field'); f.appendChild(el('label',null,label||'Gang'));
     const sel=el('select');
     const none=el('option',null, allowNone?'— Uncontrolled —':'— Unclaimed —'); none.value=''; sel.appendChild(none);
-    state.gangs.slice(0,state.players).forEach((g,i)=>{ const o=el('option',null,g.icon+'  '+g.name); o.value=String(i); sel.appendChild(o); });
+    // Build set of gang indices that already own a hideout (excluding current node)
+    const takenHideouts=new Set();
+    if(greyTaken){ for(const oid in state.nodes){ const on=LAYOUT.find(x=>x.id===oid); if(on&&on.type==='hideout'&&state.nodes[oid].gang!=null) takenHideouts.add(state.nodes[oid].gang); } }
+    state.gangs.slice(0,state.players).forEach((g,i)=>{
+      const taken=greyTaken&&takenHideouts.has(i)&&i!==current;
+      const o=el('option',null, taken ? g.icon+'  '+g.name+' (move hideout)' : g.icon+'  '+g.name);
+      o.value=String(i);
+      if(taken) o.style.color='var(--muted)';
+      sel.appendChild(o);
+    });
     sel.value=(current==null)?'':String(current);
     const line=el('div','ownerline'); fillOwner(line,current);
     sel.addEventListener('change',()=>{ const v=sel.value===''?null:Number(sel.value); fillOwner(line,v); onChange(v); });
@@ -1719,8 +1730,9 @@
       if(!ok) { errEl.textContent = data.error || 'Authentication failed'; return; }
       currentUser = data;
       if(campaignMeta && campaignMeta.arbitrator_id === currentUser.id) {
-        isArbitrator = true; 
-        arbModal.classList.remove('show'); render();
+        isArbitrator = true;
+        render();
+        renderArbModal();
       } else {
         renderArbModal();
       }
@@ -2024,10 +2036,13 @@
         .filter(i=>!alreadyChallenged.has(i))
         .sort((a,b)=>(state.gangs[a].rating||0)-(state.gangs[b].rating||0))[0] ?? 0;
 
-      // Challenger select
+      // Challenger select — exclude gangs that have already challenged this cycle,
+      // unless all gangs have challenged (then show all)
       const lbCh = document.createElement('label'); lbCh.textContent='Challenger';
       const selCh = document.createElement('select');
+      const allChallenged = alreadyChallenged.size >= state.players;
       for(let i=0;i<state.players;i++){
+        if(!allChallenged && alreadyChallenged.has(i)) continue;
         const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name;
         if(i===defaultChallenger) o.selected=true;
         selCh.appendChild(o);
@@ -2036,13 +2051,17 @@
       // Challenged select — blank prompt first
       const lbDef = document.createElement('label'); lbDef.textContent='Challenged Gang';
       const selDef = document.createElement('select');
-      const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
-      if(phase==='occupation'){
-        const unclaimedOpt=document.createElement('option'); unclaimedOpt.value='unclaimed'; unclaimedOpt.textContent='Unclaimed Territory'; selDef.appendChild(unclaimedOpt);
+      function populateDefender(){
+        const chIdx=Number(selCh.value);
+        selDef.innerHTML='';
+        const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
+        for(let i=0;i<state.players;i++){
+          if(i===chIdx) continue;
+          const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selDef.appendChild(o);
+        }
       }
-      for(let i=0;i<state.players;i++){
-        const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selDef.appendChild(o);
-      }
+      populateDefender();
+      selCh.addEventListener('change', ()=>{ populateDefender(); populateTerritories(); });
 
       // Territory select — blank prompt first
       const lbTerr = document.createElement('label'); lbTerr.textContent='Staked Territory';
