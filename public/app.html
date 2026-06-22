@@ -136,6 +136,7 @@
   .legend ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
   .legend li{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.05em;color:var(--text);text-transform:uppercase}
   .legend .swatch{width:13px;height:13px;border-radius:2px;display:grid;place-items:center;font-size:9px;border:1px solid rgba(0,0,0,.5);flex:0 0 auto}
+  .legend .legend-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .legend .ct{margin-left:auto;color:rgba(95,217,160,.85);font-size:10px;font-variant-numeric:tabular-nums}
   .legend .ct-rep{color:rgba(232,162,61,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
   .legend .ct-rat{color:rgba(100,220,255,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
@@ -229,27 +230,29 @@
   .terr-chip .tc{font-size:10px;color:var(--muted)}
   @media(max-width:560px){.setup-grid{grid-template-columns:1fr}}
   .lbl-sm{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  .gang-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--edge-soft);border-radius:2px;margin-bottom:9px;background:rgba(0,0,0,.18)}
-  .gang-row-hdr{background:transparent;border-color:transparent;margin-bottom:2px;padding:0 10px}
+  .gang-row{display:flex;align-items:center;gap:6px;padding:7px 8px;border:1px solid var(--edge-soft);border-radius:2px;margin-bottom:7px;background:rgba(0,0,0,.18);flex-wrap:nowrap}
+  .gang-row-hdr{background:transparent;border-color:transparent;margin-bottom:2px;padding:0 8px}
   .gang-hdr-cell{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--tox);font-family:'Rajdhani'}
   .gang-row-hdr .gang-hdr-cell:nth-child(1){width:14px;text-align:center}
-  .gang-row-hdr .gang-hdr-cell:nth-child(2){width:48px}
-  .gang-row-hdr .gang-hdr-cell:nth-child(3){width:30px}
-  .gang-row-hdr .gang-hdr-cell:nth-child(4){flex:1;min-width:80px}
-  .gang-row-hdr .gang-hdr-cell:nth-child(5){width:110px}
-  .gang-row-hdr .gang-hdr-cell:nth-child(6){width:60px;text-align:center}
-  .gang-row-hdr .gang-hdr-cell:nth-child(7){width:60px;text-align:center}
-  .gang-row-hdr .gang-hdr-cell:nth-child(8){width:60px;text-align:center}
-  .gang-row-hdr .gang-hdr-cell:nth-child(9){width:60px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(2){width:34px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(3){width:46px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(4){flex:1;min-width:0}
+  .gang-row-hdr .gang-hdr-cell:nth-child(5){width:100px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(6){width:44px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(7){width:52px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(8){width:52px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(9){width:44px;text-align:center}
   .gang-row .num{font-size:11px;color:var(--faint);width:14px;text-align:center;font-variant-numeric:tabular-nums}
-  .swatch-pick{position:relative;width:34px;height:34px;flex:0 0 auto}
+  .swatch-pick{position:relative;width:30px;height:30px;flex:0 0 auto}
   .swatch-pick input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0}
   .swatch-pick .face{position:absolute;inset:0;border-radius:3px;border:1px solid rgba(0,0,0,.5);display:grid;place-items:center;font-size:15px;pointer-events:none;box-shadow:0 0 10px -3px var(--c)}
   .icon-cell{position:relative}
-  .icon-cell input{width:46px;text-align:center;font-size:17px;padding:8px 4px}
-  .gang-row .nm{flex:0 0 auto;min-width:80px}
-  .gang-type-cell{flex:1} .gang-type-cell select{width:100%;font-family:'Rajdhani';font-size:13px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:8px 10px;border-radius:2px}
-  .stat-cell{flex:0 0 auto} .stat-cell input{width:60px;font-family:'Rajdhani';font-size:13px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:8px 6px;border-radius:2px;text-align:center}
+  .icon-cell input{width:36px;text-align:center;font-size:15px;padding:6px 2px}
+  .gang-row .nm{flex:1;min-width:0}
+  .gang-row .nm input{width:100%}
+  .gang-type-cell{flex:0 0 100px} .gang-type-cell select{width:100%;font-family:'Rajdhani';font-size:12px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:6px 4px;border-radius:2px}
+  .stat-cell{flex:0 0 auto} .stat-cell input{width:44px;font-family:'Rajdhani';font-size:12px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:6px 4px;border-radius:2px;text-align:center}
+  .stat-cell:nth-child(7) input{width:52px} .stat-cell:nth-child(8) input{width:52px}
   .gang-type-tag{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--tox);padding:4px 0}
   .hideout-stats{display:flex;gap:10px;margin-bottom:14px}
   .hstat{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--edge-soft);border-radius:2px;padding:8px 10px}
@@ -297,8 +300,8 @@
   }
 
   /* ===== CYCLES PANEL ===== */
+  #mapBtnGroup { position:absolute; top:14px; left:14px; z-index:6; display:flex; gap:6px; align-items:stretch; }
   #cycleBtn {
-    position: absolute; top: 14px; left: 14px; z-index: 6;
     background: rgba(6,11,9,.82); border: 1px solid var(--edge);
     color: var(--tox); font-family: 'Oswald'; font-size: 11px; font-weight: 600;
     letter-spacing: .2em; text-transform: uppercase;
@@ -308,6 +311,8 @@
   #cycleBtn:hover { border-color: var(--tox); box-shadow: 0 0 10px -2px var(--tox); }
   #cycleBtn .cb-phase { font-size: 9px; letter-spacing: .18em; color: var(--muted); display: block; margin-bottom: 1px; }
   #cycleBtn .cb-label { display: block; }
+  #triumphsMapBtn { background:rgba(6,11,9,.82); border:1px solid var(--edge); color:var(--tox); font-size:16px; padding:7px 10px; border-radius:3px; cursor:pointer; transition:border-color .15s,box-shadow .15s; line-height:1; }
+  #triumphsMapBtn:hover { border-color:var(--tox); box-shadow:0 0 10px -2px var(--tox); }
 
   /* Desktop: slide-in from left */
   #cyclePanel {
@@ -447,7 +452,7 @@
 
   /* Mobile overrides for cycle panel */
   @media (max-width: 1200px) {
-    #cycleBtn { top: 14px; }
+    #mapBtnGroup { top: 14px; }
     #cyclePanel {
       top: auto; left: 0; right: 0; bottom: 0; width: 100%;
       height: 70vh; max-height: 70vh;
@@ -711,7 +716,6 @@
       <span class="save-tag" id="saveTag"></span>
       <a href="/necromunda" class="btn ghost icon-btn" style="text-decoration:none" title="Back to campaigns" aria-label="Back to campaigns">⌂</a>
       <button class="btn ghost" id="tradingPostBtn">⚖ Trading Post</button>
-      <button class="btn icon-btn" id="triumphsBtn" title="Triumphs" aria-label="Triumphs">🏆</button>
       <button class="btn icon-btn" id="arbitratorBtn" title="Arbitrator" aria-label="Arbitrator">⚔</button>
     </div>
   </div>
@@ -726,10 +730,13 @@
         <div id="nodes"></div>
       </div>
       <div class="vig"></div>
-      <button id="cycleBtn" aria-label="Cycles">
-        <span class="cb-phase" id="cycleBtnPhase">Phase</span>
-        <span class="cb-label" id="cycleBtnLabel">Cycles</span>
-      </button>
+      <div id="mapBtnGroup">
+        <button id="cycleBtn" aria-label="Cycles">
+          <span class="cb-phase" id="cycleBtnPhase">Phase</span>
+          <span class="cb-label" id="cycleBtnLabel">Cycles</span>
+        </button>
+        <button id="triumphsMapBtn" aria-label="Triumphs" title="Triumphs">🏆</button>
+      </div>
       <div id="minimap">
         <div id="minimapView"></div>
       </div>
@@ -1351,8 +1358,8 @@
     let ro=0; const rl='ABCDEFGH'; for(let y=120;y<H;y+=200) grid+=txt(6,y,rl[ro++]||'',tick);
     out.push(grid);
 
-    // 8. scale bar (top-left) + compass (top-right)
-    const mile=266.7, sbx=160, sby=58, seg=mile/4;
+    // 8. scale bar (bottom-right) + compass (top-right)
+    const mile=266.7, sbx=1600-mile-60, sby=900-20, seg=mile/4;
     let sb=rect(sbx-8,sby-30,mile+18,34,{fill:'rgba(6,11,9,.55)',stroke:'rgba(95,217,160,.22)','stroke-width':1,rx:2});
     for(let i=0;i<4;i++) sb+=rect(sbx+i*seg,sby-6,seg,5,{fill:i%2?'rgba(95,217,160,0)':'rgba(95,217,160,.45)',stroke:'rgba(95,217,160,.45)','stroke-width':1});
     sb+=txt(sbx-2,sby-9,'0',{fill:'rgba(95,217,160,.6)','font-family':'monospace','font-size':'10'});
@@ -1511,7 +1518,7 @@
     renderLegend();
     const fn=document.getElementById('footnote'); if(fn){ const N=state.players; fn.textContent=`${4*N} holdings · ${N} hideouts · ${3*N} territory plots`; }
   }
-  let legendSort='rat';
+  let legendSort='terr';
   function renderLegend(){
     const ul=document.getElementById('legendList'); ul.innerHTML='';
     const rows=state.gangs.slice(0,state.players).map((g,i)=>({g,i,n:countHoldings(i),rep:Number(g.rep)||0,rat:Number(g.rating)||0,weal:g.wealth!=null?Number(g.wealth):1000,ooa:Number(g.outOfAction)||0}));
@@ -1522,7 +1529,7 @@
     else rows.sort((a,b)=>b.n-a.n||a.i-b.i);
     rows.forEach(({g,i,n,rep,rat,weal,ooa})=>{
       const li=el('li'); const sw=el('span','swatch',g.icon); sw.style.background=g.color;
-      li.appendChild(sw); li.appendChild(el('span',null,g.name));
+      const nm=el('span','legend-name',g.name); li.appendChild(sw); li.appendChild(nm);
       li.appendChild(el('span','ct',n));
       li.appendChild(el('span','ct-rep',rep));
       li.appendChild(el('span','ct-rat',rat));
@@ -1554,29 +1561,22 @@
     const repLabel = isSpyrer ? 'Terror Level' : 'Reputation';
     const stats=el('div','hideout-stats');
 
-    const re=el('div','hstat');
-    re.appendChild(el('span','hstat-label',repLabel));
-    const repInp=document.createElement('input'); repInp.type='number'; repInp.min='0'; repInp.value=ownerG.rep||0; repInp.className='hstat-inp hstat-rep'; repInp.readOnly=!isArbitrator;
-    repInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.rep=parseInt(repInp.value)||0; commit(); });
-    re.appendChild(repInp); stats.appendChild(re);
-
-    const ra=el('div','hstat');
-    ra.appendChild(el('span','hstat-label','Rating'));
-    const ratInp=document.createElement('input'); ratInp.type='number'; ratInp.min='0'; ratInp.value=ownerG.rating||0; ratInp.className='hstat-inp hstat-rat'; ratInp.readOnly=!isArbitrator;
-    ratInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.rating=parseInt(ratInp.value)||0; commit(); });
-    ra.appendChild(ratInp); stats.appendChild(ra);
-
-    const rw=el('div','hstat');
-    rw.appendChild(el('span','hstat-label','Wealth'));
-    const wealInp=document.createElement('input'); wealInp.type='number'; wealInp.min='0'; wealInp.value=ownerG.wealth!=null?ownerG.wealth:1000; wealInp.className='hstat-inp hstat-weal'; wealInp.readOnly=!isArbitrator;
-    wealInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.wealth=parseInt(wealInp.value)||0; commit(); renderLegend(); });
-    rw.appendChild(wealInp); stats.appendChild(rw);
-
-    const ro=el('div','hstat');
-    ro.appendChild(el('span','hstat-label','Kills'));
-    const ooaInp=document.createElement('input'); ooaInp.type='number'; ooaInp.min='0'; ooaInp.value=ownerG.outOfAction||0; ooaInp.className='hstat-inp hstat-ooa'; ooaInp.readOnly=!isArbitrator;
-    ooaInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.outOfAction=parseInt(ooaInp.value)||0; commit(); renderLegend(); });
-    ro.appendChild(ooaInp); stats.appendChild(ro);
+    function hstatCard(label, value, colorClass, onChange) {
+      const card=el('div','hstat');
+      card.appendChild(el('span','hstat-label',label));
+      if (isArbitrator) {
+        const inp=document.createElement('input'); inp.type='number'; inp.min='0'; inp.value=value; inp.className='hstat-inp '+colorClass;
+        inp.addEventListener('change',()=>onChange(parseInt(inp.value)||0));
+        card.appendChild(inp);
+      } else {
+        card.appendChild(el('span','hstat-val '+colorClass,String(value)));
+      }
+      return card;
+    }
+    stats.appendChild(hstatCard(repLabel, ownerG.rep||0, 'hstat-rep', v=>{ ownerG.rep=v; commit(); }));
+    stats.appendChild(hstatCard('Rating', ownerG.rating||0, 'hstat-rat', v=>{ ownerG.rating=v; commit(); }));
+    stats.appendChild(hstatCard('Wealth', ownerG.wealth!=null?ownerG.wealth:1000, 'hstat-weal', v=>{ ownerG.wealth=v; commit(); renderLegend(); }));
+    stats.appendChild(hstatCard('Kills', ownerG.outOfAction||0, 'hstat-ooa', v=>{ ownerG.outOfAction=v; commit(); renderLegend(); }));
 
     wrap.appendChild(stats);
 
@@ -2309,7 +2309,7 @@
     { key: 'dominator',   label: 'Dominator',   criteria: 'Most Territories at the end of the campaign.',                                                              auto: gi => Object.values(state.nodes).filter(n => n.gang === gi && n.terr).length },
     { key: 'slaughterer', label: 'Slaughterer',  criteria: 'Most enemy fighters taken Out of Action and vehicles Wrecked across the whole campaign.',                   auto: gi => state.gangs[gi]?.outOfAction || 0 },
     { key: 'creditor',    label: 'Creditor',     criteria: 'Largest Wealth at the end of the campaign.',                                                               auto: gi => state.gangs[gi]?.wealth ?? 1000 },
-    { key: 'warmonger',   label: 'Warmonger',    criteria: 'Most battles fought across the whole campaign.',                                                            auto: gi => state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status==='done'&&(ch.challenger===gi||ch.challenged===gi)).length },
+    { key: 'warmonger',   label: 'Warmonger',    criteria: 'Most battles fought across the whole campaign.',                                                            auto: gi => state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status!=='pending'&&(Number(ch.challenger)===gi||Number(ch.challenged)===gi)).length },
     { key: 'powerbroker', label: 'Powerbroker',  criteria: 'Highest Reputation at the end of the campaign.',                                                           auto: gi => state.gangs[gi]?.rep || 0 },
   ];
 
@@ -2344,7 +2344,7 @@
   }
 
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); triumphsModal.classList.remove('show'); }
-  document.getElementById('triumphsBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
+  document.getElementById('triumphsMapBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
   document.getElementById('triumphsModalClose').addEventListener('click', () => triumphsModal.classList.remove('show'));
   document.getElementById('triumphsModalDone').addEventListener('click', () => triumphsModal.classList.remove('show'));
 
