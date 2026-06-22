@@ -20,16 +20,15 @@
     {"name": "Refractor Field", "availability": "R10", "cost": 50}
   ],
   "bionics": [
-    {"name": "Lobo Chip (Mundane)", "availability": "R11", "cost": 20},
-    {"name": "Lobo Chip (Improved)", "availability": "R11", "cost": 45},
-    {"name": "Cortex-cogitator (Mundane)", "availability": "R11", "cost": 20},
-    {"name": "Cortex-cogitator (Improved)", "availability": "R12", "cost": 30},
-    {"name": "Bionic Eye (Mundane)", "availability": "R13", "cost": 45},
+    {"name": "Aortic Supercharger (Mundane)", "availability": "R13", "cost": 65},
     {"name": "Bionic Arm (Mundane)", "availability": "R13", "cost": 45},
+    {"name": "Bionic Eye (Mundane)", "availability": "R13", "cost": 45},
     {"name": "Bionic Leg (Mundane)", "availability": "R12", "cost": 25},
-    {"name": "Bionic Leg (Improved)", "availability": "R12", "cost": 70},
-    {"name": "Skeletal Enhancers (Mundane)", "availability": "R13", "cost": 70},
-    {"name": "Aortic Supercharger (Mundane)", "availability": "R13", "cost": 65}
+    {"name": "Cortex-cogitator (Improved)", "availability": "R12", "cost": 30},
+    {"name": "Cortex-cogitator (Mundane)", "availability": "R11", "cost": 20},
+    {"name": "Lobo Chip (Improved)", "availability": "R11", "cost": 45},
+    {"name": "Lobo Chip (Mundane)", "availability": "R11", "cost": 20},
+    {"name": "Skeletal Enhancers (Mundane)", "availability": "R13", "cost": 70}
   ],
   "gangEquipment": [
     {"name": "Ammo Cache", "availability": "R8", "cost": 60},
@@ -46,7 +45,7 @@
     {"name": "Chem-synth", "availability": "R12", "cost": 15},
     {"name": "Chrono-crystal", "availability": "I14", "cost": 500},
     {"name": "Cred Sniffer", "availability": "R8", "cost": 35},
-    {"name": "Cult Icon", "availability": "C", "cost": 40},
+    {"name": "Cult Icon", "availability": "R8", "cost": 40},
     {"name": "Data-thief", "availability": "I10", "cost": 35},
     {"name": "Dome Runner Map", "availability": "R9", "cost": 100},
     {"name": "Drop Rig", "availability": "C", "cost": 10},
@@ -73,8 +72,8 @@
     {"name": "Respirator", "availability": "C", "cost": 15},
     {"name": "Sanctioning Writ", "availability": "I10", "cost": 25},
     {"name": "Second Best", "availability": "C", "cost": 15},
-    {"name": "Servo Harness (Partial)", "availability": "R12", "cost": 130},
     {"name": "Servo Harness (Full)", "availability": "R12", "cost": 160},
+    {"name": "Servo Harness (Partial)", "availability": "R12", "cost": 130},
     {"name": "Skinblade", "availability": "C", "cost": 10},
     {"name": "Stimm-slug Stash", "availability": "R7", "cost": 30},
     {"name": "Strip Kit", "availability": "C", "cost": 15},
@@ -107,8 +106,6 @@
   "statusItems": [
     {"name": "Exotic Furs", "availability": "R12", "cost": 50},
     {"name": "Gold-plated Gun", "availability": "R10", "cost": 40},
-    {"name": "Master-crafted Weapon", "availability": "R10", "cost": null, "costNote": "+25% of weapon cost"},
-    {"name": "Mung Vase", "availability": "R12", "cost": null, "costNote": "2D6×10"},
     {"name": "Opulent Jewellery", "availability": "R11", "cost": 80},
     {"name": "Uphive Raiments", "availability": "R10", "cost": 60}
   ],

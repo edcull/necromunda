@@ -1642,9 +1642,13 @@
 
   const TP_SECTIONS = [
     { key: 'basicWeapons',       label: 'Basic Weapons' },
+    { key: 'basicWeaponAmmo',    label: 'Basic Weapon Ammo' },
     { key: 'pistols',            label: 'Pistols' },
+    { key: 'pistolAmmo',         label: 'Pistol Ammo' },
     { key: 'specialWeapons',     label: 'Special Weapons' },
+    { key: 'specialWeaponAmmo',  label: 'Special Weapon Ammo' },
     { key: 'heavyWeapons',       label: 'Heavy Weapons' },
+    { key: 'heavyWeaponAmmo',    label: 'Heavy Weapon Ammo' },
     { key: 'grenades',           label: 'Grenades' },
     { key: 'boobyTraps',         label: 'Booby Traps' },
     { key: 'closeCombatWeapons', label: 'Close Combat Weapons' },
@@ -1726,10 +1730,10 @@
       return `<tr class="${rowCls}"><td>${it.name}</td><td class="tp-avail">${al}</td><td>${costVal}</td></tr>`;
     }).join('');
     const total = visible.length + customs.length;
-    return `<details class="tp-section">
+    return `<details class="tp-section" data-key="${sec.key}">
       <summary><span>${sec.label}</span><span class="tp-count">(${total})</span></summary>
       <table class="tp-table">
-        <thead><tr><th>Name</th><th>AL</th><th>Cost</th></tr></thead>
+        <thead><tr><th>Name</th><th>Availability</th><th>Cost</th></tr></thead>
         <tbody>${stdRows}${customRows}</tbody>
       </table>
     </details>`;
@@ -1778,7 +1782,7 @@
     return `<details class="tp-section">
       <summary><span>${sec.label}</span><span class="tp-count">(${en}/${total} enabled)</span></summary>
       <table class="tp-table tp-cfg">
-        <thead><tr><th></th><th>Name</th><th>AL</th><th style="text-align:right">Cost</th></tr></thead>
+        <thead><tr><th></th><th>Name</th><th>Availability</th><th style="text-align:right">Cost</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </details>`;
@@ -1864,7 +1868,13 @@
         fetch('/necromunda/api/static/trading-post-weapons'),
         fetch('/necromunda/api/static/trading-post-equipment'),
       ]);
-      _tpData = { ...await wpnRes.json(), ...await eqpRes.json() };
+      const raw = { ...await wpnRes.json(), ...await eqpRes.json() };
+      // Normalise ammo entries: derive `name` from weapon + ammo fields
+      const AMMO_KEYS = ['basicWeaponAmmo','pistolAmmo','specialWeaponAmmo','heavyWeaponAmmo'];
+      AMMO_KEYS.forEach(k => {
+        if (raw[k]) raw[k] = raw[k].map(it => it.name ? it : { ...it, name: it.weapon + ' — ' + it.ammo });
+      });
+      _tpData = raw;
       renderTpBody(body);
     } catch (e) {
       body.innerHTML = '<p style="color:var(--err);font-size:13px">Failed to load trading post data.</p>';
@@ -1909,7 +1919,7 @@
       <summary><span>Custom Items</span><span class="tp-count">(${items.length} item${items.length!==1?'s':''})</span></summary>
       <table class="tp-table tp-cfg" id="tpCustomTable">
         ${colgroup}
-        <thead><tr><th></th><th>Category</th><th>Name</th><th>AL</th><th style="text-align:right">Cost</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Category</th><th>Name</th><th>Availability</th><th style="text-align:right">Cost</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr class="tp-add-row"><td colspan="6">
           <button class="btn ghost tp-add-btn" id="tpAddCustom">+ Add item</button>
@@ -2047,32 +2057,7 @@
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:#eef6f1;font-weight:600">
             <input type="checkbox" id="tpSeek"> Seek Rare &amp; Illegal Equipment
           </label>
-          <!-- Col 2 top: availability roll result -->
-          <div id="tpRollDisplay" style="display:none">
-            <div style="font-size:12px;color:#c8d8cc;margin-bottom:4px">Roll 2D6</div>
-            <input type="number" id="tpRoll2d6" min="2" max="12" value="7"
-              style="width:60px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:15px;padding:4px 8px;text-align:center;margin-bottom:8px">
-            <div style="font-size:11px;color:#7a9a82;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">Availability Roll</div>
-            <div style="font-size:26px;font-weight:700;color:var(--tox);line-height:1" id="tpRollTotal">—</div>
-            <div style="font-size:11px;color:#7a9a82;margin-top:3px" id="tpRollBreakdown"></div>
-            <div style="font-size:12px;color:#c8d8cc;margin-top:6px;line-height:1.5" id="tpRollHint"></div>
-          </div>
-
-          <!-- Col 1 bottom: modifiers -->
-          <div id="tpModGroup" style="display:none;display:none">
-            <div style="display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center">
-              <label style="font-size:12px;color:#c8d8cc;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <input type="checkbox" id="tpLeader"> Gang Leader making trade action
-              </label>
-              <span style="font-size:11px;color:#7a9a82">+1</span>
-              <span style="font-size:12px;color:#c8d8cc">Champions making trade action</span>
-              <input type="number" id="tpChampions" min="0" max="10" value="0" style="${INP}">
-              <span style="font-size:12px;color:#c8d8cc">Gang Reputation</span>
-              <input type="number" id="tpRep" min="0" value="0" style="${INP}">
-            </div>
-          </div>
-
-          <!-- Col 2 bottom: options -->
+          <!-- Col 2 top: options -->
           <div id="tpOptGroup" style="display:none">
             <div style="display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center">
               <label style="font-size:12px;color:#c8d8cc;display:flex;align-items:center;gap:6px;cursor:pointer">
@@ -2088,10 +2073,66 @@
             </div>
           </div>
 
+          <!-- Col 1 bottom: modifiers + availability result -->
+          <div id="tpModGroup" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center">
+              <label style="font-size:12px;color:#c8d8cc;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="tpLeader"> Gang Leader making trade action
+              </label>
+              <span style="font-size:11px;color:#7a9a82">+1</span>
+              <span style="font-size:12px;color:#c8d8cc">Champions making trade action</span>
+              <input type="number" id="tpChampions" min="0" max="10" value="0" style="${INP}">
+              <span style="font-size:12px;color:#c8d8cc">Gang Reputation</span>
+              <input type="number" id="tpRep" min="0" value="0" style="${INP}">
+            </div>
+            <div id="tpRollDisplay" style="margin-top:10px">
+              <div style="font-size:12px;color:#c8d8cc;margin-bottom:4px">Roll 2D6</div>
+              <input type="number" id="tpRoll2d6" min="2" max="12" value="7"
+                style="width:60px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:15px;padding:4px 8px;text-align:center;margin-bottom:8px">
+              <div style="font-size:11px;color:#7a9a82;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">Availability Result</div>
+              <div style="font-size:26px;font-weight:700;color:var(--tox);line-height:1" id="tpRollTotal">—</div>
+              <div style="font-size:11px;color:#7a9a82;margin-top:3px" id="tpRollBreakdown"></div>
+              <div style="font-size:12px;color:#c8d8cc;margin-top:6px;line-height:1.5" id="tpRollHint"></div>
+            </div>
+          </div>
+
+          <!-- Col 2 bottom: empty -->
+          <div></div>
+
         </div>
       </div>
       <div id="tpRefSections"></div>`;
       body.innerHTML = seekBar;
+      // Restore from localStorage
+      const TP_LS_KEY = 'necromunda_tp_seek';
+      (function restoreTpSeek() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(TP_LS_KEY) || '{}');
+          const set = (id, val) => { const el = body.querySelector(id); if (!el) return; if (el.type==='checkbox') el.checked = !!val; else if (val != null) el.value = val; };
+          set('#tpSeek',       saved.seek);
+          set('#tpRoll2d6',    saved.roll2d6);
+          set('#tpLeader',     saved.leader);
+          set('#tpChampions',  saved.champions);
+          set('#tpRep',        saved.rep);
+          set('#tpMod',        saved.mod);
+          set('#tpOutlaw',     saved.outlaw);
+          set('#tpHideCommon', saved.hideCommon);
+          if (saved.seek) {
+            body.querySelector('#tpModGroup').style.display = '';
+            body.querySelector('#tpOptGroup').style.display = '';
+          }
+        } catch(e) {}
+      })();
+      function saveTpSeek() {
+        try {
+          const get = id => { const el = body.querySelector(id); return el ? (el.type==='checkbox' ? el.checked : el.value) : null; };
+          localStorage.setItem(TP_LS_KEY, JSON.stringify({
+            seek: get('#tpSeek'), roll2d6: get('#tpRoll2d6'), leader: get('#tpLeader'),
+            champions: get('#tpChampions'), rep: get('#tpRep'), mod: get('#tpMod'),
+            outlaw: get('#tpOutlaw'), hideCommon: get('#tpHideCommon'),
+          }));
+        } catch(e) {}
+      }
       function calcRoll() {
         const base   = Math.min(12, Math.max(2, parseInt(body.querySelector('#tpRoll2d6')?.value) || 2));
         const leader = body.querySelector('#tpLeader').checked ? 1 : 0;
@@ -2126,24 +2167,28 @@
             hint.textContent = `Showing: ${cPart}${rPart} · ${iPart}`;
           }
         }
+        const openKeys = new Set([...body.querySelectorAll('#tpRefSections details.tp-section[open]')].map(d => d.dataset.key));
         const html = TP_SECTIONS.map(sec => {
           const items = _tpData[sec.key] || [];
           return renderTpRefSection(sec, items, maxR, maxI, hideCommon);
         }).join('');
         body.querySelector('#tpRefSections').innerHTML = html || '<p style="color:var(--muted);font-size:13px">No items available.</p>';
+        body.querySelectorAll('#tpRefSections details.tp-section').forEach(d => {
+          if (openKeys.has(d.dataset.key)) d.open = true;
+        });
       }
+      function onSeekChange() { saveTpSeek(); renderRefSections(); }
       renderRefSections();
       body.querySelector('#tpSeek').addEventListener('change', function() {
         const on = this.checked;
-        body.querySelector('#tpRollDisplay').style.display = on ? '' : 'none';
-        body.querySelector('#tpModGroup').style.display   = on ? '' : 'none';
-        body.querySelector('#tpOptGroup').style.display   = on ? '' : 'none';
-        renderRefSections();
+        body.querySelector('#tpModGroup').style.display = on ? '' : 'none';
+        body.querySelector('#tpOptGroup').style.display = on ? '' : 'none';
+        onSeekChange();
       });
       ['#tpRoll2d6','#tpChampions','#tpRep','#tpMod'].forEach(id =>
-        body.querySelector(id).addEventListener('input', renderRefSections));
+        body.querySelector(id).addEventListener('input', onSeekChange));
       ['#tpLeader','#tpOutlaw','#tpHideCommon'].forEach(id =>
-        body.querySelector(id).addEventListener('change', renderRefSections));
+        body.querySelector(id).addEventListener('change', onSeekChange));
     }
   }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
