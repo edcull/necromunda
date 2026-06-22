@@ -1984,16 +1984,18 @@
           .sort((a,b)=>isRandom
             ? cycleHash(cd.id,a.i)-cycleHash(cd.id,b.i)
             : ((a.g.rating||0)-(b.g.rating||0)) || (cycleHash(cd.id,a.i)-cycleHash(cd.id,b.i)));
+        const challengedSet=new Set(cyc.challenges.map(c=>c.challenger));
         gangsOrdered.forEach(({i,g})=>{
+          const done=challengedSet.has(i);
           const row=document.createElement('div');
-          row.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);padding:4px 6px;background:rgba(0,0,0,.18);border-radius:2px';
+          row.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;padding:4px 6px;background:rgba(0,0,0,.18);border-radius:2px;'+(done?'color:var(--muted);':'color:var(--text);');
           const dot=document.createElement('span');
-          dot.style.cssText='width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:'+g.color;
+          dot.style.cssText='width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:'+(done?'var(--muted)':g.color);
           const name=document.createElement('span'); name.style.flex='1'; name.textContent=g.name;
-          const rat=document.createElement('span');
-          rat.style.cssText='color:var(--tox);font-family:\'Oswald\';font-size:11px;letter-spacing:.06em';
-          rat.textContent=(g.rating||0)+'pts';
-          row.appendChild(dot); row.appendChild(name); row.appendChild(rat);
+          const right=document.createElement('span');
+          right.style.cssText='font-family:\'Oswald\';font-size:11px;letter-spacing:.06em;color:'+(done?'var(--muted)':'var(--tox)');
+          right.textContent=done?'✓ done':(g.rating||0)+'pts';
+          row.appendChild(dot); row.appendChild(name); row.appendChild(right);
           orderList.appendChild(row);
         });
         cpBody.appendChild(orderList);
