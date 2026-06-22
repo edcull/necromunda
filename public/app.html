@@ -2025,17 +2025,23 @@
           <input type="checkbox" id="tpSeek">
           <span class="tp-filter-label" style="text-transform:none;letter-spacing:0;font-size:13px">Seek Rare &amp; Illegal Equipment</span>
         </div>
-        <div class="tp-filter-group" id="tpRollGroup" style="display:none">
-          <span class="tp-filter-label">Availability Roll</span>
-          <input type="number" id="tpRoll" min="1" max="15" value="8"
-            style="width:50px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
+        <div id="tpRollGroup" style="display:none;width:100%">
+          <div class="tp-filter-group" style="margin-bottom:6px">
+            <span class="tp-filter-label">Availability Roll</span>
+            <input type="number" id="tpRoll" min="0" max="20" value="8"
+              style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
+          </div>
+          <p style="font-size:11px;color:var(--tox-dim);margin:0;line-height:1.6">
+            2D6, +2 if Gang Leader is making the trade, +1 for each Champion making the trade, +1 for every 10 Reputation
+          </p>
         </div>
       </div>
       <div id="tpRefSections"></div>`;
       body.innerHTML = seekBar;
       function renderRefSections() {
         const seeking = body.querySelector('#tpSeek').checked;
-        const roll = parseInt(body.querySelector('#tpRoll').value) || 8;
+        const rollRaw = body.querySelector('#tpRoll').value;
+        const roll = rollRaw !== '' ? parseInt(rollRaw) : 8;
         const maxR = seeking ? roll : null;
         const maxI = seeking ? Math.max(0, roll - 4) : null;
         const html = TP_SECTIONS.map(sec => {
