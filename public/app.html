@@ -376,6 +376,12 @@
     transition: border-color .12s;
   }
   .cp-add-btn:hover { border-color: var(--tox); }
+  .ch-batch-hdr {
+    font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted); padding: 10px 0 4px; border-top: 1px solid var(--edge-soft);
+    margin-top: 4px;
+  }
+  .ch-batch-hdr:first-child { border-top: none; margin-top: 0; }
   .ch-card {
     background: rgba(0,0,0,.22); border: 1px solid var(--edge-soft);
     border-radius: 3px; padding: 10px 12px; margin-bottom: 8px;
@@ -2872,12 +2878,35 @@
         cpBody.appendChild(empty);
       }
 
-      // Pending first, then completed
-      const sorted = [...cyc.challenges].sort((a,b)=>{
-        const order = {pending:0, refused:1, completed:2};
-        return (order[a.status]||0)-(order[b.status]||0);
-      });
-      sorted.forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator)); });
+      const statusOrder = {pending:0, refused:1, completed:2};
+      const sg2 = state.simultaneousGames;
+      if(sg2.enabled && cyc.challenges.length > 0){
+        const batchSize = sg2.count;
+        const totalMandatory = state.players; // one challenge per gang
+        // Group challenges into batches; beyond totalMandatory → additional games
+        const mandatory = cyc.challenges.slice(0, totalMandatory);
+        const additional = cyc.challenges.slice(totalMandatory);
+        const batchCount = Math.ceil(mandatory.length / batchSize);
+        for(let b=0; b<batchCount; b++){
+          const hdr = document.createElement('div'); hdr.className='ch-batch-hdr';
+          hdr.textContent = 'Set '+(b+1);
+          cpBody.appendChild(hdr);
+          const batch = mandatory.slice(b*batchSize, (b+1)*batchSize)
+            .sort((a,z)=>(statusOrder[a.status]||0)-(statusOrder[z.status]||0));
+          batch.forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator)); });
+        }
+        if(additional.length > 0){
+          const hdr = document.createElement('div'); hdr.className='ch-batch-hdr';
+          hdr.textContent = 'Additional Games';
+          cpBody.appendChild(hdr);
+          additional.sort((a,z)=>(statusOrder[a.status]||0)-(statusOrder[z.status]||0))
+            .forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator)); });
+        }
+      } else {
+        // No simultaneous games — sort by status
+        [...cyc.challenges].sort((a,b)=>(statusOrder[a.status]||0)-(statusOrder[b.status]||0))
+          .forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator)); });
+      }
     }
 
     function buildChallengeForm(cd, cyc){
@@ -2962,6 +2991,14 @@
             const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
             o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':''); selTerr.appendChild(o);
           });
+          if(avail.length===0){
+            // No territories owned by defender — special scenario only
+            const o=document.createElement('option'); o.value='special'; o.textContent='Special Scenario — no territory at stake'; selTerr.appendChild(o);
+          }
+          // Rescue Mission always available in Takeover — challenger may issue it regardless of defender's holdings
+          if(phase==='takeover'){
+            const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
+          }
         }
       }
       selDef.addEventListener('change', populateTerritories);
@@ -3004,9 +3041,15 @@
       // Top row: territory + badge only
       const top=document.createElement('div'); top.className='ch-top';
       const terrDiv=document.createElement('div'); terrDiv.className='ch-territory';
-      const lbl=nodeLabel(ch.territory); const sub=nodeSubLabel(ch.territory);
-      terrDiv.textContent=lbl;
-      if(sub&&sub!==lbl){ const s=document.createElement('span'); s.className='ch-terr-sub'; s.textContent=sub; terrDiv.appendChild(s); }
+      if(ch.territory==='special'){
+        terrDiv.textContent='Special Scenario';
+      } else if(ch.territory==='rescue'){
+        terrDiv.textContent='Rescue Mission';
+      } else {
+        const lbl=nodeLabel(ch.territory); const sub=nodeSubLabel(ch.territory);
+        terrDiv.textContent=lbl;
+        if(sub&&sub!==lbl){ const s=document.createElement('span'); s.className='ch-terr-sub'; s.textContent=sub; terrDiv.appendChild(s); }
+      }
       const badge=document.createElement('span'); badge.className='ch-status-badge '+ch.status;
       badge.textContent=ch.status==='pending'?'Pending':ch.status==='refused'?'Refused':'Done';
       top.appendChild(terrDiv); top.appendChild(badge); card.appendChild(top);
@@ -3176,16 +3219,16 @@
 
       const result = rmMode==='refused' ? 'refused' : rmSelectedResult;
 
-      // Apply territory ownership change
-      const nodeData = state.nodes[ch.territory];
-      if(result==='refused'||result==='challenger'){
-        // challenger claims
-        nodeData.gang=ch.challenger;
-      } else if(result==='challenged'){
-        // defender holds — no change unless it was unclaimed
-        if(ch.challenged!==null&&ch.challenged!==undefined) nodeData.gang=ch.challenged;
+      // Apply territory ownership change (skipped for special scenario / rescue mission)
+      if(ch.territory !== 'special' && ch.territory !== 'rescue'){
+        const nodeData = state.nodes[ch.territory];
+        if(result==='refused'||result==='challenger'){
+          nodeData.gang=ch.challenger;
+        } else if(result==='challenged'){
+          if(ch.challenged!==null&&ch.challenged!==undefined) nodeData.gang=ch.challenged;
+        }
+        // draw: no change
       }
-      // draw: no change
 
       // Update gang stats
       rmStatGrid.querySelectorAll('.rm-stat-input').forEach(inp=>{
