@@ -1976,9 +1976,11 @@
         cpBody.appendChild(orderHdr);
         const orderList=document.createElement('div');
         orderList.style.cssText='display:flex;flex-direction:column;gap:4px;margin-bottom:10px';
+        // Tiebreak with a stable per-cycle shuffle (hash of cycleId + gang index)
+        function cycleHash(cycId,i){ let h=0; for(const c of cycId+':'+i) h=(Math.imul(31,h)+c.charCodeAt(0))|0; return h; }
         const gangsOrdered=[...Array(state.players).keys()]
           .map(i=>({i,g:state.gangs[i]}))
-          .sort((a,b)=>(a.g.rating||0)-(b.g.rating||0));
+          .sort((a,b)=>((a.g.rating||0)-(b.g.rating||0)) || (cycleHash(cd.id,a.i)-cycleHash(cd.id,b.i)));
         gangsOrdered.forEach(({i,g})=>{
           const row=document.createElement('div');
           row.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);padding:4px 6px;background:rgba(0,0,0,.18);border-radius:2px';
