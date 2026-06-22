@@ -1427,7 +1427,9 @@
     drawerBody.innerHTML='';
     if(isArbitrator){
       if(node.type==='hideout'){
-        drawerBody.appendChild(gangField(data.gang, gi=>{ data.gang=gi; commit(); openEditor(id); }, 'Gang Name', false));
+        drawerBody.appendChild(gangField(data.gang, gi=>{
+          if(gi!=null){ for(const oid in state.nodes){ if(oid!==id && state.nodes[oid].gang===gi){ const on=LAYOUT.find(x=>x.id===oid); if(on&&on.type==='hideout') state.nodes[oid].gang=null; } } }
+          data.gang=gi; commit(); openEditor(id); }, 'Gang Name', false, true));
         const ownerG=gangOf(data.gang);
         if(ownerG && ownerG.type){ const tf=el('div','field'); tf.appendChild(el('label',null,'Gang Type')); tf.appendChild(el('div','gang-type-tag',ownerG.type)); drawerBody.appendChild(tf); }
         drawerBody.appendChild(hideoutStats(ownerG, data.gang));
@@ -1468,11 +1470,20 @@
     }
     drawer.classList.add('show'); scrim.classList.add('show'); render();
   }
-  function gangField(current,onChange,label,allowNone){
+  function gangField(current,onChange,label,allowNone,greyTaken){
     const f=el('div','field'); f.appendChild(el('label',null,label||'Gang'));
     const sel=el('select');
     const none=el('option',null, allowNone?'— Uncontrolled —':'— Unclaimed —'); none.value=''; sel.appendChild(none);
-    state.gangs.slice(0,state.players).forEach((g,i)=>{ const o=el('option',null,g.icon+'  '+g.name); o.value=String(i); sel.appendChild(o); });
+    // Build set of gang indices that already own a hideout (excluding current node)
+    const takenHideouts=new Set();
+    if(greyTaken){ for(const oid in state.nodes){ const on=LAYOUT.find(x=>x.id===oid); if(on&&on.type==='hideout'&&state.nodes[oid].gang!=null) takenHideouts.add(state.nodes[oid].gang); } }
+    state.gangs.slice(0,state.players).forEach((g,i)=>{
+      const taken=greyTaken&&takenHideouts.has(i)&&i!==current;
+      const o=el('option',null, taken ? g.icon+'  '+g.name+' (move hideout)' : g.icon+'  '+g.name);
+      o.value=String(i);
+      if(taken) o.style.color='var(--muted)';
+      sel.appendChild(o);
+    });
     sel.value=(current==null)?'':String(current);
     const line=el('div','ownerline'); fillOwner(line,current);
     sel.addEventListener('change',()=>{ const v=sel.value===''?null:Number(sel.value); fillOwner(line,v); onChange(v); });
