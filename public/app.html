@@ -606,6 +606,7 @@
     <div class="controls">
       <span class="save-tag" id="saveTag"></span>
       <a href="/necromunda" class="btn ghost" style="text-decoration:none">◀ Campaigns</a>
+      <button class="btn ghost" id="tradingPostBtn">⚖ Trading Post</button>
       <button class="btn" id="arbitratorBtn">⚔ Arbitrator</button>
     </div>
   </div>
@@ -1674,6 +1675,7 @@
   /* ============ ARBITRATOR MODAL ============ */
   const arbModal = document.getElementById('arbModal');
 
+  document.getElementById('tradingPostBtn').addEventListener('click', () => { openTradeModal(); });
   document.getElementById('arbitratorBtn').addEventListener('click', () => {
     renderArbModal();
     arbModal.classList.add('show');
