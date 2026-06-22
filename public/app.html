@@ -138,14 +138,14 @@
   .legend .swatch{width:13px;height:13px;border-radius:2px;display:grid;place-items:center;font-size:9px;border:1px solid rgba(0,0,0,.5);flex:0 0 auto}
   .legend .ct{margin-left:auto;color:rgba(95,217,160,.85);font-size:10px;font-variant-numeric:tabular-nums}
   .legend .ct-rep{color:rgba(232,162,61,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
-  .legend .ct-rat{color:rgba(95,217,160,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
+  .legend .ct-rat{color:rgba(100,220,255,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
   .legend .ct-weal{color:rgba(160,180,255,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
   .legend .ct-ooa{color:rgba(224,120,120,.85);font-size:10px;font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
   .legend-sort{display:flex;gap:4px;margin-bottom:8px;width:100%} .legend-sort button{flex:1}
   .legend-sort button{background:transparent;border:1px solid rgba(95,217,160,.15);color:rgba(95,217,160,.3);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border-radius:2px;font-family:'Rajdhani';transition:.15s}
   #sortTerr{border-color:rgba(95,217,160,.15);color:rgba(95,217,160,.3)} #sortTerr.on{border-color:var(--tox);color:var(--tox)}
   #sortRep{border-color:rgba(232,162,61,.15);color:rgba(232,162,61,.3)} #sortRep.on{border-color:var(--amber);color:var(--amber)}
-  #sortRat{border-color:rgba(95,217,160,.15);color:rgba(95,217,160,.3)} #sortRat.on{border-color:var(--tox-bright);color:var(--tox-bright)}
+  #sortRat{border-color:rgba(100,220,255,.15);color:rgba(100,220,255,.3)} #sortRat.on{border-color:rgba(100,220,255,.9);color:rgba(100,220,255,.9)}
   #sortWeal{border-color:rgba(160,180,255,.15);color:rgba(160,180,255,.3)} #sortWeal.on{border-color:#a0b4ff;color:#a0b4ff}
   #sortOoa{border-color:rgba(224,120,120,.15);color:rgba(224,120,120,.3)} #sortOoa.on{border-color:#e07878;color:#e07878}
   .hint{position:absolute;right:14px;bottom:14px;z-index:5;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
@@ -230,6 +230,17 @@
   @media(max-width:560px){.setup-grid{grid-template-columns:1fr}}
   .lbl-sm{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .gang-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--edge-soft);border-radius:2px;margin-bottom:9px;background:rgba(0,0,0,.18)}
+  .gang-row-hdr{background:transparent;border-color:transparent;margin-bottom:2px;padding:0 10px}
+  .gang-hdr-cell{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--tox);font-family:'Rajdhani'}
+  .gang-row-hdr .gang-hdr-cell:nth-child(1){width:14px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(2){width:48px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(3){width:30px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(4){flex:1;min-width:80px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(5){width:110px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(6){width:60px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(7){width:60px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(8){width:60px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(9){width:60px;text-align:center}
   .gang-row .num{font-size:11px;color:var(--faint);width:14px;text-align:center;font-variant-numeric:tabular-nums}
   .swatch-pick{position:relative;width:34px;height:34px;flex:0 0 auto}
   .swatch-pick input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0}
@@ -242,7 +253,7 @@
   .gang-type-tag{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--tox);padding:4px 0}
   .hideout-stats{display:flex;gap:10px;margin-bottom:14px}
   .hstat{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--edge-soft);border-radius:2px;padding:8px 10px}
-  .hstat-label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .hstat-label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;white-space:nowrap}
   .hstat-val{display:block;font-size:18px;font-family:'Oswald';font-weight:600;letter-spacing:.04em}
   .hstat-rep{color:var(--amber)} .hstat-rat{color:var(--tox)} .hstat-weal{color:#a0b4ff} .hstat-ooa{color:#e07878}
   .hstat-inp{display:block;width:100%;font-size:18px;font-family:'Oswald';font-weight:600;letter-spacing:.04em;background:transparent;border:none;border-bottom:1px solid var(--edge-soft);outline:none;padding:0;margin:0}
@@ -730,7 +741,7 @@
       </div>
       <div class="legend-body">
         <h3>Gangs</h3>
-        <div class="legend-sort"><button id="sortTerr">Terr</button><button id="sortRep">Rep</button><button id="sortRat" class="on">Rating</button><button id="sortWeal">Wealth</button><button id="sortOoa">OOA</button></div>
+        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button><button id="sortWeal">Wealth</button><button id="sortOoa">Kills</button></div>
         <ul id="legendList"></ul>
       </div>
     </div>
@@ -1550,7 +1561,7 @@
     re.appendChild(repInp); stats.appendChild(re);
 
     const ra=el('div','hstat');
-    ra.appendChild(el('span','hstat-label','Gang Rating'));
+    ra.appendChild(el('span','hstat-label','Rating'));
     const ratInp=document.createElement('input'); ratInp.type='number'; ratInp.min='0'; ratInp.value=ownerG.rating||0; ratInp.className='hstat-inp hstat-rat'; ratInp.readOnly=!isArbitrator;
     ratInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.rating=parseInt(ratInp.value)||0; commit(); });
     ra.appendChild(ratInp); stats.appendChild(ra);
@@ -1562,7 +1573,7 @@
     rw.appendChild(wealInp); stats.appendChild(rw);
 
     const ro=el('div','hstat');
-    ro.appendChild(el('span','hstat-label','Enemies OOA'));
+    ro.appendChild(el('span','hstat-label','Kills'));
     const ooaInp=document.createElement('input'); ooaInp.type='number'; ooaInp.min='0'; ooaInp.value=ownerG.outOfAction||0; ooaInp.className='hstat-inp hstat-ooa'; ooaInp.readOnly=!isArbitrator;
     ooaInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.outOfAction=parseInt(ooaInp.value)||0; commit(); renderLegend(); });
     ro.appendChild(ooaInp); stats.appendChild(ro);
@@ -2328,32 +2339,6 @@
         rows.appendChild(row);
       });
       card.appendChild(rows);
-      // Arbitrator winner selection
-      if (isArbitrator) {
-        const winnerKey = 'winner_' + t.key;
-        const saved = state.triumphs[winnerKey] ?? null;
-        const sel = document.createElement('select');
-        sel.className = 'triumph-winner-sel';
-        const none = el('option', null, '— Awarded to —'); none.value = ''; sel.appendChild(none);
-        for (let i = 0; i < state.players; i++) {
-          const o = el('option', null, state.gangs[i].name); o.value = String(i); sel.appendChild(o);
-        }
-        sel.value = saved != null ? String(saved) : '';
-        sel.addEventListener('change', () => {
-          state.triumphs[winnerKey] = sel.value === '' ? null : parseInt(sel.value);
-          scheduleSave();
-        });
-        card.appendChild(sel);
-      } else {
-        const winnerKey = 'winner_' + t.key;
-        const wi = state.triumphs[winnerKey];
-        if (wi != null && state.gangs[wi]) {
-          const aw = el('div', 'triumph-awarded');
-          const dot = el('span', 'dot'); dot.style.background = state.gangs[wi].color; aw.appendChild(dot);
-          aw.appendChild(el('span', null, 'Awarded to ' + state.gangs[wi].name));
-          card.appendChild(aw);
-        }
-      }
       body.appendChild(card);
     });
   }
@@ -2421,6 +2406,9 @@
 
   function buildGangRows(){
     const host=document.getElementById('gangRows'); host.innerHTML='';
+    const hdr=el('div','gang-row gang-row-hdr');
+    ['#','','','Name','Type','Rep','Rating','Wealth','Kills'].forEach(t=>{ hdr.appendChild(el('span','gang-hdr-cell',t)); });
+    host.appendChild(hdr);
     state.gangs.slice(0,state.players).forEach((g,i)=>{
       const row=el('div','gang-row'); row.appendChild(el('span','num',String(i+1)));
       const sp=el('div','swatch-pick');
