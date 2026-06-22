@@ -14,7 +14,7 @@ An interactive web app for tracking Necromunda Dominion Campaign progress. Multi
   - Territory locking while a challenge is pending
   - Result recording (win/refuse/draw) with automatic territory ownership update
   - Post-game gang rating and reputation update prompts
-  - Challenge order display (rating low → high) for cycles with fixed order
+  - Challenge order display — randomised for Occupation Cycle 1, rating low → high for all subsequent cycles; tied ratings broken by stable per-cycle shuffle
   - Arbitrators can edit or roll back to previous cycles
 - **Cross-navigation** — territory cards link to their map node; gang names link to the hideout drawer
 - **Mobile-first layout** — full touch pan/zoom map with minimap HUD, collapsible gang legend, hold-to-drag node repositioning for arbitrators
@@ -92,7 +92,7 @@ pi ALL=(ALL) NOPASSWD: /bin/systemctl restart necromunda
 
 ### Nginx
 
-See `nginx/necromunda.conf` for the proxy configuration. Add it inside your `server {}` block in `/etc/nginx/sites-available/default` (or equivalent):
+Add the following inside your `server {}` block in `/etc/nginx/sites-available/default` (or equivalent):
 
 ```nginx
 location /necromunda {
