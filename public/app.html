@@ -686,9 +686,10 @@
   </div>
 </div>
 
-<div class="modal" id="modal" aria-label="Campaign setup">
+<!-- Campaign Configuration modal -->
+<div class="modal" id="modal" aria-label="Campaign configuration">
   <div class="sheet">
-    <div class="mhead"><div><div class="kicker">Configuration</div><h2>Campaign Configuration</h2></div>
+    <div class="mhead"><div><div class="kicker">Configuration</div><h2>Campaign</h2></div>
       <button class="x" id="modalClose" aria-label="Close">✕</button></div>
     <div class="mbody">
       <div class="setup-grid">
@@ -697,14 +698,46 @@
       </div>
       <label class="lbl-sm" style="color:var(--tox);margin-bottom:8px">Players in this campaign</label>
       <div class="player-seg" id="playerSeg"></div>
-      <label class="lbl-sm" id="gangsLabel" style="color:var(--tox);margin:18px 0 10px">The Gangs — name · icon · colour</label>
-      <div id="gangRows"></div>
+    </div>
+    <div class="mfoot"><button class="btn" id="modalDone">Done</button></div>
+  </div>
+</div>
+
+<!-- Territory Configuration modal -->
+<div class="modal" id="terrModal" aria-label="Territory configuration">
+  <div class="sheet">
+    <div class="mhead"><div><div class="kicker">Configuration</div><h2>Territories</h2></div>
+      <button class="x" id="terrModalClose" aria-label="Close">✕</button></div>
+    <div class="mbody">
       <div class="terr-head"><label class="lbl-sm" style="color:var(--tox)">Territories in play</label><span class="terr-count" id="terrCount"></span></div>
       <div class="terr-pool" id="terrPool"></div>
     </div>
-    <div class="mfoot">
-      <button class="btn" id="modalDone">Done</button>
+    <div class="mfoot"><button class="btn" id="terrModalDone">Done</button></div>
+  </div>
+</div>
+
+<!-- Gang Configuration modal -->
+<div class="modal" id="gangModal" aria-label="Gang configuration">
+  <div class="sheet">
+    <div class="mhead"><div><div class="kicker">Configuration</div><h2>Gangs</h2></div>
+      <button class="x" id="gangModalClose" aria-label="Close">✕</button></div>
+    <div class="mbody">
+      <label class="lbl-sm" id="gangsLabel" style="color:var(--tox);margin-bottom:10px">The Gangs — name · icon · colour · type</label>
+      <div id="gangRows"></div>
     </div>
+    <div class="mfoot"><button class="btn" id="gangModalDone">Done</button></div>
+  </div>
+</div>
+
+<!-- Trading Post Configuration modal -->
+<div class="modal" id="tradeModal" aria-label="Trading post configuration">
+  <div class="sheet">
+    <div class="mhead"><div><div class="kicker">Configuration</div><h2>Trading Post</h2></div>
+      <button class="x" id="tradeModalClose" aria-label="Close">✕</button></div>
+    <div class="mbody">
+      <p style="color:var(--muted);font-size:13px;letter-spacing:.05em;line-height:1.6">Trading Post configuration coming soon.</p>
+    </div>
+    <div class="mfoot"><button class="btn" id="tradeModalDone">Done</button></div>
   </div>
 </div>
 
@@ -1199,7 +1232,7 @@
     out.push(grid);
 
     // 8. scale bar (top-left) + compass (top-right)
-    const mile=266.7, sbx=130, sby=58, seg=mile/4;
+    const mile=266.7, sbx=160, sby=58, seg=mile/4;
     let sb=rect(sbx-8,sby-30,mile+18,34,{fill:'rgba(6,11,9,.55)',stroke:'rgba(95,217,160,.22)','stroke-width':1,rx:2});
     for(let i=0;i<4;i++) sb+=rect(sbx+i*seg,sby-6,seg,5,{fill:i%2?'rgba(95,217,160,0)':'rgba(95,217,160,.45)',stroke:'rgba(95,217,160,.45)','stroke-width':1});
     sb+=txt(sbx-2,sby-9,'0',{fill:'rgba(95,217,160,.6)','font-family':'monospace','font-size':'10'});
@@ -1529,23 +1562,38 @@
   scrim.addEventListener('click',closeDrawer);
   function commit(){ if(!isArbitrator) return; scheduleSave(); render(); }
 
-  /* ============ MODAL ============ */
+  /* ============ MODALS ============ */
   const modal=document.getElementById('modal');
-  function openSetupModal(){ document.getElementById('inSector').value=state.sector; document.getElementById('inCampaign').value=state.campaign; buildPlayerSeg(); buildGangRows(); buildTerrPool(); modal.classList.add('show'); }
-  function closeModal(){ modal.classList.remove('show'); }
+  const terrModal=document.getElementById('terrModal');
+  const gangModal=document.getElementById('gangModal');
+  const tradeModal=document.getElementById('tradeModal');
+
+  function openSetupModal(){ document.getElementById('inSector').value=state.sector; document.getElementById('inCampaign').value=state.campaign; buildPlayerSeg(); modal.classList.add('show'); }
+  function openTerrModal(){ buildTerrPool(); terrModal.classList.add('show'); }
+  function openGangModal(){ const gl=document.getElementById('gangsLabel'); if(gl) gl.textContent='The '+state.players+' Gangs — name · icon · colour · type'; buildGangRows(); gangModal.classList.add('show'); }
+  function openTradeModal(){ tradeModal.classList.add('show'); }
+  function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
+
+  document.getElementById('terrModalClose').addEventListener('click', closeModal);
+  document.getElementById('terrModalDone').addEventListener('click', closeModal);
+  document.getElementById('gangModalClose').addEventListener('click', closeModal);
+  document.getElementById('gangModalDone').addEventListener('click', closeModal);
+  document.getElementById('tradeModalClose').addEventListener('click', closeModal);
+  document.getElementById('tradeModalDone').addEventListener('click', closeModal);
 
   function setPlayers(N){ N=clamp(N|0,3,8); if(N===state.players) return; state.players=N; buildWorld(N);
     const nn={}; LAYOUT.forEach(n=>{ nn[n.id]= state.nodes[n.id] || (n.type==='hideout'?{gang:null}:{terr:null,gang:null}); });
     state.nodes=nn;
     if(state.pos) Object.keys(state.pos).forEach(id=>{ if(!LBI[id]) delete state.pos[id]; });
     scheduleSave(); buildHive(); render();
-    if(modal.classList.contains('show')){ buildPlayerSeg(); buildGangRows(); buildTerrPool(); }
+    if(modal.classList.contains('show')) buildPlayerSeg();
+    if(gangModal.classList.contains('show')){ const gl=document.getElementById('gangsLabel'); if(gl) gl.textContent='The '+state.players+' Gangs — name · icon · colour · type'; buildGangRows(); }
+    if(terrModal.classList.contains('show')) buildTerrPool();
   }
   function buildPlayerSeg(){
     const host=document.getElementById('playerSeg'); host.innerHTML='';
     for(let n=3;n<=8;n++){ const b=el('button',n===state.players?'on':'',String(n));
       b.addEventListener('click',()=>setPlayers(n)); host.appendChild(b); }
-    const gl=document.getElementById('gangsLabel'); if(gl) gl.textContent='The '+state.players+' Gangs — name · icon · colour · type';
   }
   function buildTerrPool(){
     const host=document.getElementById('terrPool'); host.innerHTML='';
@@ -1644,10 +1692,18 @@
       const who = el('p','','• Logged in as: '+currentUser.username);
       who.style.cssText = 'font-size:13px;color:var(--tox);letter-spacing:.06em;margin-bottom:16px';
       body.appendChild(who);
-      const setupBtn2 = el('button','btn','⚙ Campaign Configuration');
-      setupBtn2.style.cssText = 'width:100%;margin-bottom:10px;text-align:center';
-      setupBtn2.addEventListener('click', () => { arbModal.classList.remove('show'); openSetupModal(); });
-      body.appendChild(setupBtn2);
+      const cfgBtns = [
+        ['⚙ Campaign Configuration', openSetupModal],
+        ['⬡ Territory Configuration', openTerrModal],
+        ['☠ Gang Configuration',      openGangModal],
+        ['⚖ Trading Post',            openTradeModal],
+      ];
+      cfgBtns.forEach(([label, fn]) => {
+        const b = el('button','btn',label);
+        b.style.cssText = 'width:100%;margin-bottom:10px;text-align:center';
+        b.addEventListener('click', () => { arbModal.classList.remove('show'); fn(); });
+        body.appendChild(b);
+      });
       const delBtn = el('button','btn','⚠ Delete Campaign');
       delBtn.style.cssText = 'width:100%;margin-bottom:10px;text-align:center;border-color:var(--ember);color:var(--ember)';
       delBtn.addEventListener('click', async () => {
