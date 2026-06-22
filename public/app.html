@@ -39,6 +39,7 @@
     letter-spacing:.14em;text-transform:uppercase;font-weight:600;border-radius:2px;transition:.15s}
   .btn:hover{border-color:var(--tox);color:var(--tox-bright);background:var(--panel-2)}
   .btn.ghost{background:transparent}
+  .btn.icon-btn{padding:9px 11px;font-size:16px;line-height:1}
   .btn.warn:hover{border-color:var(--ember);color:#ffb27a}
 
   /* ---------- HUD frame ---------- */
@@ -605,9 +606,9 @@
     </div>
     <div class="controls">
       <span class="save-tag" id="saveTag"></span>
-      <a href="/necromunda" class="btn ghost" style="text-decoration:none">◀ Campaigns</a>
+      <a href="/necromunda" class="btn ghost icon-btn" style="text-decoration:none" title="Back to campaigns" aria-label="Back to campaigns">⌂</a>
       <button class="btn ghost" id="tradingPostBtn">⚖ Trading Post</button>
-      <button class="btn" id="arbitratorBtn">⚔ Arbitrator</button>
+      <button class="btn icon-btn" id="arbitratorBtn" title="Arbitrator" aria-label="Arbitrator">⚔</button>
     </div>
   </div>
 
