@@ -2048,13 +2048,17 @@
       // Challenged select — blank prompt first
       const lbDef = document.createElement('label'); lbDef.textContent='Challenged Gang';
       const selDef = document.createElement('select');
-      const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
-      if(phase==='occupation'){
-        const unclaimedOpt=document.createElement('option'); unclaimedOpt.value='unclaimed'; unclaimedOpt.textContent='Unclaimed Territory'; selDef.appendChild(unclaimedOpt);
+      function populateDefender(){
+        const chIdx=Number(selCh.value);
+        selDef.innerHTML='';
+        const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
+        for(let i=0;i<state.players;i++){
+          if(i===chIdx) continue;
+          const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selDef.appendChild(o);
+        }
       }
-      for(let i=0;i<state.players;i++){
-        const o=document.createElement('option'); o.value=i; o.textContent=state.gangs[i].name; selDef.appendChild(o);
-      }
+      populateDefender();
+      selCh.addEventListener('change', ()=>{ populateDefender(); populateTerritories(); });
 
       // Territory select — blank prompt first
       const lbTerr = document.createElement('label'); lbTerr.textContent='Staked Territory';
