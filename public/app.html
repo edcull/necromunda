@@ -601,22 +601,60 @@
   .tp-section { border-bottom: 1px solid var(--edge); }
   .tp-section summary {
     cursor: pointer; list-style: none; padding: 11px 4px;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center;
     font-size: 13px; letter-spacing: .1em; text-transform: uppercase;
     color: var(--tox); user-select: none;
   }
   .tp-section summary::-webkit-details-marker { display: none; }
-  .tp-section summary::after { content: '▸'; font-size: 11px; color: var(--tox-dim); }
+  .tp-section summary::after { content: '▸'; font-size: 11px; color: var(--tox-dim); margin-left: 10px; }
+  .tp-count { margin-left: auto; font-size: 11px; color: var(--tox-dim); }
   .tp-section[open] summary::after { content: '▾'; }
   .tp-section summary:hover { color: #eef6f1; }
   .tp-table { width: 100%; border-collapse: collapse; margin: 4px 0 12px; font-size: 13px; }
   .tp-table th { text-align: left; color: var(--tox); font-weight: 600; font-size: 11px;
     letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px 6px; border-bottom: 1px solid var(--edge); }
-  .tp-table td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,.04); color: #c8d8cc; }
+  .tp-table td { padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,.04); color: #c8d8cc; }
   .tp-table tr:last-child td { border-bottom: none; }
   .tp-table td:nth-child(2), .tp-table th:nth-child(2) { text-align: center; }
   .tp-table td:nth-child(3), .tp-table th:nth-child(3) { text-align: right; }
   .tp-avail { font-size: 11px; letter-spacing: .05em; color: var(--tox); }
+  .tp-row-c td { color: #7ec8a0; }
+  .tp-row-r td { color: #7ab0e0; }
+  .tp-row-i td { color: #e07a7a; }
+  /* Config table controls */
+  .tp-cfg td { vertical-align: middle; }
+  .tp-cfg td:first-child { width: 28px; text-align: center; }
+  .tp-cfg td:last-child { text-align: right; }
+  .tp-cfg tr.tp-disabled td { opacity: .35; }
+  .tp-cfg tr.tp-disabled td:first-child { opacity: 1; }
+  .tp-al-wrap { display: flex; gap: 4px; align-items: center; justify-content: center; }
+  .tp-al-wrap select, .tp-al-wrap input[type=number] { background: var(--surface); border: 1px solid var(--edge);
+    color: #eef6f1; border-radius: 4px; font-size: 12px; padding: 2px 4px; }
+  .tp-al-wrap select { width: 46px; }
+  .tp-al-wrap input[type=number] { width: 44px; }
+  .tp-cost-inp { background: var(--surface); border: 1px solid var(--edge); color: #eef6f1;
+    border-radius: 4px; font-size: 12px; padding: 2px 4px; width: 60px; text-align: right; }
+  .tp-name-inp { background: var(--surface); border: 1px solid var(--edge); color: #eef6f1;
+    border-radius: 4px; font-size: 12px; padding: 2px 6px; width: 120px; }
+  .tp-cat-sel { background: var(--surface); border: 1px solid var(--edge); color: #eef6f1;
+    border-radius: 4px; font-size: 12px; padding: 2px 4px; width: 120px; }
+  .tp-del-btn { background: none; border: none; color: var(--tox-dim); cursor: pointer;
+    font-size: 14px; padding: 2px 4px; line-height: 1; }
+  .tp-del-btn:hover { color: var(--err, #e05); }
+  .tp-add-row td { padding-top: 10px; }
+  .tp-add-btn { font-size: 12px; padding: 5px 12px; }
+  .tp-modified { color: #f0c060; }
+  select.tp-modified, input.tp-modified { border-color: #f0c060; color: #f0c060; }
+  /* Filter bar */
+  .tp-filter { display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    padding: 10px 0 14px; border-bottom: 1px solid var(--edge); margin-bottom: 4px; }
+  .tp-filter-group { display: flex; align-items: center; gap: 8px; }
+  .tp-filter-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--tox); white-space: nowrap; min-width: 20px; }
+  .tp-filter-val { font-size: 12px; color: #eef6f1; min-width: 18px; text-align: center; }
+  .tp-filter input[type=range] { width: 90px; accent-color: var(--tox); cursor: pointer; }
+  .tp-filter input[type=checkbox] { cursor: pointer; accent-color: var(--tox); }
+  tr.tp-filter-hidden { display: none; }
 </style>
 
 <div class="wrap">
@@ -1036,7 +1074,7 @@
   function defaultState(){
     const nodes={};
     LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null,label:null}:{terr:null,gang:null,label:null}; });
-    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1'};
+    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]}};
   }
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
   function mergeState(loaded){
@@ -1063,6 +1101,8 @@
       return {id:d.id, challenges: Array.isArray(lc.challenges)?lc.challenges:[]};
     });
     s.currentCycleId = CYCLE_DEFS.find(d=>d.id===loaded.currentCycleId) ? loaded.currentCycleId : 'occ-1';
+    const rawTp = (loaded.tradingPost && typeof loaded.tradingPost === 'object') ? loaded.tradingPost : {};
+    s.tradingPost = { ...rawTp, customItems: Array.isArray(rawTp.customItems) ? rawTp.customItems : [] };
     return s;
   }
 
@@ -1618,6 +1658,25 @@
     { key: 'exoticBeasts',       label: 'Exotic Beasts' },
   ];
 
+  function tpKey(catKey, name) { return catKey + ':' + name; }
+
+  function tpOverride(catKey, item) {
+    // Returns effective {enabled, availability, availValue, cost} merged with defaults
+    const dflt = {
+      enabled: true,
+      availability: item.availability ? item.availability.replace(/\d+$/, '') : 'C',
+      availValue: parseInt(item.availability) || null,
+      cost: item.cost != null ? item.cost : (item.costMod != null ? item.costMod : null),
+    };
+    const ov = (state.tradingPost || {})[tpKey(catKey, item.name)] || {};
+    return { ...dflt, ...ov };
+  }
+
+  function tpEffectiveAvail(ov) {
+    if (ov.availability === 'C') return 'C';
+    return ov.availability + (ov.availValue != null ? ov.availValue : '');
+  }
+
   function tpCostStr(item) {
     if (item.costNote) return item.costNote;
     if (item.cost === 0) return 'Free';
@@ -1626,26 +1685,166 @@
     return '—';
   }
 
-  function renderTpSection(sec, items) {
-    const common = items.filter(it => it.availability === 'C');
-    if (!common.length) return '';
-    const rows = common.map(it =>
-      `<tr><td>${it.name}</td><td class="tp-avail">${it.availability}</td><td>${tpCostStr(it)}</td></tr>`
-    ).join('');
+  /* ---- Reference view (player-facing) ---- */
+  function renderTpRefSection(sec, items, maxR, maxI) {
+    const visible = items.filter(it => {
+      const ov = tpOverride(sec.key, it);
+      if (!ov.enabled) return false;
+      const al = ov.availability;
+      const val = ov.availValue != null ? ov.availValue : 0;
+      if (al === 'C') return true;
+      if (al === 'R') return maxR != null && val <= maxR;
+      if (al === 'I') return maxI != null && val <= maxI;
+      return false;
+    });
+    const customs = tpCustomItems().filter(it => {
+      if (it.category !== sec.key || it.enabled === false || !it.name) return false;
+      const al = it.availability || 'C';
+      const val = it.availValue != null ? it.availValue : 0;
+      if (al === 'C') return true;
+      if (al === 'R') return maxR != null && val <= maxR;
+      if (al === 'I') return maxI != null && val <= maxI;
+      return false;
+    });
+    if (!visible.length && !customs.length) return '';
+    const stdRows = visible.map(it => {
+      const ov = tpOverride(sec.key, it);
+      const al = tpEffectiveAvail(ov);
+      const rowCls = ov.availability === 'R' ? 'tp-row-r' : ov.availability === 'I' ? 'tp-row-i' : 'tp-row-c';
+      const costVal = ov.cost != null ? (ov.cost === 0 ? 'Free' : ov.cost + ' cr') : tpCostStr(it);
+      return `<tr class="${rowCls}"><td>${it.name}</td><td class="tp-avail">${al}</td><td>${costVal}</td></tr>`;
+    }).join('');
+    const customRows = customs.map(it => {
+      const alType = it.availability || 'C';
+      const al = alType === 'C' ? 'C' : (alType + (it.availValue != null ? it.availValue : ''));
+      const rowCls = alType === 'R' ? 'tp-row-r' : alType === 'I' ? 'tp-row-i' : 'tp-row-c';
+      const costVal = it.cost != null ? (it.cost === 0 ? 'Free' : it.cost + ' cr') : '—';
+      return `<tr class="${rowCls}"><td>${it.name}</td><td class="tp-avail">${al}</td><td>${costVal}</td></tr>`;
+    }).join('');
+    const total = visible.length + customs.length;
     return `<details class="tp-section">
-      <summary>${sec.label} <span style="font-size:11px;color:var(--tox-dim)">(${common.length} Common)</span></summary>
+      <summary><span>${sec.label}</span><span class="tp-count">(${total})</span></summary>
       <table class="tp-table">
         <thead><tr><th>Name</th><th>AL</th><th>Cost</th></tr></thead>
+        <tbody>${stdRows}${customRows}</tbody>
+      </table>
+    </details>`;
+  }
+
+  /* ---- Config view (arbitrator-facing) ---- */
+  function renderTpCfgSection(sec, items) {
+    if (!items.length) return '';
+    const rows = items.map(it => {
+      const ov = tpOverride(sec.key, it);
+      const k = tpKey(sec.key, it.name);
+      const stored = (state.tradingPost || {})[k];
+      const disabled = !ov.enabled;
+      const alType = ov.availability;
+      const alVal = ov.availValue != null ? ov.availValue : '';
+      const costVal = ov.cost != null ? ov.cost : '';
+      // Defaults from JSON
+      const dfltAl = it.availability ? it.availability.replace(/\d+$/, '') : 'C';
+      const dfltAlVal = parseInt(it.availability) || null;
+      const dfltCost = it.cost != null ? it.cost : (it.costMod != null ? it.costMod : null);
+      const alModified = stored && (stored.availability !== dfltAl || stored.availValue !== dfltAlVal);
+      const costModified = stored && stored.cost != null && stored.cost !== dfltCost;
+      const disabledMod = stored && stored.enabled === false;
+      const hasNote = it.costNote && it.cost == null && it.costMod == null;
+      const costCell = hasNote
+        ? `<span style="font-size:11px;color:var(--tox-dim)">${it.costNote}</span>`
+        : `<input class="tp-cost-inp${costModified?' tp-modified':''}" type="number" min="0" data-k="${k}" data-f="cost" value="${costVal}" ${disabled?'disabled':''}>`;
+      return `<tr class="${disabled ? 'tp-disabled' : ''}" data-k="${k}">
+        <td><input type="checkbox" data-k="${k}" data-f="enabled" ${ov.enabled ? 'checked' : ''}></td>
+        <td${disabledMod?' class="tp-modified"':''}>${it.name}</td>
+        <td><div class="tp-al-wrap">
+          <select class="${alModified?'tp-modified':''}" data-k="${k}" data-f="availability" ${disabled?'disabled':''}>
+            <option value="C" ${alType==='C'?'selected':''}>C</option>
+            <option value="R" ${alType==='R'?'selected':''}>R</option>
+            <option value="I" ${alType==='I'?'selected':''}>I</option>
+          </select>
+          <input type="number" min="1" max="15" class="${alModified?'tp-modified':''}" data-k="${k}" data-f="availValue"
+            value="${alVal}" style="display:${alType==='C'?'none':'inline-block'}" ${disabled?'disabled':''}>
+        </div></td>
+        <td>${costCell}</td>
+      </tr>`;
+    }).join('');
+    const total = items.length;
+    const en = items.filter(it => tpOverride(sec.key, it).enabled).length;
+    return `<details class="tp-section">
+      <summary><span>${sec.label}</span><span class="tp-count">(${en}/${total} enabled)</span></summary>
+      <table class="tp-table tp-cfg">
+        <thead><tr><th></th><th>Name</th><th>AL</th><th style="text-align:right">Cost</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </details>`;
   }
 
+  function wireTpCfg(body) {
+    body.querySelectorAll('[data-k][data-f]').forEach(el => {
+      el.addEventListener('change', () => {
+        const k = el.dataset.k, f = el.dataset.f;
+        if (!state.tradingPost) state.tradingPost = {};
+        if (!state.tradingPost[k]) {
+          // Initialise from defaults before first edit
+          const [catKey, ...nameParts] = k.split(':');
+          const name = nameParts.join(':');
+          const sec = TP_SECTIONS.find(s => s.key === catKey);
+          const items = _tpData[catKey] || [];
+          const item = items.find(i => i.name === name);
+          if (item) state.tradingPost[k] = { ...tpOverride(catKey, item) };
+        }
+        const [catKey, ...nameParts] = k.split(':');
+        const itemName = nameParts.join(':');
+        const srcItem = (_tpData[catKey]||[]).find(i=>i.name===itemName);
+        const dfltAl   = srcItem ? (srcItem.availability||'C').replace(/\d+$/,'') : 'C';
+        const dfltAlVal= srcItem ? (parseInt(srcItem.availability)||null) : null;
+        const dfltCost = srcItem ? (srcItem.cost!=null?srcItem.cost:(srcItem.costMod!=null?srcItem.costMod:null)) : null;
+        if (f === 'enabled') {
+          state.tradingPost[k].enabled = el.checked;
+          const row = el.closest('tr');
+          row.classList.toggle('tp-disabled', !el.checked);
+          row.querySelectorAll('select,input:not([type=checkbox])').forEach(i => i.disabled = !el.checked);
+          const nameCell = row.querySelector('td:nth-child(2)');
+          if (nameCell) nameCell.classList.toggle('tp-modified', !el.checked);
+        } else if (f === 'availability') {
+          state.tradingPost[k].availability = el.value;
+          const valInp = el.closest('.tp-al-wrap').querySelector('input[type=number]');
+          valInp.style.display = el.value === 'C' ? 'none' : 'inline-block';
+          const mod = el.value !== dfltAl;
+          el.classList.toggle('tp-modified', mod);
+          if (valInp) valInp.classList.toggle('tp-modified', mod);
+        } else if (f === 'availValue') {
+          state.tradingPost[k].availValue = parseInt(el.value) || null;
+          const mod = (parseInt(el.value)||null) !== dfltAlVal;
+          el.classList.toggle('tp-modified', mod);
+          const sel = el.closest('.tp-al-wrap').querySelector('select');
+          if (sel) sel.classList.toggle('tp-modified', mod);
+        } else if (f === 'cost') {
+          const newCost = el.value !== '' ? parseInt(el.value) : null;
+          state.tradingPost[k].cost = newCost;
+          el.classList.toggle('tp-modified', newCost != null && newCost !== dfltCost);
+        }
+        // Refresh the summary count
+        const details = el.closest('details');
+        if (details) {
+          const [catKey] = k.split(':');
+          const items = _tpData[catKey] || [];
+          const en = items.filter(it => tpOverride(catKey, it).enabled).length;
+          const cnt = details.querySelector('.tp-count');
+          if (cnt) cnt.textContent = `(${en}/${items.length} enabled)`;
+        }
+        scheduleSave();
+      });
+    });
+  }
+
   async function openTradeModal(fromArb = false) {
     _tradeFromArb = fromArb;
     tradeModal.classList.add('show');
+    // Update kicker label
+    document.querySelector('#tradeModal .kicker').textContent = fromArb ? 'Configuration' : 'Reference';
     const body = document.getElementById('tradeModalBody');
-    if (_tpData) { renderTpBody(body); return; }
+    if (_tpData) { renderTpBody(body); return; }  // data cached, re-render for current mode
     body.innerHTML = '<p style="color:var(--muted);font-size:13px">Loading…</p>';
     try {
       const [wpnRes, eqpRes] = await Promise.all([
@@ -1659,12 +1858,211 @@
     }
   }
 
-  function renderTpBody(body) {
-    const html = TP_SECTIONS.map(sec => {
-      const items = _tpData[sec.key] || [];
-      return renderTpSection(sec, items);
+  function tpUid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+  function tpCustomItems() {
+    if (!state.tradingPost) state.tradingPost = { customItems: [] };
+    if (!Array.isArray(state.tradingPost.customItems)) state.tradingPost.customItems = [];
+    return state.tradingPost.customItems;
+  }
+
+  function renderTpCustomSection() {
+    const items = tpCustomItems();
+    const catOptions = TP_SECTIONS.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+    const rows = items.map(it => {
+      const alType = it.availability || 'C';
+      const alVal  = it.availValue != null ? it.availValue : '';
+      return `<tr data-cid="${it.id}" class="${it.enabled===false?'tp-disabled':''}">
+        <td><input type="checkbox" data-cid="${it.id}" data-f="enabled" ${it.enabled!==false?'checked':''}></td>
+        <td><select class="tp-cat-sel" data-cid="${it.id}" data-f="category">
+          ${TP_SECTIONS.map(s=>`<option value="${s.key}"${it.category===s.key?' selected':''}>${s.label}</option>`).join('')}
+        </select></td>
+        <td><input class="tp-name-inp" type="text" data-cid="${it.id}" data-f="name" value="${it.name||''}" placeholder="Item name"></td>
+        <td><div class="tp-al-wrap">
+          <select data-cid="${it.id}" data-f="availability">
+            <option value="C" ${alType==='C'?'selected':''}>C</option>
+            <option value="R" ${alType==='R'?'selected':''}>R</option>
+            <option value="I" ${alType==='I'?'selected':''}>I</option>
+          </select>
+          <input type="number" min="1" max="15" data-cid="${it.id}" data-f="availValue"
+            value="${alVal}" style="display:${alType==='C'?'none':'inline-block'}">
+        </div></td>
+        <td><input class="tp-cost-inp" type="number" min="0" data-cid="${it.id}" data-f="cost" value="${it.cost!=null?it.cost:''}"></td>
+        <td><button class="tp-del-btn" data-cid="${it.id}" title="Remove">✕</button></td>
+      </tr>`;
     }).join('');
-    body.innerHTML = html || '<p style="color:var(--muted);font-size:13px">No common items found.</p>';
+    const colgroup = `<colgroup><col style="width:28px"><col style="width:130px"><col><col style="width:110px"><col style="width:75px"><col style="width:30px"></colgroup>`;
+    return `<details class="tp-section" id="tpCustomSection" open>
+      <summary><span>Custom Items</span><span class="tp-count">(${items.length} item${items.length!==1?'s':''})</span></summary>
+      <table class="tp-table tp-cfg" id="tpCustomTable">
+        ${colgroup}
+        <thead><tr><th></th><th>Category</th><th>Name</th><th>AL</th><th style="text-align:right">Cost</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="tp-add-row"><td colspan="6">
+          <button class="btn ghost tp-add-btn" id="tpAddCustom">+ Add item</button>
+        </td></tr></tfoot>
+      </table>
+    </details>`;
+  }
+
+  function wireTpCustom(body) {
+    function save() { scheduleSave(); refreshCustomCount(body); }
+
+    function refreshCustomCount(body) {
+      const sec = body.querySelector('#tpCustomSection .tp-count');
+      if (sec) { const n = tpCustomItems().length; sec.textContent = `(${n} item${n!==1?'s':''})`; }
+    }
+
+    body.addEventListener('change', e => {
+      const el = e.target;
+      const cid = el.dataset.cid;
+      const f   = el.dataset.f;
+      if (!cid || !f) return;
+      const items = tpCustomItems();
+      const it = items.find(i => i.id === cid);
+      if (!it) return;
+      if (f === 'enabled') {
+        it.enabled = el.checked;
+        el.closest('tr').classList.toggle('tp-disabled', !el.checked);
+      } else if (f === 'category') {
+        it.category = el.value;
+      } else if (f === 'name') {
+        it.name = el.value;
+      } else if (f === 'availability') {
+        it.availability = el.value;
+        const valInp = el.closest('.tp-al-wrap').querySelector('input[type=number]');
+        if (valInp) valInp.style.display = el.value === 'C' ? 'none' : 'inline-block';
+      } else if (f === 'availValue') {
+        it.availValue = parseInt(el.value) || null;
+      } else if (f === 'cost') {
+        it.cost = el.value !== '' ? parseInt(el.value) : null;
+      }
+      save();
+    });
+
+    body.querySelector('#tpAddCustom').addEventListener('click', () => {
+      const items = tpCustomItems();
+      items.push({ id: tpUid(), category: TP_SECTIONS[0].key, name: '', availability: 'C', availValue: null, cost: null, enabled: true });
+      // Re-render just the custom section
+      const sec = body.querySelector('#tpCustomSection');
+      if (sec) { const tmp = document.createElement('div'); tmp.innerHTML = renderTpCustomSection(); sec.replaceWith(tmp.firstElementChild); wireTpCustom(body); }
+      save();
+    });
+
+    body.querySelectorAll('.tp-del-btn[data-cid]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cid = btn.dataset.cid;
+        state.tradingPost.customItems = tpCustomItems().filter(i => i.id !== cid);
+        const sec = body.querySelector('#tpCustomSection');
+        if (sec) { const tmp = document.createElement('div'); tmp.innerHTML = renderTpCustomSection(); sec.replaceWith(tmp.firstElementChild); wireTpCustom(body); }
+        save();
+      });
+    });
+  }
+
+  function applyTpFilter(body, showC, maxR, maxI) {
+    body.querySelectorAll('.tp-cfg tbody tr[data-k]').forEach(row => {
+      const k = row.dataset.k;
+      const [catKey, ...nameParts] = k.split(':');
+      const name = nameParts.join(':');
+      const items = _tpData[catKey] || [];
+      const item = items.find(i => i.name === name);
+      if (!item) return;
+      const ov = tpOverride(catKey, item);
+      const al = ov.availability;
+      const val = ov.availValue != null ? ov.availValue : (parseInt(item.availability) || 0);
+      let hidden = false;
+      if (al === 'C' && !showC) hidden = true;
+      if (al === 'R' && val > maxR) hidden = true;
+      if (al === 'I' && val > maxI) hidden = true;
+      row.classList.toggle('tp-filter-hidden', hidden);
+    });
+  }
+
+  function wireTpFilter(body) {
+    const cbC  = body.querySelector('#tpfC');
+    const slR  = body.querySelector('#tpfR');
+    const lblR = body.querySelector('#tpfRv');
+    const slI  = body.querySelector('#tpfI');
+    const lblI = body.querySelector('#tpfIv');
+    function update() {
+      const showC = cbC.checked;
+      const maxR  = parseInt(slR.value);
+      const maxI  = parseInt(slI.value);
+      lblR.textContent = maxR === 0 ? 'Off' : maxR;
+      lblI.textContent = maxI === 0 ? 'Off' : maxI;
+      applyTpFilter(body, showC, maxR, maxI);
+    }
+    cbC.addEventListener('change', update);
+    slR.addEventListener('input', update);
+    slI.addEventListener('input', update);
+    update();
+  }
+
+  function renderTpBody(body) {
+    if (_tradeFromArb) {
+      const filterBar = `<div class="tp-filter">
+        <div class="tp-filter-group">
+          <input type="checkbox" id="tpfC" checked>
+          <span class="tp-filter-label">Common</span>
+        </div>
+        <div class="tp-filter-group">
+          <span class="tp-filter-label">Rare ≤</span>
+          <input type="range" id="tpfR" min="0" max="15" value="15">
+          <span class="tp-filter-val" id="tpfRv">15</span>
+        </div>
+        <div class="tp-filter-group">
+          <span class="tp-filter-label">Illegal ≤</span>
+          <input type="range" id="tpfI" min="0" max="15" value="15">
+          <span class="tp-filter-val" id="tpfIv">15</span>
+        </div>
+      </div>`;
+      const html = TP_SECTIONS.map(sec => {
+        const items = _tpData[sec.key] || [];
+        return renderTpCfgSection(sec, items);
+      }).join('') + renderTpCustomSection();
+      body.innerHTML = filterBar + (html || '<p style="color:var(--muted);font-size:13px">No items.</p>');
+      wireTpCfg(body);
+      wireTpFilter(body);
+      wireTpCustom(body);
+    } else {
+      const seekBar = `<div class="tp-filter" id="tpSeekBar">
+        <div class="tp-filter-group">
+          <input type="checkbox" id="tpSeek">
+          <span class="tp-filter-label" style="text-transform:none;letter-spacing:0;font-size:13px">Seek Rare &amp; Illegal Equipment</span>
+        </div>
+        <div id="tpRollGroup" style="display:none;width:100%">
+          <div class="tp-filter-group" style="margin-bottom:6px">
+            <span class="tp-filter-label">Availability Roll</span>
+            <input type="number" id="tpRoll" min="0" max="20" value="8"
+              style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
+          </div>
+          <p style="font-size:11px;color:var(--tox-dim);margin:0;line-height:1.6">
+            2D6, +2 if Gang Leader is making the trade, +1 for each Champion making the trade, +1 for every 10 Reputation
+          </p>
+        </div>
+      </div>
+      <div id="tpRefSections"></div>`;
+      body.innerHTML = seekBar;
+      function renderRefSections() {
+        const seeking = body.querySelector('#tpSeek').checked;
+        const rollRaw = body.querySelector('#tpRoll').value;
+        const roll = rollRaw !== '' ? parseInt(rollRaw) : 8;
+        const maxR = seeking ? roll : null;
+        const maxI = seeking ? Math.max(0, roll - 4) : null;
+        const html = TP_SECTIONS.map(sec => {
+          const items = _tpData[sec.key] || [];
+          return renderTpRefSection(sec, items, maxR, maxI);
+        }).join('');
+        body.querySelector('#tpRefSections').innerHTML = html || '<p style="color:var(--muted);font-size:13px">No items available.</p>';
+      }
+      renderRefSections();
+      body.querySelector('#tpSeek').addEventListener('change', function() {
+        body.querySelector('#tpRollGroup').style.display = this.checked ? '' : 'none';
+        renderRefSections();
+      });
+      body.querySelector('#tpRoll').addEventListener('input', renderRefSections);
+    }
   }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
 
