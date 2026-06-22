@@ -606,7 +606,8 @@
     color: var(--tox); user-select: none;
   }
   .tp-section summary::-webkit-details-marker { display: none; }
-  .tp-section summary::after { content: '▸'; font-size: 11px; color: var(--tox-dim); }
+  .tp-section summary::after { content: '▸'; font-size: 11px; color: var(--tox-dim); margin-left: 10px; }
+  .tp-count { margin-left: auto; font-size: 11px; color: var(--tox-dim); }
   .tp-section[open] summary::after { content: '▾'; }
   .tp-section summary:hover { color: #eef6f1; }
   .tp-table { width: 100%; border-collapse: collapse; margin: 4px 0 12px; font-size: 13px; }
@@ -1633,7 +1634,7 @@
       `<tr><td>${it.name}</td><td class="tp-avail">${it.availability}</td><td>${tpCostStr(it)}</td></tr>`
     ).join('');
     return `<details class="tp-section">
-      <summary>${sec.label} <span style="font-size:11px;color:var(--tox-dim)">(${common.length} Common)</span></summary>
+      <summary><span>${sec.label}</span><span class="tp-count">(${common.length} Common)</span></summary>
       <table class="tp-table">
         <thead><tr><th>Name</th><th>AL</th><th>Cost</th></tr></thead>
         <tbody>${rows}</tbody>
