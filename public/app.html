@@ -596,6 +596,27 @@
     .deck { pointer-events: none; }
     .vig { pointer-events: none; }
   }
+
+  /* Trading post accordion */
+  .tp-section { border-bottom: 1px solid var(--edge); }
+  .tp-section summary {
+    cursor: pointer; list-style: none; padding: 11px 4px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--tox); user-select: none;
+  }
+  .tp-section summary::-webkit-details-marker { display: none; }
+  .tp-section summary::after { content: '▸'; font-size: 11px; color: var(--tox-dim); }
+  .tp-section[open] summary::after { content: '▾'; }
+  .tp-section summary:hover { color: #eef6f1; }
+  .tp-table { width: 100%; border-collapse: collapse; margin: 4px 0 12px; font-size: 13px; }
+  .tp-table th { text-align: left; color: var(--tox); font-weight: 600; font-size: 11px;
+    letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px 6px; border-bottom: 1px solid var(--edge); }
+  .tp-table td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,.04); color: #c8d8cc; }
+  .tp-table tr:last-child td { border-bottom: none; }
+  .tp-table td:nth-child(2), .tp-table th:nth-child(2) { text-align: center; }
+  .tp-table td:nth-child(3), .tp-table th:nth-child(3) { text-align: right; }
+  .tp-avail { font-size: 11px; letter-spacing: .05em; color: var(--tox); }
 </style>
 
 <div class="wrap">
@@ -732,14 +753,14 @@
 </div>
 
 <!-- Trading Post Configuration modal -->
-<div class="modal" id="tradeModal" aria-label="Trading post configuration">
-  <div class="sheet">
-    <div class="mhead"><div><div class="kicker">Configuration</div><h2>Trading Post</h2></div>
+<div class="modal" id="tradeModal" aria-label="Trading post">
+  <div class="sheet" style="width:min(720px,100%)">
+    <div class="mhead"><div><div class="kicker">Reference</div><h2>Trading Post</h2></div>
       <button class="x" id="tradeModalClose" aria-label="Close">✕</button></div>
-    <div class="mbody">
-      <p style="color:var(--muted);font-size:13px;letter-spacing:.05em;line-height:1.6">Trading Post configuration coming soon.</p>
+    <div class="mbody" id="tradeModalBody">
+      <p style="color:var(--muted);font-size:13px">Loading…</p>
     </div>
-    <div class="mfoot"><button class="btn" id="tradeModalDone">Done</button></div>
+    <div class="mfoot"><button class="btn" id="tradeModalDone">Close</button></div>
   </div>
 </div>
 
@@ -1573,15 +1594,89 @@
   function openSetupModal(){ document.getElementById('inSector').value=state.sector; document.getElementById('inCampaign').value=state.campaign; buildPlayerSeg(); modal.classList.add('show'); }
   function openTerrModal(){ buildTerrPool(); terrModal.classList.add('show'); }
   function openGangModal(){ const gl=document.getElementById('gangsLabel'); if(gl) gl.textContent='The '+state.players+' Gangs — name · icon · colour · type'; buildGangRows(); gangModal.classList.add('show'); }
-  function openTradeModal(){ tradeModal.classList.add('show'); }
+  let _tpData = null;
+
+  const TP_SECTIONS = [
+    { key: 'basicWeapons',       label: 'Basic Weapons' },
+    { key: 'pistols',            label: 'Pistols' },
+    { key: 'specialWeapons',     label: 'Special Weapons' },
+    { key: 'heavyWeapons',       label: 'Heavy Weapons' },
+    { key: 'grenades',           label: 'Grenades' },
+    { key: 'boobyTraps',         label: 'Booby Traps' },
+    { key: 'closeCombatWeapons', label: 'Close Combat Weapons' },
+    { key: 'powerShockWeapons',  label: 'Power & Shock Weapons' },
+    { key: 'twoHandedWeapons',   label: 'Two-Handed Weapons' },
+    { key: 'armour',             label: 'Armour' },
+    { key: 'fieldArmour',        label: 'Field Armour' },
+    { key: 'bionics',            label: 'Bionics' },
+    { key: 'gangEquipment',      label: 'Gang Equipment' },
+    { key: 'personalEquipment',  label: 'Personal Equipment' },
+    { key: 'chems',              label: 'Chems' },
+    { key: 'weaponAccessories',  label: 'Weapon Accessories' },
+    { key: 'statusItems',        label: 'Status Items' },
+    { key: 'servoSkulls',        label: 'Servo-skulls' },
+    { key: 'exoticBeasts',       label: 'Exotic Beasts' },
+  ];
+
+  function tpCostStr(item) {
+    if (item.costNote) return item.costNote;
+    if (item.cost === 0) return 'Free';
+    if (item.cost != null) return item.cost + ' cr';
+    if (item.costMod != null) return (item.costMod > 0 ? '+' : '') + item.costMod + ' cr';
+    return '—';
+  }
+
+  function renderTpSection(sec, items) {
+    const common = items.filter(it => it.availability === 'C');
+    if (!common.length) return '';
+    const rows = common.map(it =>
+      `<tr><td>${it.name}</td><td class="tp-avail">${it.availability}</td><td>${tpCostStr(it)}</td></tr>`
+    ).join('');
+    return `<details class="tp-section">
+      <summary>${sec.label} <span style="font-size:11px;color:var(--tox-dim)">(${common.length} Common)</span></summary>
+      <table class="tp-table">
+        <thead><tr><th>Name</th><th>AL</th><th>Cost</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </details>`;
+  }
+
+  async function openTradeModal(fromArb = false) {
+    _tradeFromArb = fromArb;
+    tradeModal.classList.add('show');
+    const body = document.getElementById('tradeModalBody');
+    if (_tpData) { renderTpBody(body); return; }
+    body.innerHTML = '<p style="color:var(--muted);font-size:13px">Loading…</p>';
+    try {
+      const [wpnRes, eqpRes] = await Promise.all([
+        fetch('/necromunda/api/static/trading-post-weapons'),
+        fetch('/necromunda/api/static/trading-post-equipment'),
+      ]);
+      _tpData = { ...await wpnRes.json(), ...await eqpRes.json() };
+      renderTpBody(body);
+    } catch (e) {
+      body.innerHTML = '<p style="color:var(--err);font-size:13px">Failed to load trading post data.</p>';
+    }
+  }
+
+  function renderTpBody(body) {
+    const html = TP_SECTIONS.map(sec => {
+      const items = _tpData[sec.key] || [];
+      return renderTpSection(sec, items);
+    }).join('');
+    body.innerHTML = html || '<p style="color:var(--muted);font-size:13px">No common items found.</p>';
+  }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
 
-  document.getElementById('terrModalClose').addEventListener('click', closeModal);
-  document.getElementById('terrModalDone').addEventListener('click', closeModal);
-  document.getElementById('gangModalClose').addEventListener('click', closeModal);
-  document.getElementById('gangModalDone').addEventListener('click', closeModal);
-  document.getElementById('tradeModalClose').addEventListener('click', closeModal);
-  document.getElementById('tradeModalDone').addEventListener('click', closeModal);
+  function closeConfigModal(){ closeModal(); renderArbModal(); arbModal.classList.add('show'); }
+  document.getElementById('terrModalClose').addEventListener('click', closeConfigModal);
+  document.getElementById('terrModalDone').addEventListener('click', closeConfigModal);
+  document.getElementById('gangModalClose').addEventListener('click', closeConfigModal);
+  document.getElementById('gangModalDone').addEventListener('click', closeConfigModal);
+  let _tradeFromArb = false;
+  function closeTrade(){ closeModal(); if(_tradeFromArb){ renderArbModal(); arbModal.classList.add('show'); } }
+  document.getElementById('tradeModalClose').addEventListener('click', closeTrade);
+  document.getElementById('tradeModalDone').addEventListener('click', closeTrade);
 
   function setPlayers(N){ N=clamp(N|0,3,8); if(N===state.players) return; state.players=N; buildWorld(N);
     const nn={}; LAYOUT.forEach(n=>{ nn[n.id]= state.nodes[n.id] || (n.type==='hideout'?{gang:null}:{terr:null,gang:null}); });
@@ -1621,9 +1716,9 @@
     c.textContent=sel+' selected · target '+target+' (3 per player)';
     c.classList.toggle('over', sel<target);
   }
-  document.getElementById('modalClose').addEventListener('click',closeModal);
-  document.getElementById('modalDone').addEventListener('click',closeModal);
-  modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
+  document.getElementById('modalClose').addEventListener('click',closeConfigModal);
+  document.getElementById('modalDone').addEventListener('click',closeConfigModal);
+  modal.addEventListener('click',e=>{ if(e.target===modal) closeConfigModal(); });
   document.getElementById('inSector').addEventListener('input',e=>{ state.sector=e.target.value||'Unnamed Sector'; scheduleSave(); render(); });
   document.getElementById('inCampaign').addEventListener('input',e=>{ state.campaign=e.target.value||'Campaign'; scheduleSave(); render(); });
 
@@ -1676,7 +1771,7 @@
   /* ============ ARBITRATOR MODAL ============ */
   const arbModal = document.getElementById('arbModal');
 
-  document.getElementById('tradingPostBtn').addEventListener('click', () => { openTradeModal(); });
+  document.getElementById('tradingPostBtn').addEventListener('click', () => openTradeModal(false));
   document.getElementById('arbitratorBtn').addEventListener('click', () => {
     renderArbModal();
     arbModal.classList.add('show');
@@ -1699,7 +1794,7 @@
         ['⚙ Campaign Configuration', openSetupModal],
         ['⬡ Territory Configuration', openTerrModal],
         ['☠ Gang Configuration',      openGangModal],
-        ['⚖ Trading Post',            openTradeModal],
+        ['⚖ Trading Post Configuration', () => openTradeModal(true)],
       ];
       cfgBtns.forEach(([label, fn]) => {
         const b = el('button','btn',label);
@@ -2399,10 +2494,6 @@
     window._updateCycleBtn = updateCycleBtn;
   })();
 
-  /* ============ SETUP MODAL WIRING ============ */
-  document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
-  document.getElementById('modalDone').addEventListener('click', () => modal.classList.remove('show'));
-  modal.addEventListener('click', e => { if(e.target === modal) modal.classList.remove('show'); });
 
   /* ============ INIT ============ */
   (async function init(){
