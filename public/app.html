@@ -253,6 +253,7 @@
   .gang-type-cell{flex:0 0 100px} .gang-type-cell select{width:100%;font-family:'Rajdhani';font-size:12px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:6px 4px;border-radius:2px}
   .stat-cell{flex:0 0 auto} .stat-cell input{width:44px;font-family:'Rajdhani';font-size:12px;background:var(--void);border:1px solid var(--edge);color:var(--text);padding:6px 4px;border-radius:2px;text-align:center}
   .stat-cell:nth-child(7) input{width:52px} .stat-cell:nth-child(8) input{width:52px}
+  .stat-cell-lbl{display:none;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--tox);margin-bottom:3px;font-family:'Rajdhani'}
   .gang-type-tag{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--tox);padding:4px 0}
   .hideout-stats{display:flex;gap:10px;margin-bottom:14px}
   .hstat{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--edge-soft);border-radius:2px;padding:8px 10px}
@@ -577,6 +578,7 @@
     .legend-sort button { font-size: 10px; padding: 4px 8px; }
 
     /* Gang rows: two-row layout on mobile */
+    .gang-row-hdr { display: none; }
     .gang-row { flex-wrap: wrap; gap: 6px; }
     .gang-row .num { order: 0; }
     .gang-row .swatch-pick { order: 1; }
@@ -584,28 +586,12 @@
     .gang-row .emoji-btn { order: 3; }
     .gang-row .nm { order: 10; flex: 1 1 100%; margin-top: 2px; }
     .gang-type-cell { order: 4; flex: 1; min-width: 0; }
-    .stat-cell { order: 11; flex: 1; }
+    .stat-cell { order: 11; flex: 1; display: flex; flex-direction: column; }
     .stat-cell input { width: 100%; }
+    .stat-cell-lbl { display: block; }
 
     /* Territories in hideout drawer: single column */
     .terr-held { grid-template-columns: 1fr !important; }
-
-    /* Prevent horizontal scroll */
-    html, body { overflow-x: hidden; max-width: 100vw; }
-    .sheet { max-width: 100vw; box-sizing: border-box; }
-    .mbody { overflow-x: hidden; }
-
-
-    /* Gang rows: two-row layout on mobile */
-    .gang-row { flex-wrap: wrap; gap: 6px; }
-    .gang-row .num { order: 0; }
-    .gang-row .swatch-pick { order: 1; }
-    .gang-row .icon-cell { order: 2; }
-    .gang-row .emoji-btn { order: 3; }
-    .gang-row .nm { order: 10; flex: 1 1 100%; margin-top: 2px; }
-    .gang-type-cell { order: 4; flex: 1; min-width: 0; }
-    .stat-cell { order: 11; flex: 1; }
-    .stat-cell input { width: 100%; }
 
     /* Territories in hideout drawer: single column */
     .terr-held { grid-template-columns: 1fr !important; }
@@ -835,7 +821,7 @@
     <div class="mhead"><div><div class="kicker">Configuration</div><h2>Gangs</h2></div>
       <button class="x" id="gangModalClose" aria-label="Close">✕</button></div>
     <div class="mbody">
-      <label class="lbl-sm" id="gangsLabel" style="color:var(--tox);margin-bottom:10px">The Gangs — name · icon · colour · type</label>
+      <label class="lbl-sm" id="gangsLabel" style="display:none"></label>
       <div id="gangRows"></div>
     </div>
     <div class="mfoot"><button class="btn" id="gangModalDone">Done</button></div>
@@ -2431,18 +2417,19 @@
       gs.value=g.type||'';
       gs.addEventListener('change',()=>{ g.type=gs.value||null; scheduleSave(); });
       gt.appendChild(gs); row.appendChild(gt);
-      const rc=el('div','stat-cell'); const ri=document.createElement('input'); ri.type='number'; ri.min=0; ri.max=99; ri.step=1; ri.value=g.rep||0; ri.title='Reputation'; ri.placeholder='Rep';
+      function statCell(lbl,inp){ const c=el('div','stat-cell'); c.appendChild(el('span','stat-cell-lbl',lbl)); c.appendChild(inp); return c; }
+      const ri=document.createElement('input'); ri.type='number'; ri.min=0; ri.max=99; ri.step=1; ri.value=g.rep||0; ri.title='Reputation'; ri.placeholder='Rep';
       ri.addEventListener('input',()=>{ g.rep=Math.max(0,parseInt(ri.value)||0); scheduleSave(); renderLegend(); });
-      rc.appendChild(ri); row.appendChild(rc);
-      const rrc=el('div','stat-cell'); const rri=document.createElement('input'); rri.type='number'; rri.min=0; rri.max=9999; rri.step=1; rri.value=g.rating||0; rri.title='Gang Rating'; rri.placeholder='Rating';
+      row.appendChild(statCell('Rep',ri));
+      const rri=document.createElement('input'); rri.type='number'; rri.min=0; rri.max=9999; rri.step=1; rri.value=g.rating||0; rri.title='Gang Rating'; rri.placeholder='Rating';
       rri.addEventListener('input',()=>{ g.rating=Math.max(0,parseInt(rri.value)||0); scheduleSave(); renderLegend(); });
-      rrc.appendChild(rri); row.appendChild(rrc);
-      const wc=el('div','stat-cell'); const wi=document.createElement('input'); wi.type='number'; wi.min=0; wi.max=99999; wi.step=1; wi.value=g.wealth!=null?g.wealth:1000; wi.title='Wealth'; wi.placeholder='Wealth';
+      row.appendChild(statCell('Rating',rri));
+      const wi=document.createElement('input'); wi.type='number'; wi.min=0; wi.max=99999; wi.step=1; wi.value=g.wealth!=null?g.wealth:1000; wi.title='Wealth'; wi.placeholder='Wealth';
       wi.addEventListener('input',()=>{ g.wealth=Math.max(0,parseInt(wi.value)||0); scheduleSave(); renderLegend(); });
-      wc.appendChild(wi); row.appendChild(wc);
-      const oc=el('div','stat-cell'); const oi=document.createElement('input'); oi.type='number'; oi.min=0; oi.max=9999; oi.step=1; oi.value=g.outOfAction||0; oi.title='Enemies Out of Action'; oi.placeholder='OOA';
+      row.appendChild(statCell('Wealth',wi));
+      const oi=document.createElement('input'); oi.type='number'; oi.min=0; oi.max=9999; oi.step=1; oi.value=g.outOfAction||0; oi.title='Enemies Out of Action'; oi.placeholder='OOA';
       oi.addEventListener('input',()=>{ g.outOfAction=Math.max(0,parseInt(oi.value)||0); scheduleSave(); renderLegend(); });
-      oc.appendChild(oi); row.appendChild(oc);
+      row.appendChild(statCell('Kills',oi));
       host.appendChild(row);
     });
   }
@@ -3131,11 +3118,11 @@
         col.appendChild(h4);
 
         const g=state.gangs[gi];
-        [{field:'rating',label:'Rating'},{field:'rep',label:'Reputation'}].forEach(({field,label})=>{
+        [{field:'rating',label:'Rating'},{field:'rep',label:'Reputation'},{field:'wealth',label:'Wealth'},{field:'outOfAction',label:'Kills'}].forEach(({field,label})=>{
           const row=document.createElement('div'); row.className='rm-stat-row';
           const lbl=document.createElement('span'); lbl.className='rm-stat-label'; lbl.textContent=label;
           const inp=document.createElement('input'); inp.type='number'; inp.className='rm-stat-input';
-          inp.value=g[field]||0; inp.min=0; inp.dataset.gang=gi; inp.dataset.field=field;
+          inp.value=field==='wealth'?(g.wealth!=null?g.wealth:1000):(g[field]||0); inp.min=0; inp.dataset.gang=gi; inp.dataset.field=field;
           row.appendChild(lbl); row.appendChild(inp); col.appendChild(row);
         });
         rmStatGrid.appendChild(col);
