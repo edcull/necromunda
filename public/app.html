@@ -631,6 +631,16 @@
   .tp-al-wrap input[type=number] { width: 44px; }
   .tp-cost-inp { background: var(--surface); border: 1px solid var(--edge); color: #eef6f1;
     border-radius: 4px; font-size: 12px; padding: 2px 4px; width: 60px; text-align: right; }
+  /* Filter bar */
+  .tp-filter { display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    padding: 10px 0 14px; border-bottom: 1px solid var(--edge); margin-bottom: 4px; }
+  .tp-filter-group { display: flex; align-items: center; gap: 8px; }
+  .tp-filter-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--tox); white-space: nowrap; min-width: 20px; }
+  .tp-filter-val { font-size: 12px; color: #eef6f1; min-width: 18px; text-align: center; }
+  .tp-filter input[type=range] { width: 90px; accent-color: var(--tox); cursor: pointer; }
+  .tp-filter input[type=checkbox] { cursor: pointer; accent-color: var(--tox); }
+  tr.tp-filter-hidden { display: none; }
 </style>
 
 <div class="wrap">
@@ -1783,14 +1793,70 @@
     }
   }
 
+  function applyTpFilter(body, showC, maxR, maxI) {
+    body.querySelectorAll('.tp-cfg tbody tr[data-k]').forEach(row => {
+      const k = row.dataset.k;
+      const [catKey, ...nameParts] = k.split(':');
+      const name = nameParts.join(':');
+      const items = _tpData[catKey] || [];
+      const item = items.find(i => i.name === name);
+      if (!item) return;
+      const ov = tpOverride(catKey, item);
+      const al = ov.availability;
+      const val = ov.availValue != null ? ov.availValue : (parseInt(item.availability) || 0);
+      let hidden = false;
+      if (al === 'C' && !showC) hidden = true;
+      if (al === 'R' && val > maxR) hidden = true;
+      if (al === 'I' && val > maxI) hidden = true;
+      row.classList.toggle('tp-filter-hidden', hidden);
+    });
+  }
+
+  function wireTpFilter(body) {
+    const cbC  = body.querySelector('#tpfC');
+    const slR  = body.querySelector('#tpfR');
+    const lblR = body.querySelector('#tpfRv');
+    const slI  = body.querySelector('#tpfI');
+    const lblI = body.querySelector('#tpfIv');
+    function update() {
+      const showC = cbC.checked;
+      const maxR  = parseInt(slR.value);
+      const maxI  = parseInt(slI.value);
+      lblR.textContent = maxR === 0 ? 'Off' : maxR;
+      lblI.textContent = maxI === 0 ? 'Off' : maxI;
+      applyTpFilter(body, showC, maxR, maxI);
+    }
+    cbC.addEventListener('change', update);
+    slR.addEventListener('input', update);
+    slI.addEventListener('input', update);
+    update();
+  }
+
   function renderTpBody(body) {
     if (_tradeFromArb) {
+      const filterBar = `<div class="tp-filter">
+        <div class="tp-filter-group">
+          <input type="checkbox" id="tpfC" checked>
+          <span class="tp-filter-label">Common</span>
+        </div>
+        <div class="tp-filter-group">
+          <span class="tp-filter-label">Rare ≤</span>
+          <input type="range" id="tpfR" min="0" max="15" value="15">
+          <span class="tp-filter-val" id="tpfRv">15</span>
+        </div>
+        <div class="tp-filter-group">
+          <span class="tp-filter-label">Illegal ≤</span>
+          <input type="range" id="tpfI" min="0" max="15" value="15">
+          <span class="tp-filter-val" id="tpfIv">15</span>
+        </div>
+      </div>`;
       const html = TP_SECTIONS.map(sec => {
         const items = _tpData[sec.key] || [];
         return renderTpCfgSection(sec, items);
       }).join('');
-      body.innerHTML = html || '<p style="color:var(--muted);font-size:13px">No items.</p>';
+      body.innerHTML = filterBar + (html || '<p style="color:var(--muted);font-size:13px">No items.</p>');
       wireTpCfg(body);
+      wireTpFilter(body);
     } else {
       const html = TP_SECTIONS.map(sec => {
         const items = _tpData[sec.key] || [];
