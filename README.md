@@ -7,15 +7,21 @@ An interactive web app for tracking Necromunda Dominion Campaign progress. Multi
 - **Interactive hive map** — territory and hideout nodes on a procedurally generated SVG map, draggable by the arbitrator
 - **Territory ownership** — assign territories to gangs; map nodes colour-coded by controlling gang
 - **Per-node custom labels** — arbitrators can rename any territory or hideout inline
-- **Gang roster** — up to 8 gangs with name, icon, colour, type, rating and reputation
+- **Gang roster** — up to 8 gangs with name, icon, colour, type, rating, reputation, wealth and kills
+- **Gang hideout panel** — displays rep, rating, wealth and kills as stat cards; arbitrators can edit all values; shows territory boons in effect including enhanced boons for matching gang type; Spyrer gangs show Terror Level and a Base Camp boon instead of territory boons
 - **Campaign configuration** — sector/campaign name, player count, territories in play, gang details
 - **Dominion Campaign Cycles** — full 7-phase cycle tracker (Occupation ×3, Downtime, Takeover ×3):
   - Challenge creation with challenger, defender and staked territory
+  - Occupation phase restricts staked territories to unclaimed only
   - Territory locking while a challenge is pending
   - Result recording (win/refuse/draw) with automatic territory ownership update
-  - Post-game gang rating and reputation update prompts
+  - Post-game stat update (rating, wealth, reputation, kills) for both gangs
   - Challenge order display — randomised for Occupation Cycle 1, rating low → high for all subsequent cycles; tied ratings broken by stable per-cycle shuffle
+  - Gang type shown in challenger/defender dropdowns
   - Arbitrators can edit or roll back to previous cycles
+- **Trading post** — full Dominion Campaign trading post with all weapon, armour, equipment and ammunition categories; seek rare/illegal items with availability roll, modifiers and gang-type filters; arbitrators can override availability levels and add custom items
+- **Triumphs** — five triumph cards (Dominator, Slaughterer, Creditor, Warmonger, Powerbroker) auto-calculated from campaign state, showing the top 3 gangs per triumph; accessible via the 🏆 button on the map overlay
+- **Gang legend** — sortable by territories, rep or rating; truncates long names
 - **Cross-navigation** — territory cards link to their map node; gang names link to the hideout drawer
 - **Mobile-first layout** — full touch pan/zoom map with minimap HUD, collapsible gang legend, hold-to-drag node repositioning for arbitrators
 - **Multi-campaign** — campaigns are independent; each has its own arbitrator account
