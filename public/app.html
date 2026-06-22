@@ -794,6 +794,18 @@
       </div>
       <label class="lbl-sm" style="color:var(--tox);margin-bottom:8px">Players in this campaign</label>
       <div class="player-seg" id="playerSeg"></div>
+      <div class="setup-grid" style="margin-top:18px">
+        <div>
+          <label class="lbl-sm">Simultaneous Games</label>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text)">
+              <input type="checkbox" id="inSimEnabled"> Enabled
+            </label>
+            <input type="number" id="inSimCount" min="2" max="8" step="1" style="width:60px">
+            <span style="font-size:11px;color:var(--muted)">games per round</span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="mfoot"><button class="btn" id="modalDone">Done</button></div>
   </div>
@@ -1120,7 +1132,7 @@
   function defaultState(){
     const nodes={};
     LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null,label:null}:{terr:null,gang:null,label:null}; });
-    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]}};
+    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]},simultaneousGames:{enabled:false,count:4}};
   }
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
   function mergeState(loaded){
@@ -1150,6 +1162,8 @@
     const rawTp = (loaded.tradingPost && typeof loaded.tradingPost === 'object') ? loaded.tradingPost : {};
     s.tradingPost = { ...rawTp, customItems: Array.isArray(rawTp.customItems) ? rawTp.customItems : [] };
     s.triumphs = (loaded.triumphs && typeof loaded.triumphs === 'object') ? loaded.triumphs : {};
+    const sg = (loaded.simultaneousGames && typeof loaded.simultaneousGames === 'object') ? loaded.simultaneousGames : {};
+    s.simultaneousGames = { enabled: sg.enabled === true, count: Math.max(2, Math.min(8, parseInt(sg.count)||4)) };
     return s;
   }
 
@@ -1733,7 +1747,13 @@
   const gangModal=document.getElementById('gangModal');
   const tradeModal=document.getElementById('tradeModal');
 
-  function openSetupModal(){ document.getElementById('inSector').value=state.sector; document.getElementById('inCampaign').value=state.campaign; buildPlayerSeg(); modal.classList.add('show'); }
+  function openSetupModal(){
+    document.getElementById('inSector').value=state.sector;
+    document.getElementById('inCampaign').value=state.campaign;
+    document.getElementById('inSimEnabled').checked=state.simultaneousGames.enabled;
+    document.getElementById('inSimCount').value=state.simultaneousGames.count;
+    buildPlayerSeg(); modal.classList.add('show');
+  }
   function openTerrModal(){ buildTerrPool(); terrModal.classList.add('show'); }
   function openGangModal(){ const gl=document.getElementById('gangsLabel'); if(gl) gl.textContent='The '+state.players+' Gangs — name · icon · colour · type'; buildGangRows(); gangModal.classList.add('show'); }
   let _tpData = null;
@@ -2380,6 +2400,8 @@
   modal.addEventListener('click',e=>{ if(e.target===modal) closeConfigModal(); });
   document.getElementById('inSector').addEventListener('input',e=>{ state.sector=e.target.value||'Unnamed Sector'; scheduleSave(); render(); });
   document.getElementById('inCampaign').addEventListener('input',e=>{ state.campaign=e.target.value||'Campaign'; scheduleSave(); render(); });
+  document.getElementById('inSimEnabled').addEventListener('change',e=>{ state.simultaneousGames.enabled=e.target.checked; scheduleSave(); });
+  document.getElementById('inSimCount').addEventListener('input',e=>{ state.simultaneousGames.count=Math.max(2,Math.min(8,parseInt(e.target.value)||4)); scheduleSave(); });
 
   const GANG_TYPES = ['Cawdor','Delaque','Escher','Goliath','Orlock','Van Saar','Palanite Enforcers','Badzone Enforcers','Corpse-Grinder Cult','Chaos Cult','Genestealer Cult','Venator','Outcasts','Slave Ogryns','Spyrers','Ash Waste Nomads','Ironhead Squat Prospectors'];
 
@@ -2872,13 +2894,34 @@
       const allChallengedCheck = alreadyChallenged.size >= state.players;
       const defaultChallenger = cycleOrder.find(i=>allChallengedCheck||!alreadyChallenged.has(i)) ?? cycleOrder[0];
 
-      // Challenger select — exclude gangs that have already challenged this cycle,
-      // unless all gangs have challenged (then show all)
+      // Simultaneous games: compute batch constraints
+      const sg = state.simultaneousGames;
+      const batchLocked = new Set();   // gangs already in current batch (cannot appear again this set)
+      const mustChallenge = new Set(); // gangs challenged in earlier sets who haven't yet challenged (cannot be defenders)
+      if(sg.enabled){
+        const batchSize = sg.count;
+        const batchStart = Math.floor(cyc.challenges.length / batchSize) * batchSize;
+        const currentBatch = cyc.challenges.slice(batchStart);
+        const prevBatches  = cyc.challenges.slice(0, batchStart);
+
+        // Lock gangs already committed to the current batch
+        currentBatch.forEach(c=>{ batchLocked.add(Number(c.challenger)); if(c.challenged!=null) batchLocked.add(Number(c.challenged)); });
+
+        // Gangs challenged in previous batches who still haven't issued their own challenge must challenge next
+        const prevChallenged = new Set();
+        prevBatches.forEach(c=>{ if(c.challenged!=null) prevChallenged.add(Number(c.challenged)); });
+        // challengers across all completed challenges (previous batches + current batch)
+        const hasChallenged = new Set(cyc.challenges.map(c=>Number(c.challenger)));
+        prevChallenged.forEach(i=>{ if(!hasChallenged.has(i)) mustChallenge.add(i); });
+      }
+
+      // Challenger select — exclude gangs already challenged this cycle or locked in current batch
       const lbCh = document.createElement('label'); lbCh.textContent='Challenger';
       const selCh = document.createElement('select');
       const allChallenged = alreadyChallenged.size >= state.players;
       for(let i=0;i<state.players;i++){
         if(!allChallenged && alreadyChallenged.has(i)) continue;
+        if(batchLocked.has(i)) continue;
         const g = state.gangs[i];
         const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':'');
         if(i===defaultChallenger) o.selected=true;
@@ -2894,6 +2937,8 @@
         const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
         for(let i=0;i<state.players;i++){
           if(i===chIdx) continue;
+          if(batchLocked.has(i)) continue;
+          if(mustChallenge.has(i)) continue; // must issue their own challenge before being challenged
           const g=state.gangs[i]; const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':''); selDef.appendChild(o);
         }
       }
