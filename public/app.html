@@ -300,8 +300,8 @@
   }
 
   /* ===== CYCLES PANEL ===== */
+  #mapBtnGroup { position:absolute; top:14px; left:14px; z-index:6; display:flex; gap:6px; align-items:stretch; }
   #cycleBtn {
-    position: absolute; top: 14px; left: 14px; z-index: 6;
     background: rgba(6,11,9,.82); border: 1px solid var(--edge);
     color: var(--tox); font-family: 'Oswald'; font-size: 11px; font-weight: 600;
     letter-spacing: .2em; text-transform: uppercase;
@@ -311,6 +311,8 @@
   #cycleBtn:hover { border-color: var(--tox); box-shadow: 0 0 10px -2px var(--tox); }
   #cycleBtn .cb-phase { font-size: 9px; letter-spacing: .18em; color: var(--muted); display: block; margin-bottom: 1px; }
   #cycleBtn .cb-label { display: block; }
+  #triumphsMapBtn { background:rgba(6,11,9,.82); border:1px solid var(--edge); color:var(--tox); font-size:16px; padding:7px 10px; border-radius:3px; cursor:pointer; transition:border-color .15s,box-shadow .15s; line-height:1; }
+  #triumphsMapBtn:hover { border-color:var(--tox); box-shadow:0 0 10px -2px var(--tox); }
 
   /* Desktop: slide-in from left */
   #cyclePanel {
@@ -450,7 +452,7 @@
 
   /* Mobile overrides for cycle panel */
   @media (max-width: 1200px) {
-    #cycleBtn { top: 14px; }
+    #mapBtnGroup { top: 14px; }
     #cyclePanel {
       top: auto; left: 0; right: 0; bottom: 0; width: 100%;
       height: 70vh; max-height: 70vh;
@@ -714,7 +716,6 @@
       <span class="save-tag" id="saveTag"></span>
       <a href="/necromunda" class="btn ghost icon-btn" style="text-decoration:none" title="Back to campaigns" aria-label="Back to campaigns">⌂</a>
       <button class="btn ghost" id="tradingPostBtn">⚖ Trading Post</button>
-      <button class="btn icon-btn" id="triumphsBtn" title="Triumphs" aria-label="Triumphs">🏆</button>
       <button class="btn icon-btn" id="arbitratorBtn" title="Arbitrator" aria-label="Arbitrator">⚔</button>
     </div>
   </div>
@@ -729,10 +730,13 @@
         <div id="nodes"></div>
       </div>
       <div class="vig"></div>
-      <button id="cycleBtn" aria-label="Cycles">
-        <span class="cb-phase" id="cycleBtnPhase">Phase</span>
-        <span class="cb-label" id="cycleBtnLabel">Cycles</span>
-      </button>
+      <div id="mapBtnGroup">
+        <button id="cycleBtn" aria-label="Cycles">
+          <span class="cb-phase" id="cycleBtnPhase">Phase</span>
+          <span class="cb-label" id="cycleBtnLabel">Cycles</span>
+        </button>
+        <button id="triumphsMapBtn" aria-label="Triumphs" title="Triumphs">🏆</button>
+      </div>
       <div id="minimap">
         <div id="minimapView"></div>
       </div>
@@ -1354,8 +1358,8 @@
     let ro=0; const rl='ABCDEFGH'; for(let y=120;y<H;y+=200) grid+=txt(6,y,rl[ro++]||'',tick);
     out.push(grid);
 
-    // 8. scale bar (top-left) + compass (top-right)
-    const mile=266.7, sbx=160, sby=58, seg=mile/4;
+    // 8. scale bar (bottom-right) + compass (top-right)
+    const mile=266.7, sbx=1600-mile-60, sby=900-20, seg=mile/4;
     let sb=rect(sbx-8,sby-30,mile+18,34,{fill:'rgba(6,11,9,.55)',stroke:'rgba(95,217,160,.22)','stroke-width':1,rx:2});
     for(let i=0;i<4;i++) sb+=rect(sbx+i*seg,sby-6,seg,5,{fill:i%2?'rgba(95,217,160,0)':'rgba(95,217,160,.45)',stroke:'rgba(95,217,160,.45)','stroke-width':1});
     sb+=txt(sbx-2,sby-9,'0',{fill:'rgba(95,217,160,.6)','font-family':'monospace','font-size':'10'});
@@ -2340,7 +2344,7 @@
   }
 
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); triumphsModal.classList.remove('show'); }
-  document.getElementById('triumphsBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
+  document.getElementById('triumphsMapBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
   document.getElementById('triumphsModalClose').addEventListener('click', () => triumphsModal.classList.remove('show'));
   document.getElementById('triumphsModalDone').addEventListener('click', () => triumphsModal.classList.remove('show'));
 
