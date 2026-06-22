@@ -230,6 +230,17 @@
   @media(max-width:560px){.setup-grid{grid-template-columns:1fr}}
   .lbl-sm{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .gang-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--edge-soft);border-radius:2px;margin-bottom:9px;background:rgba(0,0,0,.18)}
+  .gang-row-hdr{background:transparent;border-color:transparent;margin-bottom:2px;padding:0 10px}
+  .gang-hdr-cell{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--tox);font-family:'Rajdhani'}
+  .gang-row-hdr .gang-hdr-cell:nth-child(1){width:14px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(2){width:48px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(3){width:30px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(4){flex:1;min-width:80px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(5){width:110px}
+  .gang-row-hdr .gang-hdr-cell:nth-child(6){width:60px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(7){width:60px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(8){width:60px;text-align:center}
+  .gang-row-hdr .gang-hdr-cell:nth-child(9){width:60px;text-align:center}
   .gang-row .num{font-size:11px;color:var(--faint);width:14px;text-align:center;font-variant-numeric:tabular-nums}
   .swatch-pick{position:relative;width:34px;height:34px;flex:0 0 auto}
   .swatch-pick input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0}
@@ -2421,6 +2432,9 @@
 
   function buildGangRows(){
     const host=document.getElementById('gangRows'); host.innerHTML='';
+    const hdr=el('div','gang-row gang-row-hdr');
+    ['#','','','Name','Type','Rep','Rating','Wealth','OOA'].forEach(t=>{ hdr.appendChild(el('span','gang-hdr-cell',t)); });
+    host.appendChild(hdr);
     state.gangs.slice(0,state.players).forEach((g,i)=>{
       const row=el('div','gang-row'); row.appendChild(el('span','num',String(i+1)));
       const sp=el('div','swatch-pick');
