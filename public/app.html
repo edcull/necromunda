@@ -2894,17 +2894,25 @@
       const allChallengedCheck = alreadyChallenged.size >= state.players;
       const defaultChallenger = cycleOrder.find(i=>allChallengedCheck||!alreadyChallenged.has(i)) ?? cycleOrder[0];
 
-      // Simultaneous games: compute gangs locked into the current batch
+      // Simultaneous games: compute batch constraints
       const sg = state.simultaneousGames;
-      const batchLocked = new Set();
+      const batchLocked = new Set();   // gangs already in current batch (cannot appear again this set)
+      const mustChallenge = new Set(); // gangs challenged in earlier sets who haven't yet challenged (cannot be defenders)
       if(sg.enabled){
         const batchSize = sg.count;
         const batchStart = Math.floor(cyc.challenges.length / batchSize) * batchSize;
-        const batchChallenges = cyc.challenges.slice(batchStart);
-        batchChallenges.forEach(c=>{ batchLocked.add(Number(c.challenger)); if(c.challenged!=null) batchLocked.add(Number(c.challenged)); });
-        if(batchChallenges.length === 0 && cyc.challenges.length > 0){
-          // New batch started, no locks
-        }
+        const currentBatch = cyc.challenges.slice(batchStart);
+        const prevBatches  = cyc.challenges.slice(0, batchStart);
+
+        // Lock gangs already committed to the current batch
+        currentBatch.forEach(c=>{ batchLocked.add(Number(c.challenger)); if(c.challenged!=null) batchLocked.add(Number(c.challenged)); });
+
+        // Gangs challenged in previous batches who still haven't issued their own challenge must challenge next
+        const prevChallenged = new Set();
+        prevBatches.forEach(c=>{ if(c.challenged!=null) prevChallenged.add(Number(c.challenged)); });
+        // challengers across all completed challenges (previous batches + current batch)
+        const hasChallenged = new Set(cyc.challenges.map(c=>Number(c.challenger)));
+        prevChallenged.forEach(i=>{ if(!hasChallenged.has(i)) mustChallenge.add(i); });
       }
 
       // Challenger select — exclude gangs already challenged this cycle or locked in current batch
@@ -2930,6 +2938,7 @@
         for(let i=0;i<state.players;i++){
           if(i===chIdx) continue;
           if(batchLocked.has(i)) continue;
+          if(mustChallenge.has(i)) continue; // must issue their own challenge before being challenged
           const g=state.gangs[i]; const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':''); selDef.appendChild(o);
         }
       }
