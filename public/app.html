@@ -2045,27 +2045,56 @@
           <span class="tp-filter-label" style="text-transform:none;letter-spacing:0;font-size:13px">Seek Rare &amp; Illegal Equipment</span>
         </div>
         <div id="tpRollGroup" style="display:none;width:100%">
-          <div class="tp-filter-group" style="margin-bottom:6px">
-            <span class="tp-filter-label">Availability Roll</span>
-            <input type="number" id="tpRoll" min="0" max="20" value="8"
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:10px;align-items:center">
+            <span style="font-size:12px;color:var(--tox)">Roll 2D6</span>
+            <input type="number" id="tpRoll2d6" min="2" max="12" value="7"
               style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
+            <label style="font-size:12px;color:var(--tox);display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="tpLeader"> Gang Leader making trade action
+            </label>
+            <span style="font-size:11px;color:var(--tox-dim)">+1</span>
+            <span style="font-size:12px;color:var(--tox)">Champions making trade action</span>
+            <input type="number" id="tpChampions" min="0" max="10" value="0"
+              style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
+            <span style="font-size:12px;color:var(--tox)">Gang Reputation</span>
+            <input type="number" id="tpRep" min="0" value="0"
+              style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
+            <span style="font-size:12px;color:var(--tox)">Modifier</span>
+            <input type="number" id="tpMod" value="0"
+              style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
+            <label style="font-size:12px;color:var(--tox);display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="tpOutlaw"> Outlaw Gang
+            </label>
+            <span style="font-size:11px;color:var(--tox-dim)">Illegal items up to full roll value</span>
           </div>
-          <div class="tp-filter-group" style="margin-bottom:6px">
-            <input type="checkbox" id="tpOutlaw">
-            <span class="tp-filter-label" style="text-transform:none;letter-spacing:0;font-size:13px">Outlaw Gang (Illegal items up to full roll value)</span>
+          <div style="font-size:13px;color:#eef6f1;padding:8px 0 4px;border-top:1px solid var(--edge)">
+            Availability Roll: <strong id="tpRollTotal" style="color:var(--tox)">7</strong>
+            <span id="tpRollBreakdown" style="font-size:11px;color:var(--tox-dim);margin-left:8px"></span>
           </div>
-          <p style="font-size:11px;color:var(--tox-dim);margin:0;line-height:1.6">
-            2D6, +2 if Gang Leader is making the trade, +1 for each Champion making the trade, +1 for every 10 Reputation
-          </p>
         </div>
       </div>
       <div id="tpRefSections"></div>`;
       body.innerHTML = seekBar;
+      function calcRoll() {
+        const base     = parseInt(body.querySelector('#tpRoll2d6').value)    || 0;
+        const leader   = body.querySelector('#tpLeader').checked ? 1 : 0;
+        const champs   = parseInt(body.querySelector('#tpChampions').value)  || 0;
+        const rep      = Math.floor((parseInt(body.querySelector('#tpRep').value) || 0) / 10);
+        const mod      = parseInt(body.querySelector('#tpMod').value)        || 0;
+        const total    = base + leader + champs + rep + mod;
+        const parts    = [];
+        if (leader)  parts.push('+1 leader');
+        if (champs)  parts.push(`+${champs} champion${champs!==1?'s':''}`);
+        if (rep)     parts.push(`+${rep} rep`);
+        if (mod)     parts.push((mod>0?'+':'')+mod+' mod');
+        body.querySelector('#tpRollTotal').textContent = total;
+        body.querySelector('#tpRollBreakdown').textContent = parts.length ? '('+parts.join(', ')+')' : '';
+        return total;
+      }
       function renderRefSections() {
         const seeking = body.querySelector('#tpSeek').checked;
-        const rollRaw = body.querySelector('#tpRoll').value;
-        const roll = rollRaw !== '' ? parseInt(rollRaw) : 8;
-        const outlaw = body.querySelector('#tpOutlaw').checked;
+        const roll    = seeking ? calcRoll() : 0;
+        const outlaw  = body.querySelector('#tpOutlaw').checked;
         const maxR = seeking ? roll : null;
         const maxI = seeking ? (outlaw ? roll : Math.max(0, roll - 4)) : null;
         const html = TP_SECTIONS.map(sec => {
@@ -2079,8 +2108,9 @@
         body.querySelector('#tpRollGroup').style.display = this.checked ? '' : 'none';
         renderRefSections();
       });
-      body.querySelector('#tpRoll').addEventListener('input', renderRefSections);
-      body.querySelector('#tpOutlaw').addEventListener('change', renderRefSections);
+      ['#tpRoll2d6','#tpLeader','#tpChampions','#tpRep','#tpMod','#tpOutlaw'].forEach(id => {
+        body.querySelector(id).addEventListener(id==='#tpLeader'||id==='#tpOutlaw'?'change':'input', renderRefSections);
+      });
     }
   }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
