@@ -1977,8 +1977,8 @@
         cpBody.appendChild(orderHdr);
         const orderList=document.createElement('div');
         orderList.style.cssText='display:flex;flex-direction:column;gap:4px;margin-bottom:10px';
-        // Stable per-cycle hash for tiebreaks and random ordering
-        function cycleHash(cycId,i){ let h=0; for(const c of cycId+':'+i) h=(Math.imul(31,h)+c.charCodeAt(0))|0; return h; }
+        // FNV-1a hash — good avalanche so similar cycle IDs produce very different orderings
+        function cycleHash(cycId,i){ let h=-2128831035; for(const c of cycId+':'+i){ h^=c.charCodeAt(0); h=Math.imul(h,16777619)|0; } return h; }
         const gangsOrdered=[...Array(state.players).keys()]
           .map(i=>({i,g:state.gangs[i]}))
           .sort((a,b)=>isRandom
