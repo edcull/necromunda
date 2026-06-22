@@ -2013,7 +2013,7 @@
 
       // New challenge form
       if(isArbitrator && showingForm){
-        cpBody.appendChild(buildChallengeForm(cd.phase, cyc));
+        cpBody.appendChild(buildChallengeForm(cd, cyc));
       }
 
       if(cyc.challenges.length===0 && !showingForm){
@@ -2031,15 +2031,19 @@
       sorted.forEach(ch=>{ cpBody.appendChild(buildChallengeCard(ch, isArbitrator)); });
     }
 
-    function buildChallengeForm(phase, cyc){
+    function buildChallengeForm(cd, cyc){
+      const phase = cd.phase;
       const form = document.createElement('div');
       form.className = 'ch-form';
 
-      // Determine default challenger: lowest-rated gang not yet challenged this cycle
+      // Determine default challenger: next in cycle order not yet challenged this cycle
       const alreadyChallenged = new Set(cyc.challenges.map(c=>c.challenger));
-      const defaultChallenger = [...Array(state.players).keys()]
-        .filter(i=>!alreadyChallenged.has(i))
-        .sort((a,b)=>(state.gangs[a].rating||0)-(state.gangs[b].rating||0))[0] ?? 0;
+      function fnv(cycId,i){ let h=-2128831035; for(const c of cycId+':'+i){ h^=c.charCodeAt(0); h=Math.imul(h,16777619)|0; } return h; }
+      const isRandom = cd.id==='occ-1';
+      const cycleOrder = [...Array(state.players).keys()]
+        .sort((a,b)=>isRandom ? fnv(cd.id,a)-fnv(cd.id,b) : ((state.gangs[a].rating||0)-(state.gangs[b].rating||0)) || (fnv(cd.id,a)-fnv(cd.id,b)));
+      const allChallengedCheck = alreadyChallenged.size >= state.players;
+      const defaultChallenger = cycleOrder.find(i=>allChallengedCheck||!alreadyChallenged.has(i)) ?? cycleOrder[0];
 
       // Challenger select — exclude gangs that have already challenged this cycle,
       // unless all gangs have challenged (then show all)
