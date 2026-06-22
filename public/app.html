@@ -2071,6 +2071,7 @@
             Availability Roll: <strong id="tpRollTotal" style="color:var(--tox)">7</strong>
             <span id="tpRollBreakdown" style="font-size:11px;color:var(--tox-dim);margin-left:8px"></span>
           </div>
+          <div id="tpRollHint" style="font-size:11px;color:var(--tox-dim);margin-top:4px;line-height:1.6"></div>
         </div>
       </div>
       <div id="tpRefSections"></div>`;
@@ -2097,6 +2098,17 @@
         const outlaw  = body.querySelector('#tpOutlaw').checked;
         const maxR = seeking ? roll : null;
         const maxI = seeking ? (outlaw ? roll : Math.max(0, roll - 4)) : null;
+        const hint = body.querySelector('#tpRollHint');
+        if (hint) {
+          if (!seeking) {
+            hint.textContent = '';
+          } else {
+            const rPart = maxR > 0 ? `Rare up to R${maxR}` : 'no Rare items';
+            const iPart = maxI > 0 ? `Illegal up to I${maxI}` : 'no Illegal items';
+            const outlawNote = outlaw ? ' (Outlaw Gang)' : ` (Illegal = roll − 4)`;
+            hint.textContent = `Showing: Common · ${rPart} · ${iPart}${outlawNote}`;
+          }
+        }
         const html = TP_SECTIONS.map(sec => {
           const items = _tpData[sec.key] || [];
           return renderTpRefSection(sec, items, maxR, maxI);
