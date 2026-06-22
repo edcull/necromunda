@@ -1642,9 +1642,14 @@
 
   const TP_SECTIONS = [
     { key: 'basicWeapons',       label: 'Basic Weapons' },
+    { key: 'basicWeaponAmmo',    label: 'Basic Weapon Ammo' },
     { key: 'pistols',            label: 'Pistols' },
+    { key: 'pistolAmmo',         label: 'Pistol Ammo' },
+    { key: 'pistolCombis',       label: 'Pistol Combis' },
     { key: 'specialWeapons',     label: 'Special Weapons' },
+    { key: 'specialWeaponAmmo',  label: 'Special Weapon Ammo' },
     { key: 'heavyWeapons',       label: 'Heavy Weapons' },
+    { key: 'heavyWeaponAmmo',    label: 'Heavy Weapon Ammo' },
     { key: 'grenades',           label: 'Grenades' },
     { key: 'boobyTraps',         label: 'Booby Traps' },
     { key: 'closeCombatWeapons', label: 'Close Combat Weapons' },
@@ -1864,7 +1869,13 @@
         fetch('/necromunda/api/static/trading-post-weapons'),
         fetch('/necromunda/api/static/trading-post-equipment'),
       ]);
-      _tpData = { ...await wpnRes.json(), ...await eqpRes.json() };
+      const raw = { ...await wpnRes.json(), ...await eqpRes.json() };
+      // Normalise ammo entries: derive `name` from weapon + ammo fields
+      const AMMO_KEYS = ['basicWeaponAmmo','pistolAmmo','specialWeaponAmmo','heavyWeaponAmmo'];
+      AMMO_KEYS.forEach(k => {
+        if (raw[k]) raw[k] = raw[k].map(it => it.name ? it : { ...it, name: it.weapon + ' — ' + it.ammo });
+      });
+      _tpData = raw;
       renderTpBody(body);
     } catch (e) {
       body.innerHTML = '<p style="color:var(--err);font-size:13px">Failed to load trading post data.</p>';
