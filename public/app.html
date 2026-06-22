@@ -2092,6 +2092,37 @@
       </div>
       <div id="tpRefSections"></div>`;
       body.innerHTML = seekBar;
+      // Restore from localStorage
+      const TP_LS_KEY = 'necromunda_tp_seek';
+      (function restoreTpSeek() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(TP_LS_KEY) || '{}');
+          const set = (id, val) => { const el = body.querySelector(id); if (!el) return; if (el.type==='checkbox') el.checked = !!val; else if (val != null) el.value = val; };
+          set('#tpSeek',       saved.seek);
+          set('#tpRoll2d6',    saved.roll2d6);
+          set('#tpLeader',     saved.leader);
+          set('#tpChampions',  saved.champions);
+          set('#tpRep',        saved.rep);
+          set('#tpMod',        saved.mod);
+          set('#tpOutlaw',     saved.outlaw);
+          set('#tpHideCommon', saved.hideCommon);
+          if (saved.seek) {
+            body.querySelector('#tpRollDisplay').style.display = '';
+            body.querySelector('#tpModGroup').style.display   = '';
+            body.querySelector('#tpOptGroup').style.display   = '';
+          }
+        } catch(e) {}
+      })();
+      function saveTpSeek() {
+        try {
+          const get = id => { const el = body.querySelector(id); return el ? (el.type==='checkbox' ? el.checked : el.value) : null; };
+          localStorage.setItem(TP_LS_KEY, JSON.stringify({
+            seek: get('#tpSeek'), roll2d6: get('#tpRoll2d6'), leader: get('#tpLeader'),
+            champions: get('#tpChampions'), rep: get('#tpRep'), mod: get('#tpMod'),
+            outlaw: get('#tpOutlaw'), hideCommon: get('#tpHideCommon'),
+          }));
+        } catch(e) {}
+      }
       function calcRoll() {
         const base   = Math.min(12, Math.max(2, parseInt(body.querySelector('#tpRoll2d6')?.value) || 2));
         const leader = body.querySelector('#tpLeader').checked ? 1 : 0;
@@ -2132,18 +2163,19 @@
         }).join('');
         body.querySelector('#tpRefSections').innerHTML = html || '<p style="color:var(--muted);font-size:13px">No items available.</p>';
       }
+      function onSeekChange() { saveTpSeek(); renderRefSections(); }
       renderRefSections();
       body.querySelector('#tpSeek').addEventListener('change', function() {
         const on = this.checked;
         body.querySelector('#tpRollDisplay').style.display = on ? '' : 'none';
         body.querySelector('#tpModGroup').style.display   = on ? '' : 'none';
         body.querySelector('#tpOptGroup').style.display   = on ? '' : 'none';
-        renderRefSections();
+        onSeekChange();
       });
       ['#tpRoll2d6','#tpChampions','#tpRep','#tpMod'].forEach(id =>
-        body.querySelector(id).addEventListener('input', renderRefSections));
+        body.querySelector(id).addEventListener('input', onSeekChange));
       ['#tpLeader','#tpOutlaw','#tpHideCommon'].forEach(id =>
-        body.querySelector(id).addEventListener('change', renderRefSections));
+        body.querySelector(id).addEventListener('change', onSeekChange));
     }
   }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
