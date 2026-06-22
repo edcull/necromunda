@@ -2050,6 +2050,10 @@
             <input type="number" id="tpRoll" min="0" max="20" value="8"
               style="width:54px;background:var(--surface);border:1px solid var(--edge);color:#eef6f1;border-radius:4px;font-size:13px;padding:3px 6px;text-align:center">
           </div>
+          <div class="tp-filter-group" style="margin-bottom:6px">
+            <input type="checkbox" id="tpOutlaw">
+            <span class="tp-filter-label" style="text-transform:none;letter-spacing:0;font-size:13px">Outlaw Gang (Illegal items up to full roll value)</span>
+          </div>
           <p style="font-size:11px;color:var(--tox-dim);margin:0;line-height:1.6">
             2D6, +2 if Gang Leader is making the trade, +1 for each Champion making the trade, +1 for every 10 Reputation
           </p>
@@ -2061,8 +2065,9 @@
         const seeking = body.querySelector('#tpSeek').checked;
         const rollRaw = body.querySelector('#tpRoll').value;
         const roll = rollRaw !== '' ? parseInt(rollRaw) : 8;
+        const outlaw = body.querySelector('#tpOutlaw').checked;
         const maxR = seeking ? roll : null;
-        const maxI = seeking ? Math.max(0, roll - 4) : null;
+        const maxI = seeking ? (outlaw ? roll : Math.max(0, roll - 4)) : null;
         const html = TP_SECTIONS.map(sec => {
           const items = _tpData[sec.key] || [];
           return renderTpRefSection(sec, items, maxR, maxI);
@@ -2075,6 +2080,7 @@
         renderRefSections();
       });
       body.querySelector('#tpRoll').addEventListener('input', renderRefSections);
+      body.querySelector('#tpOutlaw').addEventListener('change', renderRefSections);
     }
   }
   function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); }
