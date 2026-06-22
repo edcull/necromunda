@@ -2453,6 +2453,12 @@
       const rrc=el('div','stat-cell'); const rri=document.createElement('input'); rri.type='number'; rri.min=0; rri.max=9999; rri.step=1; rri.value=g.rating||0; rri.title='Gang Rating'; rri.placeholder='Rating';
       rri.addEventListener('input',()=>{ g.rating=Math.max(0,parseInt(rri.value)||0); scheduleSave(); renderLegend(); });
       rrc.appendChild(rri); row.appendChild(rrc);
+      const wc=el('div','stat-cell'); const wi=document.createElement('input'); wi.type='number'; wi.min=0; wi.max=99999; wi.step=1; wi.value=g.wealth!=null?g.wealth:1000; wi.title='Wealth'; wi.placeholder='Wealth';
+      wi.addEventListener('input',()=>{ g.wealth=Math.max(0,parseInt(wi.value)||0); scheduleSave(); renderLegend(); });
+      wc.appendChild(wi); row.appendChild(wc);
+      const oc=el('div','stat-cell'); const oi=document.createElement('input'); oi.type='number'; oi.min=0; oi.max=9999; oi.step=1; oi.value=g.outOfAction||0; oi.title='Enemies Out of Action'; oi.placeholder='OOA';
+      oi.addEventListener('input',()=>{ g.outOfAction=Math.max(0,parseInt(oi.value)||0); scheduleSave(); renderLegend(); });
+      oc.appendChild(oi); row.appendChild(oc);
       host.appendChild(row);
     });
   }
