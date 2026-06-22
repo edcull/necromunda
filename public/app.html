@@ -129,7 +129,7 @@
   .lbl .sub.owner{color:var(--c)}
 
   .legend{position:absolute;left:14px;bottom:14px;z-index:5;background:rgba(6,11,9,.74);border:1px solid var(--edge);
-    backdrop-filter:blur(2px);padding:9px 12px 10px;border-radius:2px;max-width:212px}
+    backdrop-filter:blur(2px);padding:9px 12px 10px;border-radius:2px;max-width:270px}
   .legend-toggle{display:none}
   .legend-body{}
   .legend h3{font-size:10px;letter-spacing:.24em;color:var(--tox);text-transform:uppercase;margin:0 0 7px}
@@ -730,7 +730,7 @@
       </div>
       <div class="legend-body">
         <h3>Gangs</h3>
-        <div class="legend-sort"><button id="sortTerr" class="on">Terr</button><button id="sortRep">Rep</button><button id="sortRat">Rating</button><button id="sortWeal">Wealth</button><button id="sortOoa">OOA</button></div>
+        <div class="legend-sort"><button id="sortTerr">Terr</button><button id="sortRep">Rep</button><button id="sortRat" class="on">Rating</button><button id="sortWeal">Wealth</button><button id="sortOoa">OOA</button></div>
         <ul id="legendList"></ul>
       </div>
     </div>
@@ -1500,7 +1500,7 @@
     renderLegend();
     const fn=document.getElementById('footnote'); if(fn){ const N=state.players; fn.textContent=`${4*N} holdings · ${N} hideouts · ${3*N} territory plots`; }
   }
-  let legendSort='terr';
+  let legendSort='rat';
   function renderLegend(){
     const ul=document.getElementById('legendList'); ul.innerHTML='';
     const rows=state.gangs.slice(0,state.players).map((g,i)=>({g,i,n:countHoldings(i),rep:Number(g.rep)||0,rat:Number(g.rating)||0,weal:g.wealth!=null?Number(g.wealth):1000,ooa:Number(g.outOfAction)||0}));
@@ -1545,26 +1545,26 @@
 
     const re=el('div','hstat');
     re.appendChild(el('span','hstat-label',repLabel));
-    const repInp=document.createElement('input'); repInp.type='number'; repInp.min='0'; repInp.value=ownerG.rep||0; repInp.className='hstat-inp hstat-rep';
-    repInp.addEventListener('change',()=>{ ownerG.rep=parseInt(repInp.value)||0; commit(); });
+    const repInp=document.createElement('input'); repInp.type='number'; repInp.min='0'; repInp.value=ownerG.rep||0; repInp.className='hstat-inp hstat-rep'; repInp.readOnly=!isArbitrator;
+    repInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.rep=parseInt(repInp.value)||0; commit(); });
     re.appendChild(repInp); stats.appendChild(re);
 
     const ra=el('div','hstat');
     ra.appendChild(el('span','hstat-label','Gang Rating'));
-    const ratInp=document.createElement('input'); ratInp.type='number'; ratInp.min='0'; ratInp.value=ownerG.rating||0; ratInp.className='hstat-inp hstat-rat';
-    ratInp.addEventListener('change',()=>{ ownerG.rating=parseInt(ratInp.value)||0; commit(); });
+    const ratInp=document.createElement('input'); ratInp.type='number'; ratInp.min='0'; ratInp.value=ownerG.rating||0; ratInp.className='hstat-inp hstat-rat'; ratInp.readOnly=!isArbitrator;
+    ratInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.rating=parseInt(ratInp.value)||0; commit(); });
     ra.appendChild(ratInp); stats.appendChild(ra);
 
     const rw=el('div','hstat');
     rw.appendChild(el('span','hstat-label','Wealth'));
-    const wealInp=document.createElement('input'); wealInp.type='number'; wealInp.min='0'; wealInp.value=ownerG.wealth!=null?ownerG.wealth:1000; wealInp.className='hstat-inp hstat-weal';
-    wealInp.addEventListener('change',()=>{ ownerG.wealth=parseInt(wealInp.value)||0; commit(); renderLegend(); });
+    const wealInp=document.createElement('input'); wealInp.type='number'; wealInp.min='0'; wealInp.value=ownerG.wealth!=null?ownerG.wealth:1000; wealInp.className='hstat-inp hstat-weal'; wealInp.readOnly=!isArbitrator;
+    wealInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.wealth=parseInt(wealInp.value)||0; commit(); renderLegend(); });
     rw.appendChild(wealInp); stats.appendChild(rw);
 
     const ro=el('div','hstat');
     ro.appendChild(el('span','hstat-label','Enemies OOA'));
-    const ooaInp=document.createElement('input'); ooaInp.type='number'; ooaInp.min='0'; ooaInp.value=ownerG.outOfAction||0; ooaInp.className='hstat-inp hstat-ooa';
-    ooaInp.addEventListener('change',()=>{ ownerG.outOfAction=parseInt(ooaInp.value)||0; commit(); renderLegend(); });
+    const ooaInp=document.createElement('input'); ooaInp.type='number'; ooaInp.min='0'; ooaInp.value=ownerG.outOfAction||0; ooaInp.className='hstat-inp hstat-ooa'; ooaInp.readOnly=!isArbitrator;
+    ooaInp.addEventListener('change',()=>{ if(!isArbitrator)return; ownerG.outOfAction=parseInt(ooaInp.value)||0; commit(); renderLegend(); });
     ro.appendChild(ooaInp); stats.appendChild(ro);
 
     wrap.appendChild(stats);
