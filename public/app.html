@@ -2984,6 +2984,8 @@
         const avail = getAvailableTerritories(phase, cg);
         if(avail.length===0 && phase==='occupation'){
           const o=document.createElement('option'); o.value=''; o.textContent='— No unclaimed territories —'; selTerr.appendChild(o);
+        } else if(avail.length===0 && phase==='takeover'){
+          const o=document.createElement('option'); o.value='special'; o.textContent='Special Scenario — no territory at stake'; selTerr.appendChild(o);
         } else {
           const prompt=document.createElement('option'); prompt.value=''; prompt.textContent='— Select Territory —'; selTerr.appendChild(prompt);
           avail.forEach(n=>{
@@ -3033,9 +3035,13 @@
       // Top row: territory + badge only
       const top=document.createElement('div'); top.className='ch-top';
       const terrDiv=document.createElement('div'); terrDiv.className='ch-territory';
-      const lbl=nodeLabel(ch.territory); const sub=nodeSubLabel(ch.territory);
-      terrDiv.textContent=lbl;
-      if(sub&&sub!==lbl){ const s=document.createElement('span'); s.className='ch-terr-sub'; s.textContent=sub; terrDiv.appendChild(s); }
+      if(ch.territory==='special'){
+        terrDiv.textContent='Special Scenario';
+      } else {
+        const lbl=nodeLabel(ch.territory); const sub=nodeSubLabel(ch.territory);
+        terrDiv.textContent=lbl;
+        if(sub&&sub!==lbl){ const s=document.createElement('span'); s.className='ch-terr-sub'; s.textContent=sub; terrDiv.appendChild(s); }
+      }
       const badge=document.createElement('span'); badge.className='ch-status-badge '+ch.status;
       badge.textContent=ch.status==='pending'?'Pending':ch.status==='refused'?'Refused':'Done';
       top.appendChild(terrDiv); top.appendChild(badge); card.appendChild(top);
@@ -3205,16 +3211,16 @@
 
       const result = rmMode==='refused' ? 'refused' : rmSelectedResult;
 
-      // Apply territory ownership change
-      const nodeData = state.nodes[ch.territory];
-      if(result==='refused'||result==='challenger'){
-        // challenger claims
-        nodeData.gang=ch.challenger;
-      } else if(result==='challenged'){
-        // defender holds — no change unless it was unclaimed
-        if(ch.challenged!==null&&ch.challenged!==undefined) nodeData.gang=ch.challenged;
+      // Apply territory ownership change (skipped for special scenario)
+      if(ch.territory !== 'special'){
+        const nodeData = state.nodes[ch.territory];
+        if(result==='refused'||result==='challenger'){
+          nodeData.gang=ch.challenger;
+        } else if(result==='challenged'){
+          if(ch.challenged!==null&&ch.challenged!==undefined) nodeData.gang=ch.challenged;
+        }
+        // draw: no change
       }
-      // draw: no change
 
       // Update gang stats
       rmStatGrid.querySelectorAll('.rm-stat-input').forEach(inp=>{
