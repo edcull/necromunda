@@ -1160,12 +1160,15 @@
     if(!isArbitrator) return;
     const { ok } = await apiFetch('PATCH', `/api/campaigns/${campaignId}/state`, { state });
     if(ok) flashSaved();
-    else { saveTag.textContent='Save failed'; saveTag.classList.remove('on'); }
+    else { updateSaveTag('error'); }
   }
   const saveTag=document.getElementById('saveTag');
-  function flashSaving(){ saveTag.textContent='Saving…'; saveTag.classList.remove('on'); }
-  function flashSaved(){ saveTag.textContent='✓ Saved'; saveTag.classList.add('on');
-    clearTimeout(flashSaved._t); flashSaved._t=setTimeout(()=>{saveTag.textContent='';saveTag.classList.remove('on');},1400); }
+  let _saveTagTimer;
+  function updateSaveTag(state){ clearTimeout(_saveTagTimer); saveTag.classList.toggle('on', state==='saved');
+    saveTag.textContent = state==='saving'?'Saving…': state==='saved'?'✓ Saved':'Save failed';
+    if(state==='saved') _saveTagTimer=setTimeout(()=>{saveTag.textContent='';saveTag.classList.remove('on');},1400); }
+  function flashSaving(){ updateSaveTag('saving'); }
+  function flashSaved(){ updateSaveTag('saved'); }
 
   /* ============ HELPERS ============ */
   const NEUTRAL='#6c7a74';
@@ -2321,20 +2324,18 @@
     });
   }
 
-  function closeModal(){ modal.classList.remove('show'); terrModal.classList.remove('show'); gangModal.classList.remove('show'); tradeModal.classList.remove('show'); triumphsModal.classList.remove('show'); }
-  document.getElementById('triumphsMapBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
-  document.getElementById('triumphsModalClose').addEventListener('click', () => triumphsModal.classList.remove('show'));
-  document.getElementById('triumphsModalDone').addEventListener('click', () => triumphsModal.classList.remove('show'));
-
+  const ALL_MODALS = [modal, terrModal, gangModal, tradeModal, triumphsModal];
+  function closeModal(){ ALL_MODALS.forEach(m => m.classList.remove('show')); }
   function closeConfigModal(){ closeModal(); renderArbModal(); arbModal.classList.add('show'); }
-  document.getElementById('terrModalClose').addEventListener('click', closeConfigModal);
-  document.getElementById('terrModalDone').addEventListener('click', closeConfigModal);
-  document.getElementById('gangModalClose').addEventListener('click', closeConfigModal);
-  document.getElementById('gangModalDone').addEventListener('click', closeConfigModal);
   let _tradeFromArb = false;
   function closeTrade(){ closeModal(); if(_tradeFromArb){ renderArbModal(); arbModal.classList.add('show'); } }
-  document.getElementById('tradeModalClose').addEventListener('click', closeTrade);
-  document.getElementById('tradeModalDone').addEventListener('click', closeTrade);
+  document.getElementById('triumphsMapBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
+  [['triumphsModalClose', () => triumphsModal.classList.remove('show')],
+   ['triumphsModalDone',  () => triumphsModal.classList.remove('show')],
+   ['terrModalClose', closeConfigModal], ['terrModalDone', closeConfigModal],
+   ['gangModalClose', closeConfigModal], ['gangModalDone', closeConfigModal],
+   ['tradeModalClose', closeTrade],      ['tradeModalDone', closeTrade],
+  ].forEach(([id, fn]) => document.getElementById(id).addEventListener('click', fn));
 
   function setPlayers(N){ N=clamp(N|0,3,8); if(N===state.players) return; state.players=N; buildWorld(N);
     const nn={}; LAYOUT.forEach(n=>{ nn[n.id]= state.nodes[n.id] || (n.type==='hideout'?{gang:null}:{terr:null,gang:null}); });
