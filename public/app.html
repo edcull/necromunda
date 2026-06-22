@@ -1511,7 +1511,7 @@
     renderLegend();
     const fn=document.getElementById('footnote'); if(fn){ const N=state.players; fn.textContent=`${4*N} holdings · ${N} hideouts · ${3*N} territory plots`; }
   }
-  let legendSort='terr';
+  let legendSort='rat';
   function renderLegend(){
     const ul=document.getElementById('legendList'); ul.innerHTML='';
     const rows=state.gangs.slice(0,state.players).map((g,i)=>({g,i,n:countHoldings(i),rep:Number(g.rep)||0,rat:Number(g.rating)||0,weal:g.wealth!=null?Number(g.wealth):1000,ooa:Number(g.outOfAction)||0}));
