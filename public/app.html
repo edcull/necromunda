@@ -1641,14 +1641,11 @@
   let _tpData = null;
 
   const TP_SECTIONS = [
+    { key: 'ammunition',         label: 'Ammunition' },
     { key: 'basicWeapons',       label: 'Basic Weapons' },
-    { key: 'basicWeaponAmmo',    label: 'Basic Weapon Ammo' },
     { key: 'pistols',            label: 'Pistols' },
-    { key: 'pistolAmmo',         label: 'Pistol Ammo' },
     { key: 'specialWeapons',     label: 'Special Weapons' },
-    { key: 'specialWeaponAmmo',  label: 'Special Weapon Ammo' },
     { key: 'heavyWeapons',       label: 'Heavy Weapons' },
-    { key: 'heavyWeaponAmmo',    label: 'Heavy Weapon Ammo' },
     { key: 'grenades',           label: 'Grenades' },
     { key: 'boobyTraps',         label: 'Booby Traps' },
     { key: 'closeCombatWeapons', label: 'Close Combat Weapons' },
@@ -1869,11 +1866,11 @@
         fetch('/necromunda/api/static/trading-post-equipment'),
       ]);
       const raw = { ...await wpnRes.json(), ...await eqpRes.json() };
-      // Normalise ammo entries: derive `name` from weapon + ammo fields
+      // Merge all ammo sections into a single 'ammunition' key, sorted alphabetically
       const AMMO_KEYS = ['basicWeaponAmmo','pistolAmmo','specialWeaponAmmo','heavyWeaponAmmo'];
-      AMMO_KEYS.forEach(k => {
-        if (raw[k]) raw[k] = raw[k].map(it => it.name ? it : { ...it, name: it.weapon + ' — ' + it.ammo });
-      });
+      const allAmmo = AMMO_KEYS.flatMap(k => (raw[k] || []).map(it => it.name ? it : { ...it, name: it.weapon + ' — ' + it.ammo }));
+      allAmmo.sort((a, b) => a.name.localeCompare(b.name));
+      raw.ammunition = allAmmo;
       _tpData = raw;
       renderTpBody(body);
     } catch (e) {
