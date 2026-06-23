@@ -705,7 +705,7 @@
       <span class="save-tag" id="saveTag"></span>
       <a href="/necromunda" class="btn ghost icon-btn" style="text-decoration:none" title="Back to campaigns" aria-label="Back to campaigns">⌂</a>
       <button class="btn ghost" id="tradingPostBtn">⚖ Trading Post</button>
-      <button class="btn icon-btn" id="arbitratorBtn" title="Arbitrator" aria-label="Arbitrator">⚔</button>
+      <button class="btn icon-btn" id="arbitratorBtn" title="Menu" aria-label="Menu">☰</button>
     </div>
   </div>
 
@@ -874,6 +874,55 @@
     </div>
     <div class="mbody" id="arbModalBody"></div>
     <div class="mfoot" id="arbModalFoot" style="justify-content:flex-end"></div>
+  </div>
+</div>
+
+<div class="modal" id="helpModal" aria-label="Help">
+  <div class="sheet" style="width:min(560px,100%);max-height:85vh;display:flex;flex-direction:column">
+    <div class="mhead">
+      <div><div class="kicker">Guide</div><h2>How to Use</h2></div>
+      <button class="x" id="helpModalClose">✕</button>
+    </div>
+    <div class="mbody" id="helpModalBody" style="overflow-y:auto;line-height:1.65;font-size:13px">
+      <h3 style="color:var(--tox);margin:0 0 6px">Map</h3>
+      <p style="margin:0 0 12px">Pan and pinch-zoom the hive map. Tap a territory or hideout node to open its detail card. Arbitrators can hold-drag nodes to reposition them. The minimap (bottom-right) shows your position in the full map.</p>
+
+      <h3 style="color:var(--tox);margin:0 0 6px">Territory Nodes</h3>
+      <p style="margin:0 0 12px">Tap any territory to see its name, boon, and current owner. Arbitrators can assign ownership, rename nodes, and reassign hideouts. Territories locked by a pending challenge show a lock indicator.</p>
+
+      <h3 style="color:var(--tox);margin:0 0 6px">Gang Legend</h3>
+      <p style="margin:0 0 12px">The legend (bottom-left) lists all gangs with territory count, rep, and rating. Sort by Territories, Rep, or Rating using the buttons. Tap a gang name to open their hideout panel. Collapse the legend with the arrow button.</p>
+
+      <h3 style="color:var(--tox);margin:0 0 6px">Hideout Panel</h3>
+      <p style="margin:0 0 12px">Shows a gang's Rating, Wealth, Rep, and Kills as stat cards. Arbitrators can edit all values inline. Territory boons in effect are listed below the stats, with enhanced boons highlighted for matching gang types. Spyrer gangs show Terror Level and a Base Camp boon instead.</p>
+
+      <h3 style="color:var(--tox);margin:0 0 6px">Cycle Panel</h3>
+      <p style="margin:0 0 12px">Access via the <strong>Cycle</strong> button on the map. Tracks all 7 phases (Occupation ×3, Downtime, Takeover ×3). Navigate between cycles with the arrows. Arbitrators can advance to the next cycle or roll back to a previous one.</p>
+
+      <h3 style="color:var(--tox);margin:0 0 6px">Challenges</h3>
+      <p style="margin:0 0 4px">Arbitrators create challenges in the active cycle. For each challenge, select:</p>
+      <ul style="margin:0 0 12px;padding-left:18px">
+        <li><strong>Challenger</strong> — the gang issuing the challenge (each gang challenges once per cycle)</li>
+        <li><strong>Challenged Gang</strong> — the defending gang</li>
+        <li><strong>Staked Territory</strong> — the territory at stake; or <em>Rescue Mission</em> if the challenger has a captured fighter; or <em>Special Scenario</em> if the defender holds no territories</li>
+      </ul>
+      <p style="margin:0 0 12px">Record results (Win / Draw / Refused) and update gang stats (Rating, Wealth, Rep, Kills) on the result screen. Territory ownership updates automatically.</p>
+
+      <h3 style="color:var(--tox);margin:0 0 6px">Simultaneous Games</h3>
+      <p style="margin:0 0 12px">Enable in Campaign Configuration to group challenges into sets played at the same time. Set the batch size (2–8). Gangs already committed to the current set are locked from new challenges. A gang challenged in one set must challenge before they can be challenged again. Once all gangs have issued their challenge, additional games are unrestricted.</p>
+
+      <h3 style="color:var(--tox);margin:0 0 6px">Trading Post</h3>
+      <p style="margin:0 0 12px">Access via the <strong>Trading Post</strong> button. Browse weapons, armour, equipment, and ammunition. Use the Seek Rare/Illegal tab to roll for availability with modifiers and gang-type filters. Arbitrators can override availability levels and add custom items.</p>
+
+      <h3 style="color:var(--tox);margin:0 0 6px">Triumphs</h3>
+      <p style="margin:0 0 12px">Access via the <strong>🏆</strong> button on the map. Five triumphs are auto-calculated from campaign state — Dominator (territories), Slaughterer (kills), Creditor (wealth), Warmonger (battles fought), Powerbroker (rep). The top 3 gangs per triumph are shown.</p>
+
+      <h3 style="color:var(--tox);margin:0 0 6px">Campaign Configuration</h3>
+      <p style="margin:0 0 0">Arbitrators access all configuration via the <strong>☰</strong> menu — campaign name, sector, player count, territory count, gang details (name, icon, colour, type, starting stats), and simultaneous games settings.</p>
+    </div>
+    <div class="mfoot" style="justify-content:flex-end">
+      <button class="btn" id="helpModalDone">Done</button>
+    </div>
   </div>
 </div>
 
@@ -2350,7 +2399,12 @@
     });
   }
 
-  const ALL_MODALS = [modal, terrModal, gangModal, tradeModal, triumphsModal];
+  const helpModal = document.getElementById('helpModal');
+  document.getElementById('helpModalClose').addEventListener('click', () => helpModal.classList.remove('show'));
+  document.getElementById('helpModalDone').addEventListener('click', () => helpModal.classList.remove('show'));
+  helpModal.addEventListener('click', e => { if(e.target === helpModal) helpModal.classList.remove('show'); });
+
+  const ALL_MODALS = [modal, terrModal, gangModal, tradeModal, triumphsModal, helpModal];
   function closeModal(){ ALL_MODALS.forEach(m => m.classList.remove('show')); }
   function closeConfigModal(){ closeModal(); renderArbModal(); arbModal.classList.add('show'); }
   let _tradeFromArb = false;
@@ -2482,6 +2536,7 @@
       who.style.cssText = 'font-size:13px;color:var(--tox);letter-spacing:.06em;margin-bottom:16px';
       body.appendChild(who);
       const cfgBtns = [
+        ['? Help', () => { arbModal.classList.remove('show'); helpModal.classList.add('show'); }],
         ['⚙ Campaign Configuration', openSetupModal],
         ['⬡ Territory Configuration', openTerrModal],
         ['☠ Gang Configuration',      openGangModal],
