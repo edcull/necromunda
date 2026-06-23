@@ -376,6 +376,25 @@
     transition: border-color .12s;
   }
   .cp-add-btn:hover { border-color: var(--tox); }
+  .help-section { border-bottom: 1px solid var(--edge-soft); }
+  .help-section:last-child { border-bottom: none; }
+  .help-hdr {
+    list-style: none; display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 20px; font-family: 'Oswald', sans-serif; font-size: 13px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--tox);
+    cursor: pointer; user-select: none;
+  }
+  .help-hdr::-webkit-details-marker { display: none; }
+  .help-hdr::after { content: '▸'; font-size: 11px; color: var(--muted); transition: transform .18s; }
+  details[open] > .help-hdr::after { transform: rotate(90deg); }
+  .help-body {
+    padding: 0 20px 16px; font-size: 13px; line-height: 1.65; color: var(--dim);
+  }
+  .help-body p { margin: 0 0 10px; }
+  .help-body p:last-child { margin-bottom: 0; }
+  .help-body ul { margin: 0 0 10px; padding-left: 18px; }
+  .help-body li { margin-bottom: 4px; }
+  .help-body kbd { background: var(--edge); border: 1px solid var(--edge-soft); border-radius: 3px; padding: 1px 5px; font-size: 11px; }
   .ch-batch-hdr {
     font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
     color: var(--muted); padding: 10px 0 4px; border-top: 1px solid var(--edge-soft);
@@ -878,47 +897,121 @@
 </div>
 
 <div class="modal" id="helpModal" aria-label="Help">
-  <div class="sheet" style="width:min(560px,100%);max-height:85vh;display:flex;flex-direction:column">
+  <div class="sheet" style="width:min(580px,100%);max-height:90vh;display:flex;flex-direction:column">
     <div class="mhead">
       <div><div class="kicker">Guide</div><h2>How to Use</h2></div>
       <button class="x" id="helpModalClose">✕</button>
     </div>
-    <div class="mbody" id="helpModalBody" style="overflow-y:auto;line-height:1.65;font-size:13px">
-      <h3 style="color:var(--tox);margin:0 0 6px">Map</h3>
-      <p style="margin:0 0 12px">Pan and pinch-zoom the hive map. Tap a territory or hideout node to open its detail card. Arbitrators can hold-drag nodes to reposition them. The minimap (bottom-right) shows your position in the full map.</p>
-
-      <h3 style="color:var(--tox);margin:0 0 6px">Territory Nodes</h3>
-      <p style="margin:0 0 12px">Tap any territory to see its name, boon, and current owner. Arbitrators can assign ownership, rename nodes, and reassign hideouts. Territories locked by a pending challenge show a lock indicator.</p>
-
-      <h3 style="color:var(--tox);margin:0 0 6px">Gang Legend</h3>
-      <p style="margin:0 0 12px">The legend (bottom-left) lists all gangs with territory count, rep, and rating. Sort by Territories, Rep, or Rating using the buttons. Tap a gang name to open their hideout panel. Collapse the legend with the arrow button.</p>
-
-      <h3 style="color:var(--tox);margin:0 0 6px">Hideout Panel</h3>
-      <p style="margin:0 0 12px">Shows a gang's Rating, Wealth, Rep, and Kills as stat cards. Arbitrators can edit all values inline. Territory boons in effect are listed below the stats, with enhanced boons highlighted for matching gang types. Spyrer gangs show Terror Level and a Base Camp boon instead.</p>
-
-      <h3 style="color:var(--tox);margin:0 0 6px">Cycle Panel</h3>
-      <p style="margin:0 0 12px">Access via the <strong>Cycle</strong> button on the map. Tracks all 7 phases (Occupation ×3, Downtime, Takeover ×3). Navigate between cycles with the arrows. Arbitrators can advance to the next cycle or roll back to a previous one.</p>
-
-      <h3 style="color:var(--tox);margin:0 0 6px">Challenges</h3>
-      <p style="margin:0 0 4px">Arbitrators create challenges in the active cycle. For each challenge, select:</p>
-      <ul style="margin:0 0 12px;padding-left:18px">
-        <li><strong>Challenger</strong> — the gang issuing the challenge (each gang challenges once per cycle)</li>
-        <li><strong>Challenged Gang</strong> — the defending gang</li>
-        <li><strong>Staked Territory</strong> — the territory at stake; or <em>Rescue Mission</em> if the challenger has a captured fighter; or <em>Special Scenario</em> if the defender holds no territories</li>
-      </ul>
-      <p style="margin:0 0 12px">Record results (Win / Draw / Refused) and update gang stats (Rating, Wealth, Rep, Kills) on the result screen. Territory ownership updates automatically.</p>
-
-      <h3 style="color:var(--tox);margin:0 0 6px">Simultaneous Games</h3>
-      <p style="margin:0 0 12px">Enable in Campaign Configuration to group challenges into sets played at the same time. Set the batch size (2–8). Gangs already committed to the current set are locked from new challenges. A gang challenged in one set must challenge before they can be challenged again. Once all gangs have issued their challenge, additional games are unrestricted.</p>
-
-      <h3 style="color:var(--tox);margin:0 0 6px">Trading Post</h3>
-      <p style="margin:0 0 12px">Access via the <strong>Trading Post</strong> button. Browse weapons, armour, equipment, and ammunition. Use the Seek Rare/Illegal tab to roll for availability with modifiers and gang-type filters. Arbitrators can override availability levels and add custom items.</p>
-
-      <h3 style="color:var(--tox);margin:0 0 6px">Triumphs</h3>
-      <p style="margin:0 0 12px">Access via the <strong>🏆</strong> button on the map. Five triumphs are auto-calculated from campaign state — Dominator (territories), Slaughterer (kills), Creditor (wealth), Warmonger (battles fought), Powerbroker (rep). The top 3 gangs per triumph are shown.</p>
-
-      <h3 style="color:var(--tox);margin:0 0 6px">Campaign Configuration</h3>
-      <p style="margin:0 0 0">Arbitrators access all configuration via the <strong>☰</strong> menu — campaign name, sector, player count, territory count, gang details (name, icon, colour, type, starting stats), and simultaneous games settings.</p>
+    <div class="mbody" id="helpModalBody" style="overflow-y:auto;padding:0">
+      <details class="help-section" open>
+        <summary class="help-hdr">Map &amp; Navigation</summary>
+        <div class="help-body">
+          <p><strong>Pan &amp; zoom</strong> — drag to pan; pinch or scroll to zoom. On desktop, hold <kbd>Shift</kbd> and drag to zoom.</p>
+          <p><strong>Minimap</strong> — the small HUD (bottom-right) shows the full map. Tap it to jump to any area.</p>
+          <p><strong>Nodes</strong> — territory nodes are hexagonal; hideout nodes are smaller circles. Tap any node to open its detail card.</p>
+          <p><strong>Repositioning (arbitrator)</strong> — hold-press a node for ~0.5s until it lifts, then drag it to a new position. Release to drop.</p>
+          <p><strong>Node colours</strong> — nodes are tinted by their controlling gang's colour. Uncontrolled territories are neutral. A lock icon indicates a pending challenge.</p>
+        </div>
+      </details>
+      <details class="help-section">
+        <summary class="help-hdr">Gang Legend</summary>
+        <div class="help-body">
+          <p>The collapsible legend (bottom-left) lists all gangs ranked by their current sort key. Tap the <strong>◀</strong> arrow to collapse it.</p>
+          <p><strong>Sort options</strong> — Territories (default), Rep, or Rating. Click the sort buttons to switch.</p>
+          <p><strong>Gang names</strong> are clickable links that open the gang's Hideout panel directly.</p>
+          <p>Each row shows the gang's colour dot, name, and their count for the active sort (territories held, rep, or rating).</p>
+        </div>
+      </details>
+      <details class="help-section">
+        <summary class="help-hdr">Hideout Panel</summary>
+        <div class="help-body">
+          <p>Open by tapping a gang's hideout node on the map, or clicking a gang name in the legend.</p>
+          <p><strong>Stat cards</strong> — Rating, Wealth, Rep, and Kills are shown as cards. Arbitrators can tap any value to edit it inline.</p>
+          <p><strong>Territory boons</strong> — all boons from territories the gang controls are listed. Boons that match the gang's house type are highlighted as enhanced boons.</p>
+          <p><strong>Spyrer gangs</strong> — instead of territory boons, Spyrers show a Terror Level stat and their Base Camp boon.</p>
+          <p><strong>Territory list</strong> — controlled territories are listed with a link back to their map node.</p>
+        </div>
+      </details>
+      <details class="help-section">
+        <summary class="help-hdr">Cycle Panel</summary>
+        <div class="help-body">
+          <p>Open via the <strong>Cycle</strong> button (top-left of map). Tracks the full Dominion Campaign — 7 phases total:</p>
+          <ul>
+            <li><strong>Occupation ×3</strong> — gangs fight for unclaimed territories</li>
+            <li><strong>Downtime</strong> — gangs recover, trade, and regroup</li>
+            <li><strong>Takeover ×3</strong> — gangs challenge each other for owned territories</li>
+          </ul>
+          <p><strong>Navigate</strong> — use the ◀ ▶ arrows to view previous cycles. Only the active cycle allows new challenges.</p>
+          <p><strong>Advance (arbitrator)</strong> — once ready, click <em>Advance</em> to move to the next phase. The button becomes <em>Roll Back</em> when viewing a past cycle.</p>
+        </div>
+      </details>
+      <details class="help-section">
+        <summary class="help-hdr">Challenges</summary>
+        <div class="help-body">
+          <p>Arbitrators add challenges via <strong>+ New Challenge</strong> in the active cycle panel.</p>
+          <p><strong>Challenger</strong> — the gang issuing the challenge. Each gang may only challenge once per cycle (until all have challenged, after which additional games are unrestricted).</p>
+          <p><strong>Challenged Gang</strong> — the defending gang. A gang that was challenged in a previous set must issue their own challenge before they can be challenged again.</p>
+          <p><strong>Staked Territory</strong> options:</p>
+          <ul>
+            <li><em>Normal</em> — a territory controlled by the defender is put at stake; winner claims it</li>
+            <li><em>Rescue Mission</em> — always available; used when the challenger has a captured fighter to rescue; no territory changes hands</li>
+            <li><em>Special Scenario</em> — appears when the defender holds no territories; no ownership change</li>
+          </ul>
+          <p><strong>Occupation phase</strong> — staked territory must be unclaimed. The defender is optional (leave blank for an unclaimed node).</p>
+          <p><strong>Recording results</strong> — click the result button on a pending challenge card to open the result screen. Select Win (challenger or defender), Draw, or Refused. Update Rating, Wealth, Rep, and Kills for both gangs. Territory ownership updates automatically.</p>
+          <p><strong>Deleting</strong> — pending challenges can be deleted (trash icon) in the active cycle only.</p>
+        </div>
+      </details>
+      <details class="help-section">
+        <summary class="help-hdr">Simultaneous Games</summary>
+        <div class="help-body">
+          <p>Enable in <strong>Campaign Configuration → Simultaneous Games</strong>. Set the batch size (2–8 games per set).</p>
+          <p>When active, challenges are grouped into numbered sets (Set 1, Set 2, …). All games in a set are played at the same time before the next set begins.</p>
+          <p><strong>Constraints within a set:</strong></p>
+          <ul>
+            <li>A gang already in the current set (as challenger or challenged) cannot appear in another challenge in the same set</li>
+            <li>A gang challenged in a previous set who hasn't yet issued their own challenge must be a challenger — they cannot be challenged again until they've done so</li>
+          </ul>
+          <p><strong>Additional games</strong> — once every gang has issued their challenge this cycle, all constraints are lifted and any gang may challenge any other freely.</p>
+          <p>Challenge cards are grouped by set with divider labels. An <em>Additional Games</em> section appears below.</p>
+        </div>
+      </details>
+      <details class="help-section">
+        <summary class="help-hdr">Trading Post</summary>
+        <div class="help-body">
+          <p>Access via the <strong>⚖ Trading Post</strong> button in the top bar.</p>
+          <p><strong>Browse tab</strong> — full Dominion Campaign trading post catalogue organised by category: weapons, armour, wargear, and ammunition. Each item shows its cost and rarity.</p>
+          <p><strong>Seek Rare / Illegal tab</strong> — roll for availability of rare or illegal items. Set your base dice, modifiers, and gang type to filter relevant items. The tracker shows which items become available at each roll threshold.</p>
+          <p><strong>Arbitrator overrides</strong> — arbitrators can change any item's availability level (Common / Rare / Illegal / Unavailable) and add fully custom items with a name, cost, and availability.</p>
+        </div>
+      </details>
+      <details class="help-section">
+        <summary class="help-hdr">Triumphs</summary>
+        <div class="help-body">
+          <p>Access via the <strong>🏆</strong> button (top-left of map, next to the Cycle button).</p>
+          <p>Five triumph cards are auto-calculated live from campaign state. The top 3 gangs for each triumph are displayed:</p>
+          <ul>
+            <li><strong>Dominator</strong> — most territories controlled at campaign end</li>
+            <li><strong>Slaughterer</strong> — most enemy fighters taken Out of Action</li>
+            <li><strong>Creditor</strong> — highest Wealth at campaign end</li>
+            <li><strong>Warmonger</strong> — most battles fought across the whole campaign</li>
+            <li><strong>Powerbroker</strong> — highest Reputation at campaign end</li>
+          </ul>
+          <p>Triumphs update in real time as challenges are recorded and stats change.</p>
+        </div>
+      </details>
+      <details class="help-section">
+        <summary class="help-hdr">Campaign Configuration</summary>
+        <div class="help-body">
+          <p>Arbitrators access all configuration via the <strong>☰</strong> menu (top-right).</p>
+          <p><strong>Campaign Configuration</strong> — set the campaign name, sector name, number of players (2–8), and number of territories in play.</p>
+          <p><strong>Simultaneous Games</strong> — toggle on/off and set the batch size (2–8). See the Simultaneous Games section above.</p>
+          <p><strong>Territory Configuration</strong> — rename any territory or hideout node inline directly on the map, or via the territory detail card.</p>
+          <p><strong>Gang Configuration</strong> — set each gang's name, icon, colour, house/gang type, and starting stats (Rating, Wealth, Rep, Kills). On mobile, fields stack vertically with labels.</p>
+          <p><strong>Trading Post Configuration</strong> — override item availability and add custom items (see Trading Post above).</p>
+          <p><strong>Delete Campaign</strong> — permanently removes the campaign and all its data. This cannot be undone.</p>
+        </div>
+      </details>
     </div>
     <div class="mfoot" style="justify-content:flex-end">
       <button class="btn" id="helpModalDone">Done</button>
