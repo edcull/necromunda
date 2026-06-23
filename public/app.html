@@ -3027,7 +3027,7 @@
       if(cd.phase!=='downtime'){
         const isRandom = cd.id==='occ-1';
         const orderHdr=document.createElement('div'); orderHdr.className='cp-section-head';
-        orderHdr.innerHTML='<span>Challenge Order ('+(isRandom?'Random':'Rating Low → High')+')</span>';
+        orderHdr.innerHTML='<span>Challenge Order ('+(isRandom?'Random':'Rating Low → High')+')</span><span style="font-size:10px;color:var(--muted);font-family:\'Oswald\';letter-spacing:.06em">Gang Rating</span>';
         cpBody.appendChild(orderHdr);
         const orderList=document.createElement('div');
         orderList.style.cssText='display:flex;flex-direction:column;gap:4px;margin-bottom:10px';
@@ -3048,7 +3048,7 @@
           const name=document.createElement('span'); name.style.flex='1'; name.textContent=g.name;
           const right=document.createElement('span');
           right.style.cssText='font-family:\'Oswald\';font-size:11px;letter-spacing:.06em;color:'+(done?'var(--muted)':'var(--tox)');
-          right.textContent=done?'✓ done':(g.rating||0)+'pts';
+          right.textContent=done?'✓ done':String(g.rating||0);
           row.appendChild(dot); row.appendChild(name); row.appendChild(right);
           orderList.appendChild(row);
         });
