@@ -750,7 +750,7 @@
           <span class="cb-phase" id="cycleBtnPhase">Phase</span>
           <span class="cb-label" id="cycleBtnLabel">Cycles</span>
         </button>
-        <button id="triumphsMapBtn" aria-label="Triumphs" title="Triumphs">🏆</button>
+        <button id="triumphsMapBtn" aria-label="Triumphs" title="Triumphs" style="display:none">🏆</button>
       </div>
       <div id="minimap">
         <div id="minimapView"></div>
@@ -835,6 +835,25 @@
             </label>
             <input type="number" id="inSimCount" min="2" max="8" step="1" style="width:60px">
             <span style="font-size:11px;color:var(--muted)">games per round</span>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <label class="lbl-sm">Feature Flags</label>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text)">
+              <input type="checkbox" id="inFeatTriumphs"> Triumphs
+            </label>
+            <div id="triumphSubFlags" style="display:flex;flex-direction:column;gap:6px;padding-left:18px">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text)">
+                <input type="checkbox" id="inFeatRep"> Gang Reputation
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text)">
+                <input type="checkbox" id="inFeatWealth"> Gang Wealth
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text)">
+                <input type="checkbox" id="inFeatKills"> Gang Kills
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -1287,7 +1306,7 @@
   function defaultState(){
     const nodes={};
     LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null,label:null}:{terr:null,gang:null,label:null}; });
-    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]},simultaneousGames:{enabled:false,count:4}};
+    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]},simultaneousGames:{enabled:false,count:4},features:{triumphs:true,rep:true,wealth:true,kills:true}};
   }
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
   function mergeState(loaded){
@@ -1319,6 +1338,9 @@
     s.triumphs = (loaded.triumphs && typeof loaded.triumphs === 'object') ? loaded.triumphs : {};
     const sg = (loaded.simultaneousGames && typeof loaded.simultaneousGames === 'object') ? loaded.simultaneousGames : {};
     s.simultaneousGames = { enabled: sg.enabled === true, count: Math.max(2, Math.min(8, parseInt(sg.count)||4)) };
+    const ft = (loaded.features && typeof loaded.features === 'object') ? loaded.features : {};
+    const d2 = defaultState();
+    s.features = { triumphs: ft.triumphs !== false, rep: ft.rep !== false, wealth: ft.wealth !== false, kills: ft.kills !== false };
     return s;
   }
 
@@ -1676,6 +1698,8 @@
       attachDrag(btn,n.id);
       nodesWrap.appendChild(btn);
     });
+    document.getElementById('triumphsMapBtn').style.display=state.features.triumphs?'':'none';
+    document.getElementById('sortRep').style.display=state.features.rep?'':'none';
     renderLegend();
     const fn=document.getElementById('footnote'); if(fn){ const N=state.players; fn.textContent=`${4*N} holdings · ${N} hideouts · ${3*N} territory plots`; }
   }
@@ -1692,7 +1716,7 @@
       const li=el('li'); const sw=el('span','swatch',g.icon); sw.style.background=g.color;
       const nm=el('span','legend-name',g.name); li.appendChild(sw); li.appendChild(nm);
       li.appendChild(el('span','ct',n));
-      li.appendChild(el('span','ct-rep',rep));
+      if(state.features.rep) li.appendChild(el('span','ct-rep',rep));
       li.appendChild(el('span','ct-rat',rat));
       ul.appendChild(li);
     });
@@ -1732,10 +1756,10 @@
       }
       return card;
     }
-    stats.appendChild(hstatCard(repLabel, ownerG.rep||0, 'hstat-rep', v=>{ ownerG.rep=v; commit(); }));
+    if(state.features.rep) stats.appendChild(hstatCard(repLabel, ownerG.rep||0, 'hstat-rep', v=>{ ownerG.rep=v; commit(); }));
     stats.appendChild(hstatCard('Rating', ownerG.rating||0, 'hstat-rat', v=>{ ownerG.rating=v; commit(); }));
-    stats.appendChild(hstatCard('Wealth', ownerG.wealth!=null?ownerG.wealth:1000, 'hstat-weal', v=>{ ownerG.wealth=v; commit(); renderLegend(); }));
-    stats.appendChild(hstatCard('Kills', ownerG.outOfAction||0, 'hstat-ooa', v=>{ ownerG.outOfAction=v; commit(); renderLegend(); }));
+    if(state.features.wealth) stats.appendChild(hstatCard('Wealth', ownerG.wealth!=null?ownerG.wealth:1000, 'hstat-weal', v=>{ ownerG.wealth=v; commit(); renderLegend(); }));
+    if(state.features.kills) stats.appendChild(hstatCard('Kills', ownerG.outOfAction||0, 'hstat-ooa', v=>{ ownerG.outOfAction=v; commit(); renderLegend(); }));
 
     wrap.appendChild(stats);
 
@@ -1913,6 +1937,12 @@
     document.getElementById('inCampaign').value=state.campaign;
     document.getElementById('inSimEnabled').checked=state.simultaneousGames.enabled;
     document.getElementById('inSimCount').value=state.simultaneousGames.count;
+    const ft=state.features;
+    document.getElementById('inFeatTriumphs').checked=ft.triumphs;
+    document.getElementById('inFeatRep').checked=ft.rep;
+    document.getElementById('inFeatWealth').checked=ft.wealth;
+    document.getElementById('inFeatKills').checked=ft.kills;
+    document.getElementById('triumphSubFlags').style.opacity=ft.triumphs?'1':'0.4';
     buildPlayerSeg(); modal.classList.add('show');
   }
   function openTerrModal(){ buildTerrPool(); terrModal.classList.add('show'); }
@@ -2468,11 +2498,11 @@
     }
   }
   const TRIUMPHS = [
-    { key: 'dominator',   label: 'Dominator',   criteria: 'Most Territories at the end of the campaign.',                                                              auto: gi => Object.values(state.nodes).filter(n => n.gang === gi && n.terr).length },
-    { key: 'slaughterer', label: 'Slaughterer',  criteria: 'Most enemy fighters taken Out of Action and vehicles Wrecked across the whole campaign.',                   auto: gi => state.gangs[gi]?.outOfAction || 0 },
-    { key: 'creditor',    label: 'Creditor',     criteria: 'Largest Wealth at the end of the campaign.',                                                               auto: gi => state.gangs[gi]?.wealth ?? 1000 },
-    { key: 'warmonger',   label: 'Warmonger',    criteria: 'Most battles fought across the whole campaign.',                                                            auto: gi => state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status!=='pending'&&(Number(ch.challenger)===gi||Number(ch.challenged)===gi)).length },
-    { key: 'powerbroker', label: 'Powerbroker',  criteria: 'Highest Reputation at the end of the campaign.',                                                           auto: gi => state.gangs[gi]?.rep || 0 },
+    { key: 'dominator',   label: 'Dominator',   criteria: 'Most Territories at the end of the campaign.',                                                              auto: gi => Object.values(state.nodes).filter(n => n.gang === gi && n.terr).length, feat: null },
+    { key: 'slaughterer', label: 'Slaughterer',  criteria: 'Most enemy fighters taken Out of Action and vehicles Wrecked across the whole campaign.',                   auto: gi => state.gangs[gi]?.outOfAction || 0, feat: 'kills' },
+    { key: 'creditor',    label: 'Creditor',     criteria: 'Largest Wealth at the end of the campaign.',                                                               auto: gi => state.gangs[gi]?.wealth ?? 1000, feat: 'wealth' },
+    { key: 'warmonger',   label: 'Warmonger',    criteria: 'Most battles fought across the whole campaign.',                                                            auto: gi => state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status!=='pending'&&(Number(ch.challenger)===gi||Number(ch.challenged)===gi)).length, feat: null },
+    { key: 'powerbroker', label: 'Powerbroker',  criteria: 'Highest Reputation at the end of the campaign.',                                                           auto: gi => state.gangs[gi]?.rep || 0, feat: 'rep' },
   ];
 
   const triumphsModal = document.getElementById('triumphsModal');
@@ -2482,7 +2512,7 @@
     if (!body) return;
     if (!state.triumphs) state.triumphs = {};
     body.innerHTML = '';
-    TRIUMPHS.forEach(t => {
+    TRIUMPHS.filter(t => t.feat === null || state.features[t.feat]).forEach(t => {
       const card = el('div', 'triumph-card');
       card.appendChild(el('div', 'triumph-name', t.label));
       card.appendChild(el('div', 'triumph-criteria', typeof t.criteria === 'function' ? t.criteria() : t.criteria));
@@ -2568,13 +2598,22 @@
   document.getElementById('inCampaign').addEventListener('input',e=>{ state.campaign=e.target.value||'Campaign'; scheduleSave(); render(); });
   document.getElementById('inSimEnabled').addEventListener('change',e=>{ state.simultaneousGames.enabled=e.target.checked; scheduleSave(); });
   document.getElementById('inSimCount').addEventListener('input',e=>{ state.simultaneousGames.count=Math.max(2,Math.min(8,parseInt(e.target.value)||4)); scheduleSave(); });
+  document.getElementById('inFeatTriumphs').addEventListener('change',e=>{
+    state.features.triumphs=e.target.checked;
+    if(e.target.checked){ state.features.rep=true; state.features.wealth=true; state.features.kills=true; document.getElementById('inFeatRep').checked=true; document.getElementById('inFeatWealth').checked=true; document.getElementById('inFeatKills').checked=true; }
+    document.getElementById('triumphSubFlags').style.opacity=e.target.checked?'1':'0.4';
+    scheduleSave(); render();
+  });
+  document.getElementById('inFeatRep').addEventListener('change',e=>{ state.features.rep=e.target.checked; scheduleSave(); render(); });
+  document.getElementById('inFeatWealth').addEventListener('change',e=>{ state.features.wealth=e.target.checked; scheduleSave(); render(); });
+  document.getElementById('inFeatKills').addEventListener('change',e=>{ state.features.kills=e.target.checked; scheduleSave(); render(); });
 
   const GANG_TYPES = ['Cawdor','Delaque','Escher','Goliath','Orlock','Van Saar','Palanite Enforcers','Badzone Enforcers','Corpse-Grinder Cult','Chaos Cult','Genestealer Cult','Venator','Outcasts','Slave Ogryns','Spyrers','Ash Waste Nomads','Ironhead Squat Prospectors'];
 
   function buildGangRows(){
     const host=document.getElementById('gangRows'); host.innerHTML='';
     const hdr=el('div','gang-row gang-row-hdr');
-    ['#','','','Name','Type','Rep','Rating','Wealth','Kills'].forEach(t=>{ hdr.appendChild(el('span','gang-hdr-cell',t)); });
+    ['#','','','Name','Type',...(state.features.rep?['Rep']:[]),'Rating',...(state.features.wealth?['Wealth']:[]),...(state.features.kills?['Kills']:[])].forEach(t=>{ hdr.appendChild(el('span','gang-hdr-cell',t)); });
     host.appendChild(hdr);
     function statCell(lbl,inp){ const c=el('div','stat-cell'); c.appendChild(el('span','stat-cell-lbl',lbl)); c.appendChild(inp); return c; }
     state.gangs.slice(0,state.players).forEach((g,i)=>{
@@ -2603,7 +2642,8 @@
       gs.value=g.type||'';
       gs.addEventListener('change',()=>{ g.type=gs.value||null; scheduleSave(); });
       gt.appendChild(gs); row.appendChild(gt);
-      [{label:'Rep',field:'rep',max:99,val:g.rep||0},{label:'Rating',field:'rating',max:9999,val:g.rating||0},{label:'Wealth',field:'wealth',max:99999,val:g.wealth!=null?g.wealth:1000},{label:'Kills',field:'outOfAction',max:9999,val:g.outOfAction||0}]
+      [{label:'Rep',field:'rep',max:99,val:g.rep||0,feat:'rep'},{label:'Rating',field:'rating',max:9999,val:g.rating||0,feat:null},{label:'Wealth',field:'wealth',max:99999,val:g.wealth!=null?g.wealth:1000,feat:'wealth'},{label:'Kills',field:'outOfAction',max:9999,val:g.outOfAction||0,feat:'kills'}]
+        .filter(({feat})=>feat===null||state.features[feat])
         .forEach(({label,field,max,val})=>{
           const inp=document.createElement('input'); inp.type='number'; inp.min=0; inp.max=max; inp.step=1; inp.value=val; inp.title=label; inp.placeholder=label;
           inp.addEventListener('input',()=>{ g[field]=Math.max(0,parseInt(inp.value)||0); scheduleSave(); renderLegend(); });
@@ -3358,7 +3398,7 @@
         col.appendChild(h4);
 
         const g=state.gangs[gi];
-        [{field:'rating',label:'Rating'},{field:'wealth',label:'Wealth'},{field:'rep',label:'Reputation'},{field:'outOfAction',label:'Kills'}].forEach(({field,label})=>{
+        [{field:'rating',label:'Rating',feat:null},{field:'wealth',label:'Wealth',feat:'wealth'},{field:'rep',label:'Reputation',feat:'rep'},{field:'outOfAction',label:'Kills',feat:'kills'}].filter(({feat})=>feat===null||state.features[feat]).forEach(({field,label})=>{
           const row=document.createElement('div'); row.className='rm-stat-row';
           const lbl=document.createElement('span'); lbl.className='rm-stat-label'; lbl.textContent=label;
           const inp=document.createElement('input'); inp.type='number'; inp.className='rm-stat-input';
