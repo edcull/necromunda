@@ -1666,7 +1666,7 @@
       lbl.appendChild(sb);
 
       btn.appendChild(mod); btn.appendChild(lbl);
-      if(n.type==='territory' && isTerritoryLocked(n.id)){
+      if(n.type==='territory' && window._isTerritoryLocked && window._isTerritoryLocked(n.id)){
         const badge=el('div','node-lock-badge','🔒');
         btn.style.position='relative';
         btn.appendChild(badge);
@@ -3403,8 +3403,9 @@
     });
     resultModal.addEventListener('click',e=>{ if(e.target===resultModal) resultModal.classList.remove('show'); });
 
-    // Expose updateCycleBtn so render() can call it
+    // Expose updateCycleBtn and isTerritoryLocked so render() can call them
     window._updateCycleBtn = updateCycleBtn;
+    window._isTerritoryLocked = isTerritoryLocked;
   })();
 
 
