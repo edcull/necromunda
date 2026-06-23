@@ -420,6 +420,12 @@
   .ch-status-badge.pending { background: rgba(212,160,23,.18); color: #d4a017; border: 1px solid rgba(212,160,23,.3); }
   .ch-status-badge.refused { background: rgba(232,100,60,.18); color: #e86040; border: 1px solid rgba(232,100,60,.3); }
   .ch-status-badge.completed { background: rgba(95,217,160,.12); color: var(--tox); border: 1px solid rgba(95,217,160,.25); }
+  .node-lock-badge {
+    position: absolute; top: -5px; right: -5px; width: 16px; height: 16px;
+    background: rgba(212,160,23,.9); border-radius: 50%; border: 1px solid rgba(212,160,23,1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; line-height: 1; pointer-events: none; z-index: 2;
+  }
   .ch-gangs { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text); margin-bottom: 8px; }
   .ch-gang-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
   .ch-vs { color: var(--faint); font-size: 9px; letter-spacing: .1em; }
@@ -904,6 +910,18 @@
     </div>
     <div class="mbody" id="helpModalBody" style="overflow-y:auto;padding:0">
       <details class="help-section" open>
+        <summary class="help-hdr">Campaign Configuration</summary>
+        <div class="help-body">
+          <p>Arbitrators access all configuration via the <strong>☰</strong> menu (top-right).</p>
+          <p><strong>Campaign Configuration</strong> — set the campaign name, sector name, number of players (2–8), and number of territories in play.</p>
+          <p><strong>Simultaneous Games</strong> — toggle on/off and set the batch size (2–8). See the Simultaneous Games section below.</p>
+          <p><strong>Territory Configuration</strong> — rename any territory or hideout node inline directly on the map, or via the territory detail card.</p>
+          <p><strong>Gang Configuration</strong> — set each gang's name, icon, colour, house/gang type, and starting stats (Rating, Wealth, Rep, Kills). On mobile, fields stack vertically with labels.</p>
+          <p><strong>Trading Post Configuration</strong> — override item availability and add custom items (see Trading Post below).</p>
+          <p><strong>Delete Campaign</strong> — permanently removes the campaign and all its data. This cannot be undone.</p>
+        </div>
+      </details>
+      <details class="help-section">
         <summary class="help-hdr">Map &amp; Navigation</summary>
         <div class="help-body">
           <p><strong>Pan &amp; zoom</strong> — drag to pan; pinch or scroll to zoom. On desktop, hold <kbd>Shift</kbd> and drag to zoom.</p>
@@ -998,18 +1016,6 @@
             <li><strong>Powerbroker</strong> — highest Reputation at campaign end</li>
           </ul>
           <p>Triumphs update in real time as challenges are recorded and stats change.</p>
-        </div>
-      </details>
-      <details class="help-section">
-        <summary class="help-hdr">Campaign Configuration</summary>
-        <div class="help-body">
-          <p>Arbitrators access all configuration via the <strong>☰</strong> menu (top-right).</p>
-          <p><strong>Campaign Configuration</strong> — set the campaign name, sector name, number of players (2–8), and number of territories in play.</p>
-          <p><strong>Simultaneous Games</strong> — toggle on/off and set the batch size (2–8). See the Simultaneous Games section above.</p>
-          <p><strong>Territory Configuration</strong> — rename any territory or hideout node inline directly on the map, or via the territory detail card.</p>
-          <p><strong>Gang Configuration</strong> — set each gang's name, icon, colour, house/gang type, and starting stats (Rating, Wealth, Rep, Kills). On mobile, fields stack vertically with labels.</p>
-          <p><strong>Trading Post Configuration</strong> — override item availability and add custom items (see Trading Post above).</p>
-          <p><strong>Delete Campaign</strong> — permanently removes the campaign and all its data. This cannot be undone.</p>
         </div>
       </details>
     </div>
@@ -1660,6 +1666,11 @@
       lbl.appendChild(sb);
 
       btn.appendChild(mod); btn.appendChild(lbl);
+      if(n.type==='territory' && window._isTerritoryLocked && window._isTerritoryLocked(n.id)){
+        const badge=el('div','node-lock-badge','🔒');
+        btn.style.position='relative';
+        btn.appendChild(badge);
+      }
       attachDrag(btn,n.id);
       nodesWrap.appendChild(btn);
     });
@@ -3392,8 +3403,9 @@
     });
     resultModal.addEventListener('click',e=>{ if(e.target===resultModal) resultModal.classList.remove('show'); });
 
-    // Expose updateCycleBtn so render() can call it
+    // Expose updateCycleBtn and isTerritoryLocked so render() can call them
     window._updateCycleBtn = updateCycleBtn;
+    window._isTerritoryLocked = isTerritoryLocked;
   })();
 
 
