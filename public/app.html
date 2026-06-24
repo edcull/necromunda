@@ -3538,7 +3538,7 @@
     
     buildHive();
     render();
-    if(isArbitrator && !loaded){ isNewCampaign=1; openSetupModal(); }
+    if(isArbitrator && loaded && !loaded.gangs && !loaded.nodes){ isNewCampaign=1; openSetupModal(); }
   })();
 })();
 </script>
