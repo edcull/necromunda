@@ -844,6 +844,7 @@
             <input type="number" id="inSimCount" min="2" max="8" step="1" style="width:60px">
             <span style="font-size:11px;color:var(--muted)">games per round</span>
           </div>
+          <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">For running simultaneous games at a club night.</span>
         </div>
         <div style="margin-top:12px">
           <label class="lbl-sm">Feature Flags</label>
@@ -1685,7 +1686,7 @@
         if(!owner) btn.classList.add('uncontrolled');
       }else{
         const t=data.terr?TERR_BY_KEY[data.terr]:null;
-        if(!t){ btn.classList.add('empty'); mod.appendChild(el('div','plus','+')); name='Empty Plot'; sub='Tap to develop'; }
+        if(!t){ btn.classList.add('empty'); mod.appendChild(el('div','plus','+')); name=(state.variant==='into-the-unknown'&&data.label)?data.label:'Empty Plot'; sub='Tap to develop'; }
         else { mod.innerHTML=svgIcon(t.key); name=data.label||t.name; sub=owner?owner.name:'Uncontrolled'; }
         if(!owner) btn.classList.add('uncontrolled');
       }
@@ -3531,6 +3532,7 @@
     
     buildHive();
     render();
+    if(isArbitrator && !loaded) openSetupModal();
   })();
 })();
 </script>
