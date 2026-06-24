@@ -1284,7 +1284,7 @@
   /* ============ AUTH / API ============ */
   const BASE = '/necromunda';
   const campaignId = (location.pathname.split('/').pop() || '').toUpperCase();
-  let currentUser = null, campaignMeta = null, isArbitrator = false;
+  let currentUser = null, campaignMeta = null, isArbitrator = false, isNewCampaign = false;
 
   async function apiFetch(method, path, body) {
     const r = await fetch(BASE + path, {
@@ -1964,6 +1964,7 @@
     document.getElementById('inFeatWealth').checked=ft.wealth;
     document.getElementById('inFeatKills').checked=ft.kills;
     document.getElementById('triumphSubFlags').style.opacity=ft.triumphs?'1':'0.4';
+    document.getElementById('modalDone').textContent = isNewCampaign ? 'Next: Configure Gangs →' : 'Done';
     buildPlayerSeg(); modal.classList.add('show');
   }
   function openTerrModal(){ buildTerrPool(); terrModal.classList.add('show'); }
@@ -2563,7 +2564,11 @@
 
   const ALL_MODALS = [modal, terrModal, gangModal, tradeModal, triumphsModal, helpModal];
   function closeModal(){ ALL_MODALS.forEach(m => m.classList.remove('show')); }
-  function closeConfigModal(){ closeModal(); renderArbModal(); arbModal.classList.add('show'); }
+  function closeConfigModal(){
+    closeModal();
+    if(isNewCampaign){ isNewCampaign=false; openGangModal(); return; }
+    renderArbModal(); arbModal.classList.add('show');
+  }
   let _tradeFromArb = false;
   function closeTrade(){ closeModal(); if(_tradeFromArb){ renderArbModal(); arbModal.classList.add('show'); } }
   document.getElementById('triumphsMapBtn').addEventListener('click', () => { renderTriumphs(); triumphsModal.classList.add('show'); });
@@ -3532,7 +3537,7 @@
     
     buildHive();
     render();
-    if(isArbitrator && !loaded) openSetupModal();
+    if(isArbitrator && !loaded){ isNewCampaign=true; openSetupModal(); }
   })();
 })();
 </script>
