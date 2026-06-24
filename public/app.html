@@ -1687,7 +1687,7 @@
       }else{
         const t=data.terr?TERR_BY_KEY[data.terr]:null;
         if(!t){ btn.classList.add('empty'); mod.appendChild(el('div','plus','+')); name=(state.variant==='into-the-unknown'&&data.label)?data.label:'Empty Plot'; sub='Tap to develop'; }
-        else { mod.innerHTML=svgIcon(t.key); name=data.label||t.name; sub=owner?owner.name:'Uncontrolled'; }
+        else { mod.innerHTML=svgIcon(t.key); name=(state.variant==='into-the-unknown')?t.name:(data.label||t.name); sub=owner?owner.name:'Uncontrolled'; }
         if(!owner) btn.classList.add('uncontrolled');
       }
 
