@@ -1049,7 +1049,10 @@
         </div>
       </details>
     </div>
-    <div class="mfoot" style="justify-content:flex-end">
+    <div class="mfoot" style="justify-content:space-between;align-items:center">
+      <label id="helpSkipLabel" style="display:none;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--muted)">
+        <input type="checkbox" id="helpSkipCheck"> Don't show this again
+      </label>
       <button class="btn" id="helpModalDone">Done</button>
     </div>
   </div>
@@ -2562,8 +2565,24 @@
   }
 
   const helpModal = document.getElementById('helpModal');
-  document.getElementById('helpModalClose').addEventListener('click', () => helpModal.classList.remove('show'));
-  document.getElementById('helpModalDone').addEventListener('click', () => helpModal.classList.remove('show'));
+  const HELP_SKIP_KEY = 'necromunda_skip_help';
+  function openHelpModal(fromNewCampaign){
+    const skipLbl = document.getElementById('helpSkipLabel');
+    const skipChk = document.getElementById('helpSkipCheck');
+    const doneBtn = document.getElementById('helpModalDone');
+    skipLbl.style.display = fromNewCampaign ? 'flex' : 'none';
+    skipChk.checked = false;
+    doneBtn.textContent = fromNewCampaign ? 'Next: Campaign Configuration →' : 'Done';
+    helpModal.classList.add('show');
+  }
+  function closeHelpModal(){
+    const skipChk = document.getElementById('helpSkipCheck');
+    if(skipChk.checked) localStorage.setItem(HELP_SKIP_KEY,'1');
+    helpModal.classList.remove('show');
+    if(isNewCampaign){ openSetupModal(); }
+  }
+  document.getElementById('helpModalClose').addEventListener('click', () => { helpModal.classList.remove('show'); });
+  document.getElementById('helpModalDone').addEventListener('click', closeHelpModal);
   helpModal.addEventListener('click', e => { if(e.target === helpModal) helpModal.classList.remove('show'); });
 
   const ALL_MODALS = [modal, terrModal, gangModal, tradeModal, triumphsModal, helpModal];
@@ -2732,7 +2751,7 @@
       who.style.cssText = 'font-size:13px;color:var(--tox);letter-spacing:.06em;margin-bottom:16px';
       body.appendChild(who);
       const cfgBtns = [
-        ['? Help', () => { arbModal.classList.remove('show'); helpModal.classList.add('show'); }],
+        ['? Help', () => { arbModal.classList.remove('show'); openHelpModal(false); }],
         ['⚙ Campaign Configuration', openSetupModal],
         ['⬡ Territory Configuration', openTerrModal],
         ['☠ Gang Configuration',      openGangModal],
@@ -3543,7 +3562,10 @@
     
     buildHive();
     render();
-    if(isArbitrator && loaded && !loaded.gangs && !loaded.nodes){ isNewCampaign=1; openSetupModal(); }
+    if(isArbitrator && loaded && !loaded.gangs && !loaded.nodes){
+      isNewCampaign=1;
+      if(localStorage.getItem(HELP_SKIP_KEY)==='1') openSetupModal(); else openHelpModal(true);
+    }
   })();
 })();
 </script>
