@@ -2734,9 +2734,9 @@
         ['☠ Gang Configuration',      openGangModal],
         ['⚖ Trading Post Configuration', () => openTradeModal(true)],
       ];
-      cfgBtns.forEach(([label, fn]) => {
+      cfgBtns.forEach(([label, fn], idx) => {
         const b = el('button','btn',label);
-        b.style.cssText = 'width:100%;margin-bottom:10px;text-align:center';
+        b.style.cssText = 'width:100%;margin-bottom:10px;text-align:center' + (idx===0?';border-color:var(--tox);color:var(--tox)':'');
         b.addEventListener('click', () => { arbModal.classList.remove('show'); fn(); });
         body.appendChild(b);
       });
