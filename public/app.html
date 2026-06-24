@@ -1687,7 +1687,7 @@
       }else{
         const t=data.terr?TERR_BY_KEY[data.terr]:null;
         if(!t){ btn.classList.add('empty'); mod.appendChild(el('div','plus','+')); name=(state.variant==='into-the-unknown'&&data.label)?data.label:'Empty Plot'; sub='Tap to develop'; }
-        else { mod.innerHTML=svgIcon(t.key); name=(state.variant==='into-the-unknown')?t.name:(data.label||t.name); sub=owner?owner.name:'Uncontrolled'; }
+        else { mod.innerHTML=svgIcon(t.key); name=data.label||t.name; const customLabel=data.label&&data.label!==t.name; sub=customLabel?t.name:(owner?owner.name:'Uncontrolled'); }
         if(!owner) btn.classList.add('uncontrolled');
       }
 
@@ -3277,7 +3277,7 @@
             const pool2=(state.terrPool&&state.terrPool.length)?state.terrPool:TERRITORIES.map(t=>t.key);
             const usedKeys=new Set(Object.values(state.nodes).map(n=>n.terr).filter(Boolean));
             const avail=pool2.filter(k=>!usedKeys.has(k));
-            if(avail.length){ terrNode.terr=avail[Math.floor(Math.random()*avail.length)]; }
+            if(avail.length){ terrNode.terr=avail[Math.floor(Math.random()*avail.length)]; terrNode.label=TERR_BY_KEY[terrNode.terr].name; }
           }
         }
         const ch={
