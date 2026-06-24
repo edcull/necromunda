@@ -3523,9 +3523,10 @@
       apiFetch('GET', `/api/campaigns/${campaignId}`)
     ]);
     if(meRes.ok) currentUser = meRes.data;
+    let loaded = null;
     if(campRes.ok) {
       campaignMeta = campRes.data;
-      const loaded = campaignMeta.state_json ? JSON.parse(campaignMeta.state_json) : null;
+      loaded = campaignMeta.state_json ? JSON.parse(campaignMeta.state_json) : null;
       state = mergeState(loaded);
       // state.campaign comes from state_json (editable in setup); fall back to DB name (= campaign ID initially)
       if(!loaded || !loaded.campaign) state.campaign = campaignMeta.name;
