@@ -823,6 +823,14 @@
       <div class="setup-grid">
         <div><label class="lbl-sm">Sector Name</label><input type="text" id="inSector" maxlength="48"></div>
         <div><label class="lbl-sm">Campaign Name</label><input type="text" id="inCampaign" maxlength="40"></div>
+        <div>
+          <label class="lbl-sm">Campaign Variant</label>
+          <select id="inVariant" style="margin-top:4px;width:100%">
+            <option value="standard">Standard</option>
+            <option value="into-the-unknown">Into the Unknown</option>
+          </select>
+          <span id="inVariantDesc" style="font-size:11px;color:var(--muted);display:block;margin-top:4px"></span>
+        </div>
       </div>
       <label class="lbl-sm" style="color:var(--tox);margin-bottom:8px">Players in this campaign</label>
       <div class="player-seg" id="playerSeg"></div>
@@ -1306,7 +1314,7 @@
   function defaultState(){
     const nodes={};
     LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null,label:null}:{terr:null,gang:null,label:null}; });
-    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]},simultaneousGames:{enabled:false,count:4},features:{triumphs:true,rep:true,wealth:true,kills:true}};
+    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',variant:'standard',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]},simultaneousGames:{enabled:false,count:4},features:{triumphs:true,rep:true,wealth:true,kills:true}};
   }
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
   function mergeState(loaded){
@@ -1339,8 +1347,8 @@
     const sg = (loaded.simultaneousGames && typeof loaded.simultaneousGames === 'object') ? loaded.simultaneousGames : {};
     s.simultaneousGames = { enabled: sg.enabled === true, count: Math.max(2, Math.min(8, parseInt(sg.count)||4)) };
     const ft = (loaded.features && typeof loaded.features === 'object') ? loaded.features : {};
-    const d2 = defaultState();
     s.features = { triumphs: ft.triumphs !== false, rep: ft.rep !== false, wealth: ft.wealth !== false, kills: ft.kills !== false };
+    s.variant = ['standard','into-the-unknown'].includes(loaded.variant) ? loaded.variant : 'standard';
     return s;
   }
 
@@ -1902,7 +1910,17 @@
       const o=el('option',null,`${t.name} (${t.card})${t.house?' · '+t.house:''}${inUse?'  · placed':''}`); o.value=t.key;
       if(inUse) o.style.color='#6f7d77';
       sel.appendChild(o); });
-    sel.value=current||''; sel.addEventListener('change',()=>onChange(sel.value||null)); f.appendChild(sel); return f;
+    sel.value=current||''; sel.addEventListener('change',()=>onChange(sel.value||null));
+    const row=el('div'); row.style.cssText='display:flex;gap:6px;align-items:center';
+    row.appendChild(sel);
+    const randBtn=el('button','btn ghost'); randBtn.textContent='Random'; randBtn.style.cssText='font-size:10px;padding:4px 8px;white-space:nowrap';
+    randBtn.addEventListener('click',e=>{ e.preventDefault();
+      const avail=TERRITORIES.filter(t=>pool.includes(t.key)&&!used.has(t.key)&&t.key!==current);
+      if(!avail.length){ alert('No unassigned territories available in the pool.'); return; }
+      const pick=avail[Math.floor(Math.random()*avail.length)];
+      sel.value=pick.key; onChange(pick.key);
+    });
+    row.appendChild(randBtn); f.appendChild(row); return f;
   }
   function terrCard(key){
     const wrap=el('div');
@@ -1935,6 +1953,8 @@
   function openSetupModal(){
     document.getElementById('inSector').value=state.sector;
     document.getElementById('inCampaign').value=state.campaign;
+    document.getElementById('inVariant').value=state.variant||'standard';
+    updateVariantDesc();
     document.getElementById('inSimEnabled').checked=state.simultaneousGames.enabled;
     document.getElementById('inSimCount').value=state.simultaneousGames.count;
     const ft=state.features;
@@ -2596,6 +2616,25 @@
   modal.addEventListener('click',e=>{ if(e.target===modal) closeConfigModal(); });
   document.getElementById('inSector').addEventListener('input',e=>{ state.sector=e.target.value||'Unnamed Sector'; scheduleSave(); render(); });
   document.getElementById('inCampaign').addEventListener('input',e=>{ state.campaign=e.target.value||'Campaign'; scheduleSave(); render(); });
+  const VARIANT_DESCS = { 'standard': '', 'into-the-unknown': 'Territory plots are assigned codenames. Territory types are revealed automatically when chosen for a challenge.' };
+  function updateVariantDesc(){ const el2=document.getElementById('inVariantDesc'); if(el2) el2.textContent=VARIANT_DESCS[state.variant]||''; }
+  function generateLocationNames(){
+    const prefixes=['ALPHA','BETA','GAMMA','DELTA','SIGMA','KAPPA','ZETA','THETA','OMEGA','LAMBDA','PHI','TAU','IOTA','MU','NU','XI','UPSILON','PSI','CHI','ETA'];
+    const terrNodes=LAYOUT.filter(n=>n.type==='territory');
+    let used=new Set(); let pi=0,ni=1;
+    terrNodes.forEach(n=>{
+      if(!state.nodes[n.id].label){
+        let name; do { name=prefixes[pi%prefixes.length]+'-'+(ni<10?'0':'')+ni; pi++; if(pi%prefixes.length===0) ni++; } while(used.has(name));
+        used.add(name); state.nodes[n.id].label=name;
+      }
+    });
+  }
+  document.getElementById('inVariant').addEventListener('change',e=>{
+    state.variant=e.target.value;
+    updateVariantDesc();
+    if(state.variant==='into-the-unknown') generateLocationNames();
+    scheduleSave(); render();
+  });
   document.getElementById('inSimEnabled').addEventListener('change',e=>{ state.simultaneousGames.enabled=e.target.checked; scheduleSave(); });
   document.getElementById('inSimCount').addEventListener('input',e=>{ state.simultaneousGames.count=Math.max(2,Math.min(8,parseInt(e.target.value)||4)); scheduleSave(); });
   document.getElementById('inFeatTriumphs').addEventListener('change',e=>{
@@ -3027,7 +3066,7 @@
       if(cd.phase!=='downtime'){
         const isRandom = cd.id==='occ-1';
         const orderHdr=document.createElement('div'); orderHdr.className='cp-section-head';
-        orderHdr.innerHTML='<span>Challenge Order ('+(isRandom?'Random':'Rating Low → High')+')</span>';
+        orderHdr.innerHTML='<span>Challenge Order ('+(isRandom?'Random':'Rating Low → High')+')</span><span style="font-size:10px;color:var(--muted);font-family:\'Oswald\';letter-spacing:.06em">Gang Rating</span>';
         cpBody.appendChild(orderHdr);
         const orderList=document.createElement('div');
         orderList.style.cssText='display:flex;flex-direction:column;gap:4px;margin-bottom:10px';
@@ -3048,7 +3087,7 @@
           const name=document.createElement('span'); name.style.flex='1'; name.textContent=g.name;
           const right=document.createElement('span');
           right.style.cssText='font-family:\'Oswald\';font-size:11px;letter-spacing:.06em;color:'+(done?'var(--muted)':'var(--tox)');
-          right.textContent=done?'✓ done':(g.rating||0)+'pts';
+          right.textContent=done?'✓ done':String(g.rating||0);
           row.appendChild(dot); row.appendChild(name); row.appendChild(right);
           orderList.appendChild(row);
         });
@@ -3189,8 +3228,17 @@
           const prompt=document.createElement('option'); prompt.value=''; prompt.textContent='— Select Territory —'; selTerr.appendChild(prompt);
           avail.forEach(n=>{
             const o=document.createElement('option'); o.value=n.id;
-            const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
-            o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':''); selTerr.appendChild(o);
+            const nd=state.nodes[n.id];
+            if(state.variant==='into-the-unknown'){
+              // Show codename; if territory type already revealed show it in parens
+              const codename=nd.label||n.id;
+              const revealed=nd.terr?TERR_BY_KEY[nd.terr]?.name:'?';
+              o.textContent=codename+(nd.terr?' ('+revealed+')':'');
+            } else {
+              const lbl=nodeLabel(n.id); const sub=nodeSubLabel(n.id);
+              o.textContent=lbl+(sub&&sub!==lbl?' ('+sub+')':'');
+            }
+            selTerr.appendChild(o);
           });
           if(avail.length===0){
             // No territories owned by defender — special scenario only
@@ -3215,6 +3263,16 @@
         const challenged=(raw==='')?null:(raw==='unclaimed'?null:parseInt(raw));
         const territory=selTerr.value;
         if(!territory){ alert('Please select a territory.'); return; }
+        // Into the Unknown: auto-assign territory type to the node when challenge goes pending
+        if(state.variant==='into-the-unknown' && territory!=='special' && territory!=='rescue'){
+          const terrNode=state.nodes[territory];
+          if(terrNode && !terrNode.terr){
+            const pool2=(state.terrPool&&state.terrPool.length)?state.terrPool:TERRITORIES.map(t=>t.key);
+            const usedKeys=new Set(Object.values(state.nodes).map(n=>n.terr).filter(Boolean));
+            const avail=pool2.filter(k=>!usedKeys.has(k));
+            if(avail.length){ terrNode.terr=avail[Math.floor(Math.random()*avail.length)]; }
+          }
+        }
         const ch={
           id:'ch-'+Date.now(),
           challenger, challenged, territory,
