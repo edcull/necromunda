@@ -1964,10 +1964,10 @@
     document.getElementById('inFeatWealth').checked=ft.wealth;
     document.getElementById('inFeatKills').checked=ft.kills;
     document.getElementById('triumphSubFlags').style.opacity=ft.triumphs?'1':'0.4';
-    document.getElementById('modalDone').textContent = isNewCampaign ? 'Next: Configure Gangs →' : 'Done';
+    document.getElementById('modalDone').textContent = isNewCampaign ? 'Next: Configure Territories →' : 'Done';
     buildPlayerSeg(); modal.classList.add('show');
   }
-  function openTerrModal(){ buildTerrPool(); terrModal.classList.add('show'); }
+  function openTerrModal(){ buildTerrPool(); document.getElementById('terrModalDone').textContent=isNewCampaign?'Next: Configure Gangs →':'Done'; terrModal.classList.add('show'); }
   function openGangModal(){ const gl=document.getElementById('gangsLabel'); if(gl) gl.textContent='The '+state.players+' Gangs — name · icon · colour · type'; buildGangRows(); gangModal.classList.add('show'); }
   let _tpData = null;
 
@@ -2566,7 +2566,8 @@
   function closeModal(){ ALL_MODALS.forEach(m => m.classList.remove('show')); }
   function closeConfigModal(){
     closeModal();
-    if(isNewCampaign){ isNewCampaign=false; openGangModal(); return; }
+    if(isNewCampaign===1){ isNewCampaign=2; openTerrModal(); return; }
+    if(isNewCampaign===2){ isNewCampaign=false; openGangModal(); return; }
     renderArbModal(); arbModal.classList.add('show');
   }
   let _tradeFromArb = false;
@@ -3537,7 +3538,7 @@
     
     buildHive();
     render();
-    if(isArbitrator && !loaded){ isNewCampaign=true; openSetupModal(); }
+    if(isArbitrator && !loaded){ isNewCampaign=1; openSetupModal(); }
   })();
 })();
 </script>
