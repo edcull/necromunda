@@ -1787,6 +1787,18 @@
         const li = el('li'); li.appendChild(el('span','btag',b.t)); li.appendChild(el('span','btxt',b.d)); ul.appendChild(li);
       });
       card.appendChild(ul); tf.appendChild(card); wrap.appendChild(tf);
+    } else {
+      const tf=el('div','field'); tf.appendChild(el('label',null,'Settlement'));
+      const card=el('div','terr-held-card');
+      const ul = el('ul','boonlist terr-boonlist');
+      const boons = [
+        { t: 'Income', d: 'Roll 2D6 and multiply the result by 5. The controlling gang adds this many credits to their Wealth.' },
+        { t: 'Special', d: 'A gang that controls a Settlement may add D3 Juves or Prospects to their gang roster for free during the post-battle sequence, as long as the gang did not lose the battle.' },
+      ];
+      boons.forEach(b => {
+        const li = el('li'); li.appendChild(el('span','btag',b.t)); li.appendChild(el('span','btxt',b.d)); ul.appendChild(li);
+      });
+      card.appendChild(ul); tf.appendChild(card); wrap.appendChild(tf);
     }
 
     const terrs=gangTerrList(gi);
@@ -2469,13 +2481,13 @@
       }
       function calcRoll() {
         const base   = Math.min(12, Math.max(2, parseInt(body.querySelector('#tpRoll2d6')?.value) || 2));
-        const leader = body.querySelector('#tpLeader').checked ? 1 : 0;
+        const leader = body.querySelector('#tpLeader').checked ? 2 : 0;
         const champs = parseInt(body.querySelector('#tpChampions').value) || 0;
         const rep    = Math.floor((parseInt(body.querySelector('#tpRep').value) || 0) / 10);
         const mod    = parseInt(body.querySelector('#tpMod').value) || 0;
         const total  = base + leader + champs + rep + mod;
         const parts  = [];
-        if (leader) parts.push('+1 leader');
+        if (leader) parts.push('+2 leader');
         if (champs) parts.push(`+${champs} champ${champs!==1?'s':''}`);
         if (rep)    parts.push(`+${rep} rep`);
         if (mod)    parts.push((mod>0?'+':'')+mod+' mod');
