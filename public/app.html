@@ -1792,8 +1792,9 @@
       const card=el('div','terr-held-card');
       const ul = el('ul','boonlist terr-boonlist');
       const boons = [
-        { t: 'Income', d: 'Roll 2D6 and multiply the result by 5. The controlling gang adds this many credits to their Wealth.' },
-        { t: 'Special', d: 'A gang that controls a Settlement may add D3 Juves or Prospects to their gang roster for free during the post-battle sequence, as long as the gang did not lose the battle.' },
+        { t: 'Income',     d: 'The gang earns D6×10 credits when collecting income.' },
+        { t: 'Reputation', d: '+1 Reputation whilst it controls this Territory.' },
+        { t: 'Recruit',    d: 'Roll 2D6 after every battle – a single 6 grants a free Juve from the House List, a double 6 a free Ganger.' },
       ];
       boons.forEach(b => {
         const li = el('li'); li.appendChild(el('span','btag',b.t)); li.appendChild(el('span','btxt',b.d)); ul.appendChild(li);
