@@ -1319,7 +1319,7 @@
   function defaultState(){
     const nodes={};
     LAYOUT.forEach(n=>{ nodes[n.id]= n.type==='hideout'?{gang:null,label:null}:{terr:null,gang:null,label:null}; });
-    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',variant:'standard',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]},simultaneousGames:{enabled:false,count:4},features:{triumphs:true,rep:true,wealth:true,kills:true}};
+    return {players:8,sector:'SECTOR D8-U1 — CHEMSPIRE WASTES',campaign:'Dominion Campaign',variant:'standard',gangs:DEFAULT_GANGS.map(g=>({...g})),nodes,pos:{},terrPool:[],cycles:defaultCycles(),currentCycleId:'occ-1',tradingPost:{customItems:[]},simultaneousGames:{enabled:false,count:4},features:{triumphs:true,rep:true,wealth:true,kills:true},challengeOrder:null};
   }
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
   function mergeState(loaded){
@@ -1354,6 +1354,7 @@
     const ft = (loaded.features && typeof loaded.features === 'object') ? loaded.features : {};
     s.features = { triumphs: ft.triumphs !== false, rep: ft.rep !== false, wealth: ft.wealth !== false, kills: ft.kills !== false };
     s.variant = ['standard','into-the-unknown'].includes(loaded.variant) ? loaded.variant : 'standard';
+    s.challengeOrder = Array.isArray(loaded.challengeOrder) ? loaded.challengeOrder.filter(x=>Number.isInteger(x)&&x>=0&&x<8) : null;
     return s;
   }
 
@@ -3105,26 +3106,73 @@
         return;
       }
 
-      // Challenge order strip for cycle 2+ (not first cycle of each phase)
+      // Challenge order strip
       if(cd.phase!=='downtime'){
         const isRandom = cd.id==='occ-1';
+        function cycleHash(cycId,i){ let h=-2128831035; for(const c of cycId+':'+i){ h^=c.charCodeAt(0); h=Math.imul(h,16777619)|0; } return h; }
+
+        // For occ-1, use saved challengeOrder if set, else derive from hash
+        function getOrder(){
+          if(isRandom && state.challengeOrder && state.challengeOrder.length===state.players)
+            return state.challengeOrder.map(i=>({i,g:state.gangs[i]}));
+          return [...Array(state.players).keys()]
+            .map(i=>({i,g:state.gangs[i]}))
+            .sort((a,b)=>isRandom
+              ? cycleHash(cd.id,a.i)-cycleHash(cd.id,b.i)
+              : ((a.g.rating||0)-(b.g.rating||0)) || (cycleHash(cd.id,a.i)-cycleHash(cd.id,b.i)));
+        }
+
         const orderHdr=document.createElement('div'); orderHdr.className='cp-section-head';
-        orderHdr.innerHTML='<span>Challenge Order ('+(isRandom?'Random':'Rating Low → High')+')</span><span style="font-size:10px;color:var(--muted);font-family:\'Oswald\';letter-spacing:.06em">Gang Rating</span>';
+        const orderHdrLabel = isRandom
+          ? (state.challengeOrder&&state.challengeOrder.length===state.players ? 'Custom' : 'Random')
+          : 'Rating Low → High';
+        orderHdr.innerHTML='<span>Challenge Order ('+orderHdrLabel+')</span><span style="font-size:10px;color:var(--muted);font-family:\'Oswald\';letter-spacing:.06em">Gang Rating</span>';
+
+        // Randomise + reset buttons for arbitrators on occ-1
+        if(isRandom && isArbitrator && isCurrentCycle){
+          const btnWrap=document.createElement('div'); btnWrap.style.cssText='display:flex;gap:6px;margin-bottom:8px';
+          const rndBtn=document.createElement('button'); rndBtn.className='btn ghost'; rndBtn.style.cssText='font-size:10px;padding:3px 8px';
+          rndBtn.textContent='⟳ Randomise';
+          rndBtn.addEventListener('click',()=>{
+            const arr=[...Array(state.players).keys()];
+            for(let k=arr.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [arr[k],arr[j]]=[arr[j],arr[k]]; }
+            state.challengeOrder=arr; commit(); renderPanel();
+          });
+          btnWrap.appendChild(rndBtn);
+          if(state.challengeOrder){
+            const clrBtn=document.createElement('button'); clrBtn.className='btn ghost'; clrBtn.style.cssText='font-size:10px;padding:3px 8px';
+            clrBtn.textContent='✕ Clear';
+            clrBtn.addEventListener('click',()=>{ state.challengeOrder=null; commit(); renderPanel(); });
+            btnWrap.appendChild(clrBtn);
+          }
+          cpBody.appendChild(btnWrap);
+        }
+
         cpBody.appendChild(orderHdr);
         const orderList=document.createElement('div');
         orderList.style.cssText='display:flex;flex-direction:column;gap:4px;margin-bottom:10px';
-        // FNV-1a hash — good avalanche so similar cycle IDs produce very different orderings
-        function cycleHash(cycId,i){ let h=-2128831035; for(const c of cycId+':'+i){ h^=c.charCodeAt(0); h=Math.imul(h,16777619)|0; } return h; }
-        const gangsOrdered=[...Array(state.players).keys()]
-          .map(i=>({i,g:state.gangs[i]}))
-          .sort((a,b)=>isRandom
-            ? cycleHash(cd.id,a.i)-cycleHash(cd.id,b.i)
-            : ((a.g.rating||0)-(b.g.rating||0)) || (cycleHash(cd.id,a.i)-cycleHash(cd.id,b.i)));
+        const gangsOrdered=getOrder();
         const challengedSet=new Set(cyc.challenges.map(c=>c.challenger));
-        gangsOrdered.forEach(({i,g})=>{
+        gangsOrdered.forEach(({i,g},pos)=>{
           const done=challengedSet.has(i);
           const row=document.createElement('div');
-          row.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;padding:4px 6px;background:rgba(0,0,0,.18);border-radius:2px;'+(done?'color:var(--muted);':'color:var(--text);');
+          row.style.cssText='display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 6px;background:rgba(0,0,0,.18);border-radius:2px;'+(done?'color:var(--muted);':'color:var(--text);');
+          // Up/down arrows for arbitrators on occ-1 when a custom order exists
+          if(isRandom && isArbitrator && isCurrentCycle){
+            const upBtn=document.createElement('button'); upBtn.textContent='▲'; upBtn.style.cssText='background:none;border:none;color:var(--muted);cursor:pointer;font-size:9px;padding:0 2px;line-height:1';
+            const dnBtn=document.createElement('button'); dnBtn.textContent='▼'; dnBtn.style.cssText='background:none;border:none;color:var(--muted);cursor:pointer;font-size:9px;padding:0 2px;line-height:1';
+            upBtn.disabled=pos===0; dnBtn.disabled=pos===gangsOrdered.length-1;
+            const moveOrder=(from,to)=>{
+              const base=state.challengeOrder&&state.challengeOrder.length===state.players
+                ? [...state.challengeOrder]
+                : gangsOrdered.map(x=>x.i);
+              const tmp=base[from]; base[from]=base[to]; base[to]=tmp;
+              state.challengeOrder=base; commit(); renderPanel();
+            };
+            upBtn.addEventListener('click',()=>moveOrder(pos,pos-1));
+            dnBtn.addEventListener('click',()=>moveOrder(pos,pos+1));
+            row.appendChild(upBtn); row.appendChild(dnBtn);
+          }
           const dot=document.createElement('span');
           dot.style.cssText='width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:'+(done?'var(--muted)':g.color);
           const name=document.createElement('span'); name.style.flex='1'; name.textContent=g.name;
