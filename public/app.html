@@ -3335,10 +3335,8 @@
             // No territories owned by defender — special scenario only
             const o=document.createElement('option'); o.value='special'; o.textContent='Special Scenario — no territory at stake'; selTerr.appendChild(o);
           }
-          // Rescue Mission always available in Takeover — challenger may issue it regardless of defender's holdings
-          if(phase==='takeover'){
-            const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
-          }
+          // Rescue Mission always available — challenger may issue it regardless of phase or defender's holdings
+          const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
         }
       }
       selDef.addEventListener('change', populateTerritories);
