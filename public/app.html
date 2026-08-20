@@ -2540,11 +2540,22 @@
         body.querySelector(id).addEventListener('change', onSeekChange));
     }
   }
+  // Normalize ch.challenged → always an array of gang indices
+  function getChallenged(ch){ return Array.isArray(ch.challenged)?ch.challenged:(ch.challenged!=null?[ch.challenged]:[]); }
+  // Return winning gang index, or null for draw/refused/pending
+  function getWinner(ch){
+    if(!ch.result||ch.result==='draw'||ch.result==='refused') return null;
+    if(typeof ch.result==='number') return ch.result;
+    if(ch.result==='challenger') return ch.challenger;
+    if(ch.result==='challenged'){const d=getChallenged(ch);return d.length?d[0]:null;}
+    return null;
+  }
+
   const TRIUMPHS = [
     { key: 'dominator',   label: 'Dominator',   criteria: 'Most Territories at the end of the campaign.',                                                              auto: gi => Object.values(state.nodes).filter(n => n.gang === gi && n.terr).length, feat: null },
     { key: 'slaughterer', label: 'Slaughterer',  criteria: 'Most enemy fighters taken Out of Action and vehicles Wrecked across the whole campaign.',                   auto: gi => state.gangs[gi]?.outOfAction || 0, feat: 'kills' },
     { key: 'creditor',    label: 'Creditor',     criteria: 'Largest Wealth at the end of the campaign.',                                                               auto: gi => state.gangs[gi]?.wealth ?? 1000, feat: 'wealth' },
-    { key: 'warmonger',   label: 'Warmonger',    criteria: 'Most battles fought across the whole campaign.',                                                            auto: gi => state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status!=='pending'&&(Number(ch.challenger)===gi||Number(ch.challenged)===gi)).length, feat: null },
+    { key: 'warmonger',   label: 'Warmonger',    criteria: 'Most battles fought across the whole campaign.',                                                            auto: gi => state.cycles.flatMap(c=>c.challenges).filter(ch=>ch.status!=='pending'&&(Number(ch.challenger)===gi||getChallenged(ch).some(d=>Number(d)===gi))).length, feat: null },
     { key: 'powerbroker', label: 'Powerbroker',  criteria: 'Highest Reputation at the end of the campaign.',                                                           auto: gi => state.gangs[gi]?.rep || 0, feat: 'rep' },
   ];
 
@@ -3265,7 +3276,7 @@
         const prevBatches  = cyc.challenges.slice(0, batchStart);
 
         // Lock gangs already committed to the current batch
-        currentBatch.forEach(c=>{ batchLocked.add(Number(c.challenger)); if(c.challenged!=null) batchLocked.add(Number(c.challenged)); });
+        currentBatch.forEach(c=>{ batchLocked.add(Number(c.challenger)); getChallenged(c).forEach(d=>batchLocked.add(Number(d))); });
 
         // Gangs challenged in previous batches who still haven't issued their own challenge must challenge next
         const prevChallenged = new Set();
@@ -3288,31 +3299,42 @@
         selCh.appendChild(o);
       }
 
-      // Challenged select — blank prompt first
-      const lbDef = document.createElement('label'); lbDef.textContent='Challenged Gang';
-      const selDef = document.createElement('select');
+      // Opponents — multi-checkbox (1–3 gangs for multiplayer)
+      const lbDef = document.createElement('label'); lbDef.textContent='Opponents';
+      const defContainer = document.createElement('div');
+      defContainer.style.cssText='display:flex;flex-direction:column;gap:4px;margin-bottom:4px';
+      function getCheckedOpponents(){ return Array.from(defContainer.querySelectorAll('input[type=checkbox]:checked')).map(cb=>parseInt(cb.value)); }
       function populateDefender(){
         const chIdx=Number(selCh.value);
-        selDef.innerHTML='';
-        const promptDef=document.createElement('option'); promptDef.value=''; promptDef.textContent='— Select Gang —'; selDef.appendChild(promptDef);
+        defContainer.innerHTML='';
         for(let i=0;i<state.players;i++){
           if(i===chIdx) continue;
           if(!allChallenged && batchLocked.has(i)) continue;
           if(!allChallenged && mustChallenge.has(i)) continue;
-          const g=state.gangs[i]; const o=document.createElement('option'); o.value=i; o.textContent=g.name+(g.type?' ('+g.type+')':''); selDef.appendChild(o);
+          const g=state.gangs[i];
+          const lbl=document.createElement('label'); lbl.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer';
+          const cb=document.createElement('input'); cb.type='checkbox'; cb.value=i;
+          cb.addEventListener('change', populateTerritories);
+          const dot=document.createElement('span'); dot.style.cssText='display:inline-block;width:8px;height:8px;border-radius:50%;background:'+g.color;
+          lbl.appendChild(cb); lbl.appendChild(dot); lbl.appendChild(document.createTextNode(g.name+(g.type?' ('+g.type+')':'')));
+          defContainer.appendChild(lbl);
         }
+        if(!defContainer.children.length){
+          const none=document.createElement('span'); none.style.cssText='color:var(--faint);font-size:12px'; none.textContent='No eligible opponents'; defContainer.appendChild(none);
+        }
+        populateTerritories();
       }
       populateDefender();
-      selCh.addEventListener('change', ()=>{ populateDefender(); populateTerritories(); });
+      selCh.addEventListener('change', populateDefender);
 
       // Territory select — blank prompt first
       const lbTerr = document.createElement('label'); lbTerr.textContent='Staked Territory';
       const selTerr = document.createElement('select');
       function populateTerritories(){
         selTerr.innerHTML='';
-        const raw=selDef.value;
-        const cg=(raw===''||raw==='unclaimed')?null:parseInt(raw);
-        const avail = getAvailableTerritories(phase, cg);
+        const checked=getCheckedOpponents();
+        // Show territories from checked opponents combined; for unchecked fall back to null (show all or occupation unclaimed)
+        const avail = getAvailableTerritories(phase, checked.length===1?checked[0]:null);
         if(avail.length===0 && phase==='occupation'){
           const o=document.createElement('option'); o.value=''; o.textContent='— No unclaimed territories —'; selTerr.appendChild(o);
         } else {
@@ -3339,17 +3361,13 @@
           const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
         }
       }
-      selDef.addEventListener('change', populateTerritories);
-      populateTerritories();
-
       const btns=document.createElement('div'); btns.className='ch-form-btns';
       const saveBtn=document.createElement('button'); saveBtn.className='btn'; saveBtn.textContent='Add Challenge';
       const cancelBtn=document.createElement('button'); cancelBtn.className='btn ghost'; cancelBtn.textContent='Cancel';
       cancelBtn.addEventListener('click',()=>{ showingForm=false; renderPanel(); });
       saveBtn.addEventListener('click',()=>{
         const challenger=parseInt(selCh.value);
-        const raw=selDef.value;
-        const challenged=(raw==='')?null:(raw==='unclaimed'?null:parseInt(raw));
+        const challenged=getCheckedOpponents(); // array (may be empty for occupation unclaimed)
         const territory=selTerr.value;
         if(!territory){ alert('Please select a territory.'); return; }
         // Into the Unknown: auto-assign territory type to the node when challenge goes pending
@@ -3376,7 +3394,7 @@
       btns.appendChild(cancelBtn); btns.appendChild(saveBtn);
 
       form.appendChild(lbCh); form.appendChild(selCh);
-      form.appendChild(lbDef); form.appendChild(selDef);
+      form.appendChild(lbDef); form.appendChild(defContainer);
       form.appendChild(lbTerr); form.appendChild(selTerr);
       form.appendChild(btns);
       return form;
@@ -3406,12 +3424,16 @@
       const gangsDiv=document.createElement('div'); gangsDiv.className='ch-gangs';
       const dot1=document.createElement('span'); dot1.className='ch-gang-dot'; dot1.style.background=gangColor(ch.challenger); gangsDiv.appendChild(dot1);
       gangsDiv.appendChild(document.createTextNode(gangName(ch.challenger)));
-      const vs=document.createElement('span'); vs.className='ch-vs'; vs.textContent='vs'; gangsDiv.appendChild(vs);
-      if(ch.challenged!==null&&ch.challenged!==undefined){
-        const dot2=document.createElement('span'); dot2.className='ch-gang-dot'; dot2.style.background=gangColor(ch.challenged); gangsDiv.appendChild(dot2);
-        gangsDiv.appendChild(document.createTextNode(gangName(ch.challenged)));
-      } else {
+      const opponents=getChallenged(ch);
+      if(opponents.length===0){
+        const vs=document.createElement('span'); vs.className='ch-vs'; vs.textContent='vs'; gangsDiv.appendChild(vs);
         gangsDiv.appendChild(document.createTextNode('Unclaimed'));
+      } else {
+        opponents.forEach(d=>{
+          const vs=document.createElement('span'); vs.className='ch-vs'; vs.textContent='vs'; gangsDiv.appendChild(vs);
+          const dot2=document.createElement('span'); dot2.className='ch-gang-dot'; dot2.style.background=gangColor(d); gangsDiv.appendChild(dot2);
+          gangsDiv.appendChild(document.createTextNode(gangName(d)));
+        });
       }
       card.appendChild(gangsDiv);
 
@@ -3421,9 +3443,8 @@
         rl.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px';
         const txt=document.createElement('span'); txt.className='ch-result-line'; txt.style.margin='0';
         if(ch.status==='refused') txt.textContent='Refused — '+gangName(ch.challenger)+' claims territory';
-        else if(ch.result==='draw') txt.textContent='Draw — no ownership change';
-        else if(ch.result==='challenger') txt.textContent=gangName(ch.challenger)+' wins — claims territory';
-        else if(ch.result==='challenged') txt.textContent=gangName(ch.challenged)+' wins — holds territory';
+        else if(ch.result==='draw'||ch.result===null) txt.textContent='Draw — no ownership change';
+        else { const w=getWinner(ch); txt.textContent=w!==null?gangName(w)+' wins':'Draw — no ownership change'; }
         rl.appendChild(txt);
         if(canEdit){
           const trashBtn=document.createElement('button');
@@ -3514,27 +3535,28 @@
         info.textContent=gangName(ch.challenger)+' refused — they automatically claim "'+nodeLabel(ch.territory)+'"';
         rmResultBtns.appendChild(info);
       } else {
-        // Game result buttons
-        const options=[
-          {value:'challenger',label:gangName(ch.challenger)+' Wins'},
-          {value:'challenged',label:ch.challenged!==null&&ch.challenged!==undefined?gangName(ch.challenged)+' Wins':'Defender Holds'},
-          {value:'draw',label:'Draw'},
-        ];
-        options.forEach(opt=>{
-          const b=document.createElement('button'); b.className='rm-result-btn'; b.textContent=opt.label;
+        // Game result buttons — one per gang (any can win in multiplayer) + draw
+        const allGangs=[ch.challenger, ...getChallenged(ch)];
+        allGangs.forEach(gi=>{
+          const b=document.createElement('button'); b.className='rm-result-btn'; b.textContent=gangName(gi)+' Wins';
           b.addEventListener('click',()=>{
-            rmSelectedResult=opt.value;
+            rmSelectedResult=gi; // gang index of winner
             rmResultBtns.querySelectorAll('.rm-result-btn').forEach(x=>x.classList.remove('on'));
             b.classList.add('on');
           });
           rmResultBtns.appendChild(b);
         });
+        const drawBtn=document.createElement('button'); drawBtn.className='rm-result-btn'; drawBtn.textContent='Draw';
+        drawBtn.addEventListener('click',()=>{
+          rmSelectedResult='draw';
+          rmResultBtns.querySelectorAll('.rm-result-btn').forEach(x=>x.classList.remove('on'));
+          drawBtn.classList.add('on');
+        });
+        rmResultBtns.appendChild(drawBtn);
       }
 
       // Stat update grid for gangs involved
-      const gangsInvolved=[];
-      gangsInvolved.push(ch.challenger);
-      if(ch.challenged!==null&&ch.challenged!==undefined) gangsInvolved.push(ch.challenged);
+      const gangsInvolved=[ch.challenger, ...getChallenged(ch)];
 
       gangsInvolved.forEach(gi=>{
         const col=document.createElement('div'); col.className='rm-stat-col';
@@ -3563,17 +3585,18 @@
       if(!rmChallenge) return;
       const ch=rmChallenge;
 
-      if(rmMode==='game' && !rmSelectedResult){ alert('Please select a result.'); return; }
+      if(rmMode==='game' && rmSelectedResult===null){ alert('Please select a result.'); return; }
 
       const result = rmMode==='refused' ? 'refused' : rmSelectedResult;
 
       // Apply territory ownership change (skipped for special scenario / rescue mission)
       if(ch.territory !== 'special' && ch.territory !== 'rescue'){
         const nodeData = state.nodes[ch.territory];
-        if(result==='refused'||result==='challenger'){
+        if(result==='refused'){
           nodeData.gang=ch.challenger;
-        } else if(result==='challenged'){
-          if(ch.challenged!==null&&ch.challenged!==undefined) nodeData.gang=ch.challenged;
+        } else if(result!=='draw' && typeof result==='number'){
+          // result is the winning gang index
+          nodeData.gang=result;
         }
         // draw: no change
       }
