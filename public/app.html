@@ -3324,10 +3324,7 @@
         }
         populateTerritories();
       }
-      populateDefender();
-      selCh.addEventListener('change', populateDefender);
-
-      // Territory select — blank prompt first
+      // Territory select — declared before populateDefender() is called so selTerr is in scope
       const lbTerr = document.createElement('label'); lbTerr.textContent='Staked Territory';
       const selTerr = document.createElement('select');
       function populateTerritories(){
@@ -3361,6 +3358,9 @@
           const r=document.createElement('option'); r.value='rescue'; r.textContent='Rescue Mission'; selTerr.appendChild(r);
         }
       }
+      populateDefender();
+      selCh.addEventListener('change', populateDefender);
+
       const btns=document.createElement('div'); btns.className='ch-form-btns';
       const saveBtn=document.createElement('button'); saveBtn.className='btn'; saveBtn.textContent='Add Challenge';
       const cancelBtn=document.createElement('button'); cancelBtn.className='btn ghost'; cancelBtn.textContent='Cancel';
