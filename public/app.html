@@ -829,6 +829,7 @@
           <select id="inVariant" style="margin-top:4px;width:100%">
             <option value="standard">Standard</option>
             <option value="into-the-unknown">Into the Unknown</option>
+            <option value="n26">N26</option>
           </select>
           <span id="inVariantDesc" style="font-size:11px;color:var(--muted);display:block;margin-top:4px"></span>
         </div>
@@ -1196,6 +1197,29 @@
   ];
   const TERR_BY_KEY = Object.fromEntries(TERRITORIES.map(t=>[t.key,t]));
 
+  // N26 (Necromunda 2026) territory list — D66 table
+  const N26_TERRITORIES = [
+    {key:'n26_bullet_den',       name:'Bullet Den',        d66:'11-12', boon:[{t:'Income',   d:'The gang earns D6×5 credits when collecting income.'}]},
+    {key:'n26_rogue_doc_shop',   name:'Rogue Doc Shop',    d66:'13-14', boon:[{t:'Special',  d:'Once per post-battle sequence, one fighter may be treated by the Rogue Doc (re-roll one Lasting Injury, taking the second result).'}]},
+    {key:'n26_mess_shack',       name:'Mess Shack',        d66:'15-16', boon:[{t:'Income',   d:'The gang earns D3×5 credits when collecting income.'}]},
+    {key:'n26_drinking_hole',    name:'Drinking Hole',     d66:'21-22', boon:[{t:'Special',  d:'Any fighter may re-roll failed Cool tests; they take −1 to hit for the rest of the battle while affected.'}]},
+    {key:'n26_fence_hangout',    name:'Fence Hangout',     d66:'23-24', boon:[{t:'Special',  d:'Once per post-battle sequence the gang may purchase one Rare item as if it were Common.'}]},
+    {key:'n26_bounty_den',       name:'Bounty Den',        d66:'25-26', boon:[{t:'Income',   d:'The gang earns D6×5 credits for each enemy fighter captured during the previous battle.'}]},
+    {key:'n26_generatorium',     name:'Generatorium',      d66:'31-32', boon:[{t:'Income',   d:'The gang earns D6×10 credits when collecting income.'}]},
+    {key:'n26_corpse_farm',      name:'Corpse Farm',       d66:'33-34', boon:[{t:'Income',   d:'The gang earns D6×5 credits when collecting income.'}]},
+    {key:'n26_tunnels',          name:'Tunnels',           d66:'35-36', boon:[{t:'Special',  d:'Deploy up to three fighters via tunnel entrance markers; each turn they arrive on a 4+.'}]},
+    {key:'n26_tech_bazaar',      name:'Tech Bazaar',       d66:'41-42', boon:[{t:'Income',   d:'The gang earns D6×10 credits when collecting income.'}]},
+    {key:'n26_promethium_cache', name:'Promethium Cache',  d66:'43-44', boon:[{t:'Income',   d:'The gang earns D6×10 credits when collecting income.'}]},
+    {key:'n26_collapsed_dome',   name:'Collapsed Dome',    d66:'45-46', boon:[{t:'Special',  d:'The controlling gang may choose the scenario when they are the defender.'}]},
+    {key:'n26_bone_shrine',      name:'Bone Shrine',       d66:'51-52', boon:[{t:'Reputation',d:'+1 Reputation whilst it controls this Territory.'}]},
+    {key:'n26_mine_workings',    name:'Mine Workings',     d66:'53-54', boon:[{t:'Income',   d:'The gang earns 2D6×5 credits when collecting income.'}]},
+    {key:'n26_gambling_den',     name:'Gambling Den',      d66:'55-56', boon:[{t:'Income',   d:'+1 Reputation whilst it controls this Territory.'}]},
+    {key:'n26_synth_still',      name:'Synth Still',       d66:'61-62', boon:[{t:'Special',  d:'Treat weapons with the Gas or Toxin trait as Common availability.'}]},
+    {key:'n26_old_ruins',        name:'Old Ruins',         d66:'63-64', boon:[{t:'Special',  d:'The controlling gang may re-roll one dice when determining the scenario.'}]},
+    {key:'n26_fighting_pit',     name:'Fighting Pit',      d66:'65-66', boon:[{t:'Income',   d:'The gang earns D6×5 credits when collecting income.'}]},
+  ];
+  N26_TERRITORIES.forEach(t=>{ TERR_BY_KEY[t.key]=t; });
+
   const DEFAULT_GANGS = [
     {name:'Gang 1',icon:'•',color:'#f0962a'},{name:'Gang 2',icon:'•',color:'#cdbb4a'},
     {name:'Gang 3',icon:'•',color:'#4f93c9'},{name:'Gang 4',icon:'•',color:'#d23b3b'},
@@ -1324,7 +1348,7 @@
   function validGang(g){ return (Number.isInteger(g)&&g>=0&&g<8)?g:null; }
   function mergeState(loaded){
     if(!loaded||typeof loaded!=='object'){ buildWorld(8); return defaultState(); }
-    const N=Math.max(3,Math.min(8, parseInt(loaded.players)||8));
+    const N=Math.max(2,Math.min(8, parseInt(loaded.players)||8));
     buildWorld(N);
     const d=defaultState();
     const s={players:N,sector:loaded.sector||d.sector,campaign:loaded.campaign||d.campaign,gangs:[],nodes:{},pos:{},terrPool:null};
@@ -1353,7 +1377,7 @@
     s.simultaneousGames = { enabled: sg.enabled === true, count: Math.max(2, Math.min(8, parseInt(sg.count)||4)) };
     const ft = (loaded.features && typeof loaded.features === 'object') ? loaded.features : {};
     s.features = { triumphs: ft.triumphs !== false, rep: ft.rep !== false, wealth: ft.wealth !== false, kills: ft.kills !== false };
-    s.variant = ['standard','into-the-unknown'].includes(loaded.variant) ? loaded.variant : 'standard';
+    s.variant = ['standard','into-the-unknown','n26'].includes(loaded.variant) ? loaded.variant : 'standard';
     s.challengeOrder = Array.isArray(loaded.challengeOrder) ? loaded.challengeOrder.filter(x=>Number.isInteger(x)&&x>=0&&x<8) : null;
     return s;
   }
@@ -1716,7 +1740,8 @@
       nodesWrap.appendChild(btn);
     });
     document.getElementById('triumphsMapBtn').style.display=state.features.triumphs?'':'none';
-    document.getElementById('sortRep').style.display=state.features.rep?'':'none';
+    document.getElementById('sortRep').style.display=(state.features.rep&&state.variant!=='n26')?'':'none';
+    document.getElementById('sortRat').style.display=state.variant!=='n26'?'':'none';
     renderLegend();
     const fn=document.getElementById('footnote'); if(fn){ const N=state.players; fn.textContent=`${4*N} holdings · ${N} hideouts · ${3*N} territory plots`; }
   }
@@ -1733,8 +1758,8 @@
       const li=el('li'); const sw=el('span','swatch',g.icon); sw.style.background=g.color;
       const nm=el('span','legend-name',g.name); li.appendChild(sw); li.appendChild(nm);
       li.appendChild(el('span','ct',n));
-      if(state.features.rep) li.appendChild(el('span','ct-rep',rep));
-      li.appendChild(el('span','ct-rat',rat));
+      if(state.features.rep && state.variant!=='n26') li.appendChild(el('span','ct-rep',rep));
+      if(state.variant!=='n26') li.appendChild(el('span','ct-rat',rat));
       ul.appendChild(li);
     });
     ['sortTerr','sortRep','sortRat'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on', (id==='sortTerr'&&legendSort==='terr')||(id==='sortRep'&&legendSort==='rep')||(id==='sortRat'&&legendSort==='rat')); });
@@ -1926,10 +1951,13 @@
   function terrField(current,onChange){
     const f=el('div','field'); f.appendChild(el('label',null,'Territory Type'));
     const sel=el('select'); const none=el('option',null,'— Empty plot —'); none.value=''; sel.appendChild(none);
-    const pool=(state.terrPool&&state.terrPool.length)?state.terrPool:TERRITORIES.map(t=>t.key);
+    const isN26=state.variant==='n26';
+    const sourceList=isN26?N26_TERRITORIES:TERRITORIES;
+    const pool=(state.terrPool&&state.terrPool.length)?state.terrPool:sourceList.map(t=>t.key);
     const used=new Set(); for(const oid in state.nodes){ if(oid===selectedId) continue; const tk=state.nodes[oid].terr; if(tk) used.add(tk); }
-    TERRITORIES.filter(t=>pool.includes(t.key)||t.key===current).forEach(t=>{ const inUse=used.has(t.key);
-      const o=el('option',null,`${t.name} (${t.card})${t.house?' · '+t.house:''}${inUse?'  · placed':''}`); o.value=t.key;
+    sourceList.filter(t=>pool.includes(t.key)||t.key===current).forEach(t=>{ const inUse=used.has(t.key);
+      const label=isN26?`${t.name} (${t.d66})${inUse?'  · placed':''}`:`${t.name} (${t.card})${t.house?' · '+t.house:''}${inUse?'  · placed':''}`;
+      const o=el('option',null,label); o.value=t.key;
       if(inUse) o.style.color='#6f7d77';
       sel.appendChild(o); });
     sel.value=current||''; sel.addEventListener('change',()=>onChange(sel.value||null));
@@ -1937,7 +1965,7 @@
     row.appendChild(sel);
     const randBtn=el('button','btn ghost'); randBtn.textContent='Random'; randBtn.style.cssText='font-size:10px;padding:4px 8px;white-space:nowrap';
     randBtn.addEventListener('click',e=>{ e.preventDefault();
-      const avail=TERRITORIES.filter(t=>pool.includes(t.key)&&!used.has(t.key)&&t.key!==current);
+      const avail=sourceList.filter(t=>pool.includes(t.key)&&!used.has(t.key)&&t.key!==current);
       if(!avail.length){ alert('No unassigned territories available in the pool.'); return; }
       const pick=avail[Math.floor(Math.random()*avail.length)];
       sel.value=pick.key; onChange(pick.key);
@@ -2628,7 +2656,7 @@
    ['tradeModalClose', closeTrade],      ['tradeModalDone', closeTrade],
   ].forEach(([id, fn]) => document.getElementById(id).addEventListener('click', fn));
 
-  function setPlayers(N){ N=clamp(N|0,3,8); if(N===state.players) return; state.players=N; buildWorld(N);
+  function setPlayers(N){ N=clamp(N|0,2,8); if(N===state.players) return; state.players=N; buildWorld(N);
     const nn={}; LAYOUT.forEach(n=>{ nn[n.id]= state.nodes[n.id] || (n.type==='hideout'?{gang:null}:{terr:null,gang:null}); });
     state.nodes=nn;
     if(state.pos) Object.keys(state.pos).forEach(id=>{ if(!LBI[id]) delete state.pos[id]; });
@@ -2639,25 +2667,40 @@
   }
   function buildPlayerSeg(){
     const host=document.getElementById('playerSeg'); host.innerHTML='';
-    for(let n=3;n<=8;n++){ const b=el('button',n===state.players?'on':'',String(n));
+    for(let n=2;n<=8;n++){ const b=el('button',n===state.players?'on':'',String(n));
       b.addEventListener('click',()=>setPlayers(n)); host.appendChild(b); }
   }
   function buildTerrPool(){
     const host=document.getElementById('terrPool'); host.innerHTML='';
     const pool=state.terrPool||(state.terrPool=[]);
-    const cols={'♦':el('div','terr-col'),'♠':el('div','terr-col')};
-    cols['♦'].appendChild(el('div','terr-colhead','♦  Diamonds'));
-    cols['♠'].appendChild(el('div','terr-colhead','♠  Spades'));
-    host.appendChild(cols['♦']); host.appendChild(cols['♠']);
-    TERRITORIES.forEach(t=>{ const suit=/♠/.test(t.card)?'♠':'♦', on=pool.includes(t.key);
-      const chip=el('div','terr-chip'+(on?' on':''));
-      const box=el('span','box',on?'✓':''); chip.appendChild(box);
-      const txt=el('div'); txt.appendChild(el('div','tn',t.name)); txt.appendChild(el('div','tc',t.card+(t.house?' · '+t.house:''))); chip.appendChild(txt);
-      chip.addEventListener('click',()=>{ const i=pool.indexOf(t.key);
-        if(i>=0) pool.splice(i,1); else pool.push(t.key);
-        chip.classList.toggle('on'); box.textContent=pool.includes(t.key)?'✓':'';
-        updateTerrCount(); scheduleSave(); render(); });
-      cols[suit].appendChild(chip); });
+    if(state.variant==='n26'){
+      const col=el('div','terr-col'); col.style.gridColumn='1/-1';
+      col.appendChild(el('div','terr-colhead','N26 Territories — D66 Table'));
+      host.appendChild(col);
+      N26_TERRITORIES.forEach(t=>{ const on=pool.includes(t.key);
+        const chip=el('div','terr-chip'+(on?' on':''));
+        const box=el('span','box',on?'✓':''); chip.appendChild(box);
+        const txt=el('div'); txt.appendChild(el('div','tn',t.name)); txt.appendChild(el('div','tc',t.d66)); chip.appendChild(txt);
+        chip.addEventListener('click',()=>{ const i=pool.indexOf(t.key);
+          if(i>=0) pool.splice(i,1); else pool.push(t.key);
+          chip.classList.toggle('on'); box.textContent=pool.includes(t.key)?'✓':'';
+          updateTerrCount(); scheduleSave(); render(); });
+        col.appendChild(chip); });
+    } else {
+      const cols={'♦':el('div','terr-col'),'♠':el('div','terr-col')};
+      cols['♦'].appendChild(el('div','terr-colhead','♦  Diamonds'));
+      cols['♠'].appendChild(el('div','terr-colhead','♠  Spades'));
+      host.appendChild(cols['♦']); host.appendChild(cols['♠']);
+      TERRITORIES.forEach(t=>{ const suit=/♠/.test(t.card)?'♠':'♦', on=pool.includes(t.key);
+        const chip=el('div','terr-chip'+(on?' on':''));
+        const box=el('span','box',on?'✓':''); chip.appendChild(box);
+        const txt=el('div'); txt.appendChild(el('div','tn',t.name)); txt.appendChild(el('div','tc',t.card+(t.house?' · '+t.house:''))); chip.appendChild(txt);
+        chip.addEventListener('click',()=>{ const i=pool.indexOf(t.key);
+          if(i>=0) pool.splice(i,1); else pool.push(t.key);
+          chip.classList.toggle('on'); box.textContent=pool.includes(t.key)?'✓':'';
+          updateTerrCount(); scheduleSave(); render(); });
+        cols[suit].appendChild(chip); });
+    }
     updateTerrCount();
   }
   function updateTerrCount(){
@@ -2671,7 +2714,7 @@
   modal.addEventListener('click',e=>{ if(e.target===modal) closeConfigModal(); });
   document.getElementById('inSector').addEventListener('input',e=>{ state.sector=e.target.value||'Unnamed Sector'; scheduleSave(); render(); });
   document.getElementById('inCampaign').addEventListener('input',e=>{ state.campaign=e.target.value||'Campaign'; scheduleSave(); render(); });
-  const VARIANT_DESCS = { 'standard': '', 'into-the-unknown': 'Territory plots are assigned codenames. Territory types are revealed automatically when chosen for a challenge.' };
+  const VARIANT_DESCS = { 'standard': '', 'into-the-unknown': 'Territory plots are assigned codenames. Territory types are revealed automatically when chosen for a challenge.', 'n26': 'Uses the N26 D66 territory table. Rep and Rating are not tracked.' };
   function updateVariantDesc(){ const el2=document.getElementById('inVariantDesc'); if(el2) el2.textContent=VARIANT_DESCS[state.variant]||''; }
   function generateLocationNames(){
     const prefixes=['ALPHA','BETA','GAMMA','DELTA','SIGMA','KAPPA','ZETA','THETA','OMEGA','LAMBDA','PHI','TAU','IOTA','MU','NU','XI','UPSILON','PSI','CHI','ETA'];
