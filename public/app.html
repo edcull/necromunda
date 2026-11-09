@@ -1271,11 +1271,12 @@
     let freeIdx=0,minR=1e9; DISTRICTS.forEach((d,i)=>{ if(d.r<minR){minR=d.r;freeIdx=i;} });
     const hideDomes=DISTRICTS.map((d,i)=>i).filter(i=>i!==freeIdx);
     let pa=0; for(; pa<hideDomes.length && pa<N; pa++){ const d=DISTRICTS[hideDomes[pa]]; playerHide[pa]=[d.cx,d.cy]; }
-    // ---- territories: 3 per player, spread on dome ring roads (all domes, incl. the free one) ----
-    const domeTerr=Array(M).fill(0); for(let p=0;p<N;p++) domeTerr[p%M]+=3;
+    // ---- territories: tpp per player, spread on dome ring roads (all domes, incl. the free one) ----
+    const tpp=genLayout._tpp||3;
+    const domeTerr=Array(M).fill(0); for(let p=0;p<N;p++) domeTerr[p%M]+=tpp;
     const domeRing=DISTRICTS.map((d,di)=>{ const T=domeTerr[di],pts=[],off=(di*53)%360; for(let i=0;i<T;i++){ const a=(off + i/Math.max(1,T)*360 -90)*Math.PI/180, rr=d.r*RING_FRAC; pts.push(pull(d.cx+Math.cos(a)*rr, d.cy+Math.sin(a)*rr, d.cx,d.cy)); } return pts; });
     const ringIdx=Array(M).fill(0);
-    for(let p=0;p<N;p++){ const di=p%M, a3=[]; for(let s=0;s<3;s++) a3.push(domeRing[di][ringIdx[di]++]); playerTerr[p]=a3; }
+    for(let p=0;p<N;p++){ const di=p%M, a3=[]; for(let s=0;s<tpp;s++) a3.push(domeRing[di][ringIdx[di]++]); playerTerr[p]=a3; }
     // ---- relocate overflow hideouts + a good share of territories onto factory/gap sites ----
     const dens=FAB_SITES.map(p=>({p,c:FAB_SITES.reduce((s,q)=> s+((p!==q&&Math.hypot(p[0]-q[0],p[1]-q[1])<150)?1:0),0)}));
     const edgeOK=s=> inR(s[0],s[1]);
@@ -1285,7 +1286,7 @@
     const overflow=N-pa;
     const hideSites=fpPick(denseTop, overflow);   // distinct, well-separated dense areas
     for(let k=0;k<overflow;k++){ const p=pa+k; if(hideSites[k]) playerHide[p]=hideSites[k]; else { const d=DISTRICTS[k%M]; playerHide[p]=[d.cx,d.cy]; } }
-    const ftT=Math.round(3*N*0.4);
+    const ftT=Math.round(tpp*N*0.4);
     const rest=FAB_SITES.filter(s=>!hideSites.includes(s)&&edgeOK(s));
     const terrSites=fpPick(rest, ftT);
     const usedSlot=new Set();
@@ -1305,7 +1306,7 @@
     for(let p=0;p<N;p++){ const hp=playerHide[p]; arr.push({id:'h'+(++hi),type:'hideout',x:hp[0]/16,y:hp[1]/9,player:p});
       playerTerr[p].forEach(tp=>arr.push({id:'t'+(++ti),type:'territory',x:tp[0]/16,y:tp[1]/9,player:p})); }
     return arr; }
-  function buildWorld(N){ DISTRICTS=genDistricts(domeCount(N)); FAB_SITES=genFab(); LAYOUT=genLayout(N); LBI={}; LAYOUT.forEach(n=>LBI[n.id]=n); }
+  function buildWorld(N){ DISTRICTS=genDistricts(domeCount(N)); FAB_SITES=genFab(); genLayout._tpp=(typeof state!=='undefined'&&state&&state.variant==='n26')?4:3; LAYOUT=genLayout(N); LBI={}; LAYOUT.forEach(n=>LBI[n.id]=n); }
   buildWorld(8);
   const EMOJI = ['👊','🦅','🛡️','🗡️','🕷️','🔥','🧬','🪓','💀','☠️','⚔️','⚙️','👁️','🐀','🦂','⛏️','🏴‍☠️','🦴','🩸','⚡','🛸','🐍','🦇','👹','🤖','🪖','🔱','🩻','🧨','💣','🔫','🏹','🪚','🔪','⚒️','🔨','🔩','⛓️','🪤','☣️','☢️','🛢️','🧪','⚗️','💉','💊','🏭','🚂','🧱','🪨','🦾','🦿','👺','🥷','🐗','🐺','🦟','🦠','🧟','🐉','🦖','🦑','🦀','🐙','🪲','🐜','🦗','🌋','🗝️','🪦','⚰️','⚱️','🪙','💰','🦷','🫀','🧠','🔆','🌫️','♠️','♦️','♣️','♥️','🟥','🟧','🟨','🟩','🟦','🟪','⚫','⚪'];
 
@@ -1742,8 +1743,10 @@
     document.getElementById('triumphsMapBtn').style.display=state.features.triumphs?'':'none';
     document.getElementById('sortRep').style.display=(state.features.rep&&state.variant!=='n26')?'':'none';
     document.getElementById('sortRat').style.display=state.variant!=='n26'?'':'none';
+    document.getElementById('mapBtnGroup').style.display=state.variant==='n26'?'none':'';
+    document.getElementById('legend').style.display=state.variant==='n26'?'none':'';
     renderLegend();
-    const fn=document.getElementById('footnote'); if(fn){ const N=state.players; fn.textContent=`${4*N} holdings · ${N} hideouts · ${3*N} territory plots`; }
+    const fn=document.getElementById('footnote'); if(fn){ const N=state.players,tpp=state.variant==='n26'?4:3; fn.textContent=`${(tpp+1)*N} holdings · ${N} hideouts · ${tpp*N} territory plots`; }
   }
   let legendSort='terr';
   function renderLegend(){
@@ -2705,8 +2708,9 @@
   }
   function updateTerrCount(){
     const c=document.getElementById('terrCount'); if(!c) return;
-    const sel=(state.terrPool||[]).length, target=state.players*3;
-    c.textContent=sel+' selected · target '+target+' (3 per player)';
+    const tpp=state.variant==='n26'?4:3;
+    const sel=(state.terrPool||[]).length, target=state.players*tpp;
+    c.textContent=sel+' selected · target '+target+' ('+tpp+' per player)';
     c.classList.toggle('over', sel<target);
   }
   document.getElementById('modalClose').addEventListener('click',closeConfigModal);
