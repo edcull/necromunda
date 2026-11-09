@@ -1091,6 +1091,25 @@
     gen:'<path d="M13 2L5 13.5h5L8 22l8-12.5h-5z" fill="currentColor" stroke="none"/>',
     archeo:'<path d="M12 2l4.5 4.5L12 11 7.5 6.5z"/><path d="M12 11v5"/><path d="M6.5 16h11L20 21H4z"/><path d="M10 6.5h4"/>',
     bazaar:'<ellipse cx="8.5" cy="7" rx="5" ry="2.2"/><path d="M3.5 7v4c0 1.2 2.2 2.2 5 2.2s5-1 5-2.2V7"/><path d="M3.5 11v3.5c0 1.2 2.2 2.2 5 2.2"/><circle cx="16.5" cy="15.5" r="4"/><path d="M16.5 13.5v4M14.5 15.5h4"/>',
+    // N26 territory icons
+    n26_bullet_den:'<path d="M6 3h7l5 5v13H6z"/><path d="M13 3v5h5"/><path d="M9 12h6M9 15h4"/>',
+    n26_rogue_doc_shop:'<path d="M2 13h4l1.5-4 3 8L13 9l1.5 4H22"/><path d="M18 3v4M16 5h4"/>',
+    n26_mess_shack:'<path d="M2 20h20"/><path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-5h6v5"/><path d="M10 11h4"/>',
+    n26_drinking_hole:'<path d="M6 8h9v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/><path d="M15 10h2.5a2.5 2.5 0 0 1 0 5H15"/><path d="M6 8c0-2.2 2-3.5 4.5-3.5S15 5.8 15 8"/><path d="M9 12v4M12 12v4"/>',
+    n26_fence_hangout:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h6M15 9h6M3 15h6M15 15h6"/>',
+    n26_bounty_den:'<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M15 6l2-2M17 4l2 2"/>',
+    n26_generatorium:'<path d="M13 2L5 13.5h5L8 22l8-12.5h-5z" fill="currentColor" stroke="none"/>',
+    n26_corpse_farm:'<path d="M9 3h6l3 7-3 11H9L6 10z"/><path d="M10 9.5l4 4M14 9.5l-4 4"/>',
+    n26_tunnels:'<path d="M2 20h20"/><path d="M3 20v-5a4 4 0 0 1 8 0v5M13 20v-5a4 4 0 0 1 8 0v5"/>',
+    n26_tech_bazaar:'<ellipse cx="8.5" cy="7" rx="5" ry="2.2"/><path d="M3.5 7v4c0 1.2 2.2 2.2 5 2.2s5-1 5-2.2V7"/><path d="M3.5 11v3.5c0 1.2 2.2 2.2 5 2.2"/><circle cx="16.5" cy="15.5" r="4"/><path d="M16.5 13.5v4M14.5 15.5h4"/>',
+    n26_promethium_cache:'<rect x="4" y="8" width="6" height="11" rx="1"/><path d="M4 11.5h6M4 15h6"/><rect x="12" y="10" width="6" height="9" rx="1"/><path d="M12 13.5h6"/><path d="M16.5 8c1-1.4.3-2.6-.2-3.4-.2 1.6-1.8 1.7-1 3.4" fill="currentColor" stroke="none"/>',
+    n26_collapsed_dome:'<path d="M3 20h18"/><path d="M4 20a8 8 0 0 1 16 0"/><path d="M12 4v8l-2.5 3M14.5 15L12 12"/>',
+    n26_bone_shrine:'<circle cx="12" cy="10" r="5"/><path d="M10 9.6v.01M14 9.6v.01"/><path d="M10 13.5q2 1.5 4 0"/><path d="M9 15l-1 6M15 15l1 6M8 21h8"/>',
+    n26_mine_workings:'<path d="M11.5 8L7 21"/><path d="M3.5 9.5C8 4.5 15 4.5 19.5 9.5"/><path d="M4 9l2.2 1.6M19 9l-2.2 1.6"/>',
+    n26_gambling_den:'<rect x="3.5" y="3.5" width="10" height="10" rx="2"/><path d="M7 7h.01M10 10h.01"/><rect x="10.5" y="10.5" width="10" height="10" rx="2"/><path d="M14 14h.01M17 17h.01M14 17h.01M17 14h.01"/>',
+    n26_synth_still:'<path d="M9.5 3h5M11 3v5L6.2 16.5A2 2 0 0 0 8 19.5h8a2 2 0 0 0 1.8-3L13 8V3"/><path d="M8.2 14h7.6"/>',
+    n26_old_ruins:'<path d="M3 21h18"/><path d="M6 21V9a2 2 0 0 1 4 0v4"/><path d="M5.5 9h5"/><path d="M15 21v-8l3 2v6"/>',
+    n26_fighting_pit:'<path d="M4 4l8 8M20 4l-8 8"/><path d="M12 12l-2.5 2.5 1.2 1.2L13 13.4M12 12l2.5 2.5-1.2 1.2L11 13.4"/><path d="M4 4h2.2v2.2M20 4h-2.2v2.2"/><path d="M9 19h6"/>',
   };
   function svgIcon(key){
     return `<svg class="terricon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]||''}</svg>`;
@@ -1271,11 +1290,12 @@
     let freeIdx=0,minR=1e9; DISTRICTS.forEach((d,i)=>{ if(d.r<minR){minR=d.r;freeIdx=i;} });
     const hideDomes=DISTRICTS.map((d,i)=>i).filter(i=>i!==freeIdx);
     let pa=0; for(; pa<hideDomes.length && pa<N; pa++){ const d=DISTRICTS[hideDomes[pa]]; playerHide[pa]=[d.cx,d.cy]; }
-    // ---- territories: 3 per player, spread on dome ring roads (all domes, incl. the free one) ----
-    const domeTerr=Array(M).fill(0); for(let p=0;p<N;p++) domeTerr[p%M]+=3;
+    // ---- territories: tpp per player, spread on dome ring roads (all domes, incl. the free one) ----
+    const tpp=genLayout._tpp||3;
+    const domeTerr=Array(M).fill(0); for(let p=0;p<N;p++) domeTerr[p%M]+=tpp;
     const domeRing=DISTRICTS.map((d,di)=>{ const T=domeTerr[di],pts=[],off=(di*53)%360; for(let i=0;i<T;i++){ const a=(off + i/Math.max(1,T)*360 -90)*Math.PI/180, rr=d.r*RING_FRAC; pts.push(pull(d.cx+Math.cos(a)*rr, d.cy+Math.sin(a)*rr, d.cx,d.cy)); } return pts; });
     const ringIdx=Array(M).fill(0);
-    for(let p=0;p<N;p++){ const di=p%M, a3=[]; for(let s=0;s<3;s++) a3.push(domeRing[di][ringIdx[di]++]); playerTerr[p]=a3; }
+    for(let p=0;p<N;p++){ const di=p%M, a3=[]; for(let s=0;s<tpp;s++) a3.push(domeRing[di][ringIdx[di]++]); playerTerr[p]=a3; }
     // ---- relocate overflow hideouts + a good share of territories onto factory/gap sites ----
     const dens=FAB_SITES.map(p=>({p,c:FAB_SITES.reduce((s,q)=> s+((p!==q&&Math.hypot(p[0]-q[0],p[1]-q[1])<150)?1:0),0)}));
     const edgeOK=s=> inR(s[0],s[1]);
@@ -1285,7 +1305,7 @@
     const overflow=N-pa;
     const hideSites=fpPick(denseTop, overflow);   // distinct, well-separated dense areas
     for(let k=0;k<overflow;k++){ const p=pa+k; if(hideSites[k]) playerHide[p]=hideSites[k]; else { const d=DISTRICTS[k%M]; playerHide[p]=[d.cx,d.cy]; } }
-    const ftT=Math.round(3*N*0.4);
+    const ftT=Math.round(tpp*N*0.4);
     const rest=FAB_SITES.filter(s=>!hideSites.includes(s)&&edgeOK(s));
     const terrSites=fpPick(rest, ftT);
     const usedSlot=new Set();
@@ -1305,7 +1325,7 @@
     for(let p=0;p<N;p++){ const hp=playerHide[p]; arr.push({id:'h'+(++hi),type:'hideout',x:hp[0]/16,y:hp[1]/9,player:p});
       playerTerr[p].forEach(tp=>arr.push({id:'t'+(++ti),type:'territory',x:tp[0]/16,y:tp[1]/9,player:p})); }
     return arr; }
-  function buildWorld(N){ DISTRICTS=genDistricts(domeCount(N)); FAB_SITES=genFab(); LAYOUT=genLayout(N); LBI={}; LAYOUT.forEach(n=>LBI[n.id]=n); }
+  function buildWorld(N){ DISTRICTS=genDistricts(domeCount(N)); FAB_SITES=genFab(); genLayout._tpp=(typeof state!=='undefined'&&state&&state.variant==='n26')?4:3; LAYOUT=genLayout(N); LBI={}; LAYOUT.forEach(n=>LBI[n.id]=n); }
   buildWorld(8);
   const EMOJI = ['👊','🦅','🛡️','🗡️','🕷️','🔥','🧬','🪓','💀','☠️','⚔️','⚙️','👁️','🐀','🦂','⛏️','🏴‍☠️','🦴','🩸','⚡','🛸','🐍','🦇','👹','🤖','🪖','🔱','🩻','🧨','💣','🔫','🏹','🪚','🔪','⚒️','🔨','🔩','⛓️','🪤','☣️','☢️','🛢️','🧪','⚗️','💉','💊','🏭','🚂','🧱','🪨','🦾','🦿','👺','🥷','🐗','🐺','🦟','🦠','🧟','🐉','🦖','🦑','🦀','🐙','🪲','🐜','🦗','🌋','🗝️','🪦','⚰️','⚱️','🪙','💰','🦷','🫀','🧠','🔆','🌫️','♠️','♦️','♣️','♥️','🟥','🟧','🟨','🟩','🟦','🟪','⚫','⚪'];
 
@@ -1742,8 +1762,10 @@
     document.getElementById('triumphsMapBtn').style.display=state.features.triumphs?'':'none';
     document.getElementById('sortRep').style.display=(state.features.rep&&state.variant!=='n26')?'':'none';
     document.getElementById('sortRat').style.display=state.variant!=='n26'?'':'none';
+    document.getElementById('mapBtnGroup').style.display=state.variant==='n26'?'none':'';
+    document.getElementById('legend').style.display=state.variant==='n26'?'none':'';
     renderLegend();
-    const fn=document.getElementById('footnote'); if(fn){ const N=state.players; fn.textContent=`${4*N} holdings · ${N} hideouts · ${3*N} territory plots`; }
+    const fn=document.getElementById('footnote'); if(fn){ const N=state.players,tpp=state.variant==='n26'?4:3; fn.textContent=`${(tpp+1)*N} holdings · ${N} hideouts · ${tpp*N} territory plots`; }
   }
   let legendSort='terr';
   function renderLegend(){
@@ -2705,8 +2727,9 @@
   }
   function updateTerrCount(){
     const c=document.getElementById('terrCount'); if(!c) return;
-    const sel=(state.terrPool||[]).length, target=state.players*3;
-    c.textContent=sel+' selected · target '+target+' (3 per player)';
+    const tpp=state.variant==='n26'?4:3;
+    const sel=(state.terrPool||[]).length, target=state.players*tpp;
+    c.textContent=sel+' selected · target '+target+' ('+tpp+' per player)';
     c.classList.toggle('over', sel<target);
   }
   document.getElementById('modalClose').addEventListener('click',closeConfigModal);
