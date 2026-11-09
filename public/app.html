@@ -1325,7 +1325,7 @@
     for(let p=0;p<N;p++){ const hp=playerHide[p]; arr.push({id:'h'+(++hi),type:'hideout',x:hp[0]/16,y:hp[1]/9,player:p});
       playerTerr[p].forEach(tp=>arr.push({id:'t'+(++ti),type:'territory',x:tp[0]/16,y:tp[1]/9,player:p})); }
     return arr; }
-  function buildWorld(N){ DISTRICTS=genDistricts(domeCount(N)); FAB_SITES=genFab(); genLayout._tpp=(typeof state!=='undefined'&&state&&state.variant==='n26')?4:3; LAYOUT=genLayout(N); LBI={}; LAYOUT.forEach(n=>LBI[n.id]=n); }
+  function buildWorld(N,tpp){ DISTRICTS=genDistricts(domeCount(N)); FAB_SITES=genFab(); genLayout._tpp=tpp||3; LAYOUT=genLayout(N); LBI={}; LAYOUT.forEach(n=>LBI[n.id]=n); }
   buildWorld(8);
   const EMOJI = ['👊','🦅','🛡️','🗡️','🕷️','🔥','🧬','🪓','💀','☠️','⚔️','⚙️','👁️','🐀','🦂','⛏️','🏴‍☠️','🦴','🩸','⚡','🛸','🐍','🦇','👹','🤖','🪖','🔱','🩻','🧨','💣','🔫','🏹','🪚','🔪','⚒️','🔨','🔩','⛓️','🪤','☣️','☢️','🛢️','🧪','⚗️','💉','💊','🏭','🚂','🧱','🪨','🦾','🦿','👺','🥷','🐗','🐺','🦟','🦠','🧟','🐉','🦖','🦑','🦀','🐙','🪲','🐜','🦗','🌋','🗝️','🪦','⚰️','⚱️','🪙','💰','🦷','🫀','🧠','🔆','🌫️','♠️','♦️','♣️','♥️','🟥','🟧','🟨','🟩','🟦','🟪','⚫','⚪'];
 
@@ -1369,7 +1369,8 @@
   function mergeState(loaded){
     if(!loaded||typeof loaded!=='object'){ buildWorld(8); return defaultState(); }
     const N=Math.max(2,Math.min(8, parseInt(loaded.players)||8));
-    buildWorld(N);
+    const tpp=loaded.variant==='n26'?4:3;
+    buildWorld(N,tpp);
     const d=defaultState();
     const s={players:N,sector:loaded.sector||d.sector,campaign:loaded.campaign||d.campaign,gangs:[],nodes:{},pos:{},terrPool:null};
     for(let i=0;i<8;i++){ const g=(loaded.gangs&&loaded.gangs[i])||DEFAULT_GANGS[i];
@@ -2678,7 +2679,7 @@
    ['tradeModalClose', closeTrade],      ['tradeModalDone', closeTrade],
   ].forEach(([id, fn]) => document.getElementById(id).addEventListener('click', fn));
 
-  function setPlayers(N){ N=clamp(N|0,2,8); if(N===state.players) return; state.players=N; buildWorld(N);
+  function setPlayers(N){ N=clamp(N|0,2,8); if(N===state.players) return; state.players=N; buildWorld(N,state.variant==='n26'?4:3);
     const nn={}; LAYOUT.forEach(n=>{ nn[n.id]= state.nodes[n.id] || (n.type==='hideout'?{gang:null}:{terr:null,gang:null}); });
     state.nodes=nn;
     if(state.pos) Object.keys(state.pos).forEach(id=>{ if(!LBI[id]) delete state.pos[id]; });
